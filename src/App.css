@@ -32,11 +32,61 @@ body,
   place-items: center;
   border-radius: 50%;
   background: #ffffff;
+  /* Plays on every state change (the circle remounts, see App.tsx). */
+  animation: logo-pop 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Dip in, overshoot a touch, settle: a soft pop before the icon draws. */
+@keyframes logo-pop {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(0.82);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* State icons (eye, moon, hand), in the brand blue. */
 .state-icon {
   color: #0047ff;
+  /* The moon's fill fades in once its outline is drawn. */
+  fill-opacity: 0;
+  animation: icon-fill 200ms ease-out 600ms forwards;
+}
+
+/* Line draw: each shape has pathLength 1 (set in App.tsx), so a dash of 1
+   hidden by an offset of 1 slides into view as the offset runs to 0. */
+.state-icon :is(path, circle, line, rect, polyline, ellipse) {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  /* Starts as the circle comes back up from its dip. */
+  animation: icon-draw 550ms cubic-bezier(0.22, 1, 0.36, 1) 150ms forwards;
+}
+
+@keyframes icon-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes icon-fill {
+  to {
+    fill-opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo,
+  .state-icon,
+  .state-icon :is(path, circle, line, rect, polyline, ellipse) {
+    animation: none;
+    stroke-dasharray: none;
+    stroke-dashoffset: 0;
+    fill-opacity: 1;
+  }
 }
 
 .time {

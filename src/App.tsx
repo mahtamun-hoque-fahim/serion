@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import { Eye, Hand, Moon } from "lucide-react";
@@ -28,6 +28,24 @@ const STATE_ICON = {
   hold: { Icon: Hand, fill: "none" },
 };
 
+/** Draws its lines in when mounted; remount it to replay. */
+function StateIcon({ state }: { state: Tick["state"] }) {
+  const ref = useRef<SVGSVGElement>(null);
+  const { Icon, fill } = STATE_ICON[state];
+
+  // Give every line a length of 1 so the CSS draw animation runs all of them
+  // at the same pace, whatever their real length. Runs before the first paint.
+  useLayoutEffect(() => {
+    ref.current
+      ?.querySelectorAll("path, circle, line, rect, polyline, ellipse")
+      .forEach((shape) => shape.setAttribute("pathLength", "1"));
+  }, []);
+
+  return (
+    <Icon ref={ref} className="state-icon" size={20} fill={fill} aria-hidden data-tauri-drag-region />
+  );
+}
+
 export default function App() {
   const [tick, setTick] = useState<Tick>({ text: "0m", state: "hold" });
 
@@ -37,8 +55,6 @@ export default function App() {
       unlisten.then((stop) => stop());
     };
   }, []);
-
-  const { Icon, fill } = STATE_ICON[tick.state];
 
   return (
     <div
@@ -50,8 +66,10 @@ export default function App() {
         invoke("quit");
       }}
     >
-      <div className="logo" data-tauri-drag-region aria-label={STATE_LABEL[tick.state]}>
-        <Icon className="state-icon" size={20} fill={fill} aria-hidden data-tauri-drag-region />
+      {/* key = state: a state change mounts a fresh circle and icon, which
+          replays the pop and then the draw. */}
+      <div key={tick.state} className="logo" data-tauri-drag-region aria-label={STATE_LABEL[tick.state]}>
+        <StateIcon state={tick.state} />
       </div>
       <span className="time" data-tauri-drag-region>
         {tick.text}
