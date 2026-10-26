@@ -1,3 +1,5 @@
+mod battery;
+mod breaks;
 mod history;
 mod names;
 mod tracker;
@@ -28,6 +30,9 @@ const TOP_APPS: usize = 5;
 /// Longest a limit or countdown may be: one day.
 const MAX_TIMER_MINUTES: u32 = 24 * 60;
 
+/// Battery is read on the first tick, then every this many ticks (seconds).
+const BATTERY_EVERY: u64 = 30;
+
 /// Sent to every window once a second.
 #[derive(Serialize, Clone)]
 struct Tick {
@@ -38,6 +43,13 @@ struct Tick {
     /// Time left on the countdown, when one runs.
     countdown_ms: Option<u64>,
     limit_ms: Option<u64>,
+    /// The running break, if any, and its time left.
+    break_kind: Option<breaks::Kind>,
+    break_ms: Option<u64>,
+    /// The running break's full length, for the countdown ring.
+    break_total_ms: Option<u64>,
+    /// False for an eye reminder that does not pause screen time.
+    break_pauses: Option<bool>,
 }
 
 #[derive(Serialize, Clone)]
@@ -57,6 +69,9 @@ struct Core {
     limit_alerted: bool,
     /// Today's numbers changed since the last save.
     dirty: bool,
+    /// Low on battery at the last check; None before the first check.
+    was_low: Option<bool>,
+    breaks: breaks::Breaks,
 }
 
 struct AppState {
@@ -160,6 +175,10 @@ fn tick_payload(core: &Core, state: State, now: SystemTime) -> Tick {
             .countdown_end
             .map(|end| end.duration_since(now).map(|d| d.as_millis() as u64).unwrap_or(0)),
         limit_ms: core.settings.limit_ms,
+        break_kind: core.breaks.active.map(|a| a.kind),
+        break_ms: core.breaks.active.map(|a| a.left_ms),
+        break_total_ms: core.breaks.active.map(|a| a.length_ms),
+        break_pauses: core.breaks.active.map(|a| a.pauses),
     }
 }
 
@@ -201,9 +220,14 @@ fn run_tracker(app: AppHandle) {
     let mut last_tick = SystemTime::now();
     let mut last_save = Instant::now();
     let mut names = HashMap::new();
+    let mut ticks: u64 = 0;
 
     loop {
         thread::sleep(Duration::from_secs(1));
+        let check_battery = ticks % BATTERY_EVERY == 0;
+        ticks += 1;
+        let battery = if check_battery { battery::read() } else { None };
+        let mut quit = false;
 
         // Wall clock, so time spent asleep shows up as one long gap.
         // A clock that jumped backwards counts as a gap too.
@@ -238,11 +262,17 @@ fn run_tracker(app: AppHandle) {
                 state.store.prune(&core.day, core.settings.retention_days);
             }
 
+            // Nothing counts during a pausing break (an eye reminder does not pause).
+            let pausing = core.breaks.pausing();
             let before = core.tracker.committed_ms;
-            let tick_state = core.tracker.tick(elapsed_ms, idle_ms, app_in_front);
-            if core.tracker.committed_ms != before {
+            let tick_state = core.tracker.tick(elapsed_ms, idle_ms, if pausing { None } else { app_in_front });
+            let counted = core.tracker.committed_ms - before;
+            if counted > 0 {
                 core.dirty = true;
             }
+            // Reborrow once so the breaks and the settings can be used together.
+            let c = &mut *core;
+            c.breaks.tick(counted, elapsed_ms, &c.settings.breaks);
 
             if let Some(limit) = core.settings.limit_ms {
                 if !core.limit_alerted && core.tracker.committed_ms >= limit {
@@ -255,12 +285,24 @@ fn run_tracker(app: AppHandle) {
                 alerts.push("countdown");
             }
 
-            if core.dirty && last_save.elapsed() >= SAVE_EVERY {
+            if check_battery {
+                let low = battery.is_some_and(|b| b.is_low(core.settings.battery_threshold));
+                quit = core.settings.battery_quit && battery::entered_low(core.was_low, low);
+                core.was_low = Some(low);
+            }
+
+            if quit || (core.dirty && last_save.elapsed() >= SAVE_EVERY) {
                 state.save_today(&mut core);
                 last_save = Instant::now();
             }
             tick_payload(&core, tick_state, now)
         };
+
+        if quit {
+            // Low battery and the user asked Serion to step aside: today is saved.
+            app.exit(0);
+            return;
+        }
 
         let _ = app.emit("tick", tick);
         for kind in alerts {
@@ -319,6 +361,27 @@ fn set_limit(minutes: Option<u32>, state: TauriState<AppState>) -> Result<Settin
 }
 
 #[tauri::command]
+fn set_battery_quit(enabled: bool, threshold: u8, state: TauriState<AppState>) -> Result<Settings, String> {
+    if !battery::THRESHOLD_CHOICES.contains(&threshold) {
+        return Err(format!("threshold must be one of {:?} percent", battery::THRESHOLD_CHOICES));
+    }
+    let mut core = state.lock();
+    core.settings.battery_quit = enabled;
+    core.settings.battery_threshold = threshold;
+    // Already low when you turn it on (or raise the level): not an entry, so
+    // Serion keeps running until the next time the battery runs low.
+    core.was_low = Some(battery::read().is_some_and(|b| b.is_low(threshold)));
+    state.store.save_settings(&core.settings);
+    Ok(core.settings.clone())
+}
+
+/// Current battery, or None on machines without one.
+#[tauri::command]
+fn get_battery() -> Option<battery::Battery> {
+    battery::read()
+}
+
+#[tauri::command]
 fn start_countdown(minutes: u32, state: TauriState<AppState>) -> Result<(), String> {
     if minutes == 0 || minutes > MAX_TIMER_MINUTES {
         return Err(format!("countdown must be 1 to {MAX_TIMER_MINUTES} minutes"));
@@ -330,6 +393,30 @@ fn start_countdown(minutes: u32, state: TauriState<AppState>) -> Result<(), Stri
 #[tauri::command]
 fn cancel_countdown(state: TauriState<AppState>) {
     state.lock().countdown_end = None;
+}
+
+/// Water, stretch and eye break settings, all at once.
+#[tauri::command]
+fn set_breaks(config: breaks::Config, state: TauriState<AppState>) -> Result<Settings, String> {
+    config.validate()?;
+    let mut core = state.lock();
+    core.settings.breaks = config;
+    state.store.save_settings(&core.settings);
+    Ok(core.settings.clone())
+}
+
+/// End the running break early: Done.
+#[tauri::command]
+fn finish_break(state: TauriState<AppState>) {
+    state.lock().breaks.finish();
+}
+
+/// End the running break and bring it back after 5 more minutes of screen time.
+#[tauri::command]
+fn snooze_break(state: TauriState<AppState>) {
+    let mut core = state.lock();
+    let c = &mut *core;
+    c.breaks.snooze(&c.settings.breaks);
 }
 
 /// Delete all saved days and reset today to zero. Settings stay.
@@ -378,6 +465,11 @@ pub fn run() {
             get_settings,
             set_retention,
             set_limit,
+            set_battery_quit,
+            get_battery,
+            set_breaks,
+            finish_break,
+            snooze_break,
             start_countdown,
             cancel_countdown,
             clear_history,
@@ -407,7 +499,16 @@ pub fn run() {
             let tracker = Tracker::new(saved.total_ms, saved.apps);
             let limit_alerted = settings.limit_ms.is_some_and(|l| tracker.committed_ms >= l);
             app.manage(AppState {
-                core: Mutex::new(Core { day, tracker, settings, countdown_end: None, limit_alerted, dirty: false }),
+                core: Mutex::new(Core {
+                    day,
+                    tracker,
+                    settings,
+                    countdown_end: None,
+                    limit_alerted,
+                    dirty: false,
+                    was_low: None,
+                    breaks: breaks::Breaks::default(),
+                }),
                 store,
             });
 

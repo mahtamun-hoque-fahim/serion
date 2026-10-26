@@ -7,6 +7,24 @@ export type Tick = {
   /** Time left on the countdown, when one runs. */
   countdown_ms: number | null;
   limit_ms: number | null;
+  /** The running break: its kind, time left, full length, and whether it pauses counting. */
+  break_kind: BreakKind | null;
+  break_ms: number | null;
+  break_total_ms: number | null;
+  break_pauses: boolean | null;
+};
+
+export type BreakKind = "water" | "stretch" | "eyes";
+
+/** Matches breaks::Config in src-tauri/src/breaks.rs. */
+export type BreakConfig = {
+  water_every: number | null;
+  stretch_every: number | null;
+  eye_every: number | null;
+  water_minutes: number;
+  stretch_minutes: number;
+  eye_pause: boolean;
+  eye_seconds: number;
 };
 
 /** One day from the history files (src-tauri/src/history.rs). */
@@ -19,7 +37,13 @@ export type Day = {
 export type Settings = {
   retention_days: number;
   limit_ms: number | null;
+  battery_quit: boolean;
+  battery_threshold: number;
+  breaks: BreakConfig;
 };
+
+/** Current battery; null on machines without one. */
+export type Battery = { percent: number; plugged: boolean } | null;
 
 export const EMPTY_TICK: Tick = {
   text: "0m",
@@ -28,6 +52,10 @@ export const EMPTY_TICK: Tick = {
   top: [],
   countdown_ms: null,
   limit_ms: null,
+  break_kind: null,
+  break_ms: null,
+  break_total_ms: null,
+  break_pauses: null,
 };
 
 /** Precise duration for the dashboard: "3h 12m", "42m", "0m". */

@@ -1,0 +1,459 @@
+/* Break card: shares the panel look (App.css .panel); this is its layout and motion. */
+.break-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 12px;
+  transform-origin: top left;
+}
+
+.break-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Illustration inside a countdown ring. */
+.break-ring {
+  position: relative;
+  flex: none;
+  width: 76px;
+  height: 76px;
+  display: grid;
+  place-items: center;
+  color: var(--panel-accent);
+}
+
+.ring {
+  position: absolute;
+  inset: 0;
+  transform: rotate(-90deg);
+}
+
+.ring-track,
+.ring-left {
+  fill: none;
+  stroke-width: 3;
+}
+
+.ring-track {
+  stroke: var(--panel-hover);
+}
+
+.ring-left {
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  transition:
+    stroke-dashoffset 1s linear,
+    stroke 300ms ease-out;
+}
+
+.art {
+  width: 50px;
+  height: 50px;
+  overflow: visible;
+  transition:
+    opacity 250ms ease-out,
+    transform 400ms var(--spring);
+}
+
+.art .line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The illustration pops in with the card. */
+.break-card.open .art {
+  animation: art-in 520ms var(--spring) 120ms backwards;
+}
+
+@keyframes art-in {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+}
+
+/* --- Water: fills with the break, wave slides, bubbles rise --------------- */
+.art-water .water {
+  /* Empty sits 40 units low; full sits at the rim. */
+  transform: translateY(calc((1 - var(--fill)) * 40px));
+  transition: transform 1s linear;
+}
+
+.art-water .wave {
+  fill: currentColor;
+  fill-opacity: 0.28;
+  animation: wave 1.6s linear infinite;
+}
+
+@keyframes wave {
+  to {
+    transform: translateX(-24px);
+  }
+}
+
+.art-water .bubble {
+  fill: currentColor;
+  opacity: 0;
+  transform-box: fill-box;
+  animation: bubble 2.4s ease-in infinite;
+}
+
+.art-water .b2 {
+  animation-delay: 0.8s;
+}
+
+.art-water .b3 {
+  animation-delay: 1.6s;
+}
+
+@keyframes bubble {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.6);
+  }
+  20% {
+    opacity: 0.7;
+  }
+  85% {
+    opacity: 0.5;
+    transform: translateY(-22px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-26px) scale(1.4);
+  }
+}
+
+/* Done: the full glass gives a small "cheers" tilt. */
+.art-water .glass {
+  transform-box: view-box;
+  transform-origin: 32px 55px;
+  transition: transform 500ms var(--spring);
+}
+
+.break-card.done .art-water .glass {
+  transform: rotate(-12deg);
+}
+
+/* --- Stretch: jumping jacks, about one per second ------------------------- */
+.art-stretch .arm,
+.art-stretch .leg,
+.art-stretch .body,
+.art-stretch .shadow {
+  transform-box: view-box;
+  animation-duration: 0.9s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+.art-stretch .arm {
+  transform-origin: 32px 21px;
+}
+
+.art-stretch .leg {
+  transform-origin: 32px 36px;
+}
+
+.art-stretch .arm-l {
+  animation-name: arm-l;
+}
+
+.art-stretch .arm-r {
+  animation-name: arm-r;
+}
+
+.art-stretch .leg-l {
+  animation-name: leg-l;
+}
+
+.art-stretch .leg-r {
+  animation-name: leg-r;
+}
+
+.art-stretch .body {
+  animation-name: hop;
+}
+
+.art-stretch .shadow {
+  fill: currentColor;
+  transform-origin: 32px 59px;
+  animation-name: shadow;
+}
+
+@keyframes arm-l {
+  0%,
+  100% {
+    transform: rotate(28deg);
+  }
+  50% {
+    transform: rotate(152deg);
+  }
+}
+
+@keyframes arm-r {
+  0%,
+  100% {
+    transform: rotate(-28deg);
+  }
+  50% {
+    transform: rotate(-152deg);
+  }
+}
+
+@keyframes leg-l {
+  0%,
+  100% {
+    transform: rotate(6deg);
+  }
+  50% {
+    transform: rotate(26deg);
+  }
+}
+
+@keyframes leg-r {
+  0%,
+  100% {
+    transform: rotate(-6deg);
+  }
+  50% {
+    transform: rotate(-26deg);
+  }
+}
+
+@keyframes hop {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+/* The shadow is widest on landing and shrinks while in the air. */
+@keyframes shadow {
+  0%,
+  100% {
+    opacity: 0.22;
+    transform: scaleX(1);
+  }
+  50% {
+    opacity: 0.1;
+    transform: scaleX(0.65);
+  }
+}
+
+/* --- Eyes: blink, look far away at a faint horizon, look back, blink ------- */
+.art-eyes .eye,
+.art-eyes .iris,
+.art-eyes .horizon {
+  transform-box: view-box;
+  animation-duration: 4.4s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+.art-eyes .eye {
+  transform-origin: 32px 28px;
+  animation-name: blink;
+}
+
+.art-eyes .iris {
+  animation-name: look;
+}
+
+.art-eyes .pupil {
+  fill: currentColor;
+}
+
+.art-eyes .horizon {
+  stroke-width: 1.5;
+  animation-name: horizon;
+}
+
+@keyframes blink {
+  0%,
+  6%,
+  70%,
+  76%,
+  100% {
+    transform: scaleY(1);
+  }
+  3%,
+  73% {
+    transform: scaleY(0.08);
+  }
+}
+
+@keyframes look {
+  0%,
+  12%,
+  68%,
+  100% {
+    transform: translate(0, 0);
+  }
+  24%,
+  58% {
+    transform: translate(11px, -2px);
+  }
+}
+
+@keyframes horizon {
+  0%,
+  16%,
+  66%,
+  100% {
+    opacity: 0;
+  }
+  28%,
+  56% {
+    opacity: 0.5;
+  }
+}
+
+/* --- Done: the art fades, a check draws in the ring ------------------------ */
+.break-check {
+  position: absolute;
+  opacity: 0;
+  color: var(--panel-accent);
+}
+
+.break-check path {
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+}
+
+.break-card.done .art {
+  opacity: 0;
+  transform: scale(0.6);
+}
+
+.break-card.done .break-check {
+  opacity: 1;
+}
+
+.break-card.done .break-check path {
+  animation: check-draw 420ms cubic-bezier(0.22, 1, 0.36, 1) 120ms forwards;
+}
+
+@keyframes check-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Text */
+.break-text {
+  min-width: 0;
+}
+
+.break-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--panel-ink);
+}
+
+.break-line {
+  margin: 3px 0 6px;
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--panel-ink-2);
+}
+
+.break-time {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--panel-ink);
+}
+
+.break-time span {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--panel-ink-3);
+}
+
+/* Actions */
+.break-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.break-btn {
+  flex: 1;
+  height: 30px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--panel-hover);
+  color: var(--panel-ink);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    filter 150ms ease-out,
+    transform 120ms ease-out,
+    background-color 300ms ease-out;
+}
+
+.break-btn.primary {
+  background: var(--panel-accent);
+  color: #ffffff;
+}
+
+:root[data-mode="dark"][data-graphite="true"] .break-btn.primary {
+  color: #111111;
+}
+
+.break-btn:hover {
+  filter: brightness(1.08);
+}
+
+.break-btn:active {
+  transform: scale(0.95);
+}
+
+.break-btn:focus-visible {
+  outline: 2px solid var(--panel-ink);
+  outline-offset: 2px;
+}
+
+/* Reduce motion: one still pose per illustration, no ring sweep. */
+@media (prefers-reduced-motion: reduce) {
+  .break-card *,
+  .break-card *::before {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .break-card.done .break-check path {
+    stroke-dashoffset: 0;
+  }
+
+  .art-stretch .arm-l {
+    transform: rotate(152deg);
+  }
+
+  .art-stretch .arm-r {
+    transform: rotate(-152deg);
+  }
+
+  .art-stretch .leg-l {
+    transform: rotate(26deg);
+  }
+
+  .art-stretch .leg-r {
+    transform: rotate(-26deg);
+  }
+}

@@ -2,13 +2,13 @@ import { useEffect, useLayoutEffect, useMemo, useState, type CSSProperties } fro
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { Minus, Monitor, Moon, Sun, Trash2, X } from "lucide-react";
+import { Minus, Monitor, Moon, Power, Sun, Trash2, X } from "lucide-react";
 import { useAppearance, type Appearance } from "./appearance";
 import "@fontsource/google-sans/latin-700.css";
 import { BarChart, type Bar } from "./BarChart";
 import { SerionMark } from "./SerionMark";
-import { THEMES, loadTheme } from "./Settings";
-import { EMPTY_TICK, formatClock, formatHM, type Day, type Settings, type Tick } from "./types";
+import { THEMES, ThemeSwatches, loadSize, loadTheme, saveSize, saveTheme, useAutostart } from "./Settings";
+import { EMPTY_TICK, formatClock, formatHM, type Battery, type BreakConfig, type Day, type Settings, type Tick } from "./types";
 import "./Dashboard.css";
 
 /** Chart ranges in days. Only those within the kept history are offered. */
@@ -228,32 +228,43 @@ export default function Dashboard() {
           </section>
 
           <div className="columns">
-            <section className="block">
-              <h2>Top apps</h2>
-              {apps.length === 0 ? (
-                <p className="muted">No app time in this range yet.</p>
-              ) : (
-                <ol className="app-bars">
-                  {apps.map((app, i) => (
-                    <li
-                      key={app.name}
-                      style={{ "--i": i, "--share": app.ms / apps[0].ms } as CSSProperties}
-                    >
-                      <span className="app-name" title={app.name}>
-                        {app.name}
-                      </span>
-                      <span className="app-time">
-                        {formatHM(app.ms)}
-                        <small>{rangeTotal ? Math.round((app.ms / rangeTotal) * 100) : 0}%</small>
-                      </span>
-                      <span className="app-track" aria-hidden>
-                        <span className="app-fill" />
-                      </span>
-                    </li>
-                  ))}
-                </ol>
-              )}
-            </section>
+            <div className="stack">
+              <section className="block">
+                <h2>Top apps</h2>
+                {apps.length === 0 ? (
+                  <p className="muted">No app time in this range yet.</p>
+                ) : (
+                  <ol className="app-bars">
+                    {apps.map((app, i) => (
+                      <li
+                        key={app.name}
+                        style={{ "--i": i, "--share": app.ms / apps[0].ms } as CSSProperties}
+                      >
+                        <span className="app-name" title={app.name}>
+                          {app.name}
+                        </span>
+                        <span className="app-time">
+                          {formatHM(app.ms)}
+                          <small>{rangeTotal ? Math.round((app.ms / rangeTotal) * 100) : 0}%</small>
+                        </span>
+                        <span className="app-track" aria-hidden>
+                          <span className="app-fill" />
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </section>
+              <SettingsBlock
+                theme={theme}
+                onTheme={(color) => {
+                  saveTheme(color);
+                  setTheme(color);
+                }}
+                settings={settings}
+                onSettings={setSettings}
+              />
+            </div>
 
             <div className="stack">
               <Timers tick={tick} settings={settings} onSettings={setSettings} />
@@ -395,6 +406,281 @@ function Timers({
         )}
       </div>
     </section>
+  );
+}
+
+const BATTERY_LEVELS = [10, 15, 20, 30];
+const BATTERY_REFRESH_MS = 30_000;
+
+/** The pill's settings plus the detailed ones that only live here. */
+function SettingsBlock({
+  theme,
+  onTheme,
+  settings,
+  onSettings,
+}: {
+  theme: string;
+  onTheme: (color: string) => void;
+  settings: Settings | null;
+  onSettings: (s: Settings) => void;
+}) {
+  const autostart = useAutostart();
+  const [battery, setBattery] = useState<Battery | undefined>(undefined);
+  const [size, setSize] = useState(loadSize);
+
+  useEffect(() => {
+    const read = () => invoke<Battery>("get_battery").then(setBattery);
+    read();
+    const timer = setInterval(read, BATTERY_REFRESH_MS);
+    return () => clearInterval(timer);
+  }, []);
+
+  const batteryOn = settings?.battery_quit ?? false;
+  const level = settings?.battery_threshold ?? 20;
+  const saveBattery = async (enabled: boolean, threshold: number) =>
+    onSettings(await invoke<Settings>("set_battery_quit", { enabled, threshold }));
+
+  return (
+    <section className="block">
+      <h2>Settings</h2>
+
+      <p className="setting-label">Theme</p>
+      <ThemeSwatches theme={theme} onTheme={onTheme} />
+
+      <p className="setting-label spaced">Notch size</p>
+      <div
+        className="tabs size-tabs"
+        role="radiogroup"
+        aria-label="Notch size"
+        style={{ "--i": size === "small" ? 0 : 1 } as CSSProperties}
+      >
+        <span className="tab-indicator" aria-hidden />
+        {(["small", "large"] as const).map((s) => (
+          <button
+            key={s}
+            type="button"
+            role="radio"
+            aria-checked={size === s}
+            className="tab"
+            onClick={() => {
+              saveSize(s);
+              setSize(s);
+            }}
+          >
+            {s === "small" ? "Small" : "Large"}
+          </button>
+        ))}
+      </div>
+
+      <div className="setting-list">
+        <button
+          type="button"
+          role="switch"
+          aria-checked={autostart.on}
+          className="setting-row"
+          disabled={!autostart.available}
+          title={autostart.available ? undefined : "Available in the installed app"}
+          onClick={autostart.toggle}
+        >
+          <span>
+            Start at login
+            {!autostart.available && <small>Available in the installed app</small>}
+          </span>
+          <span className="switch" aria-hidden>
+            <span className="switch-knob" />
+          </span>
+        </button>
+
+        <div className="setting-group">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={batteryOn}
+            className="setting-row"
+            disabled={battery === null}
+            onClick={() => saveBattery(!batteryOn, level)}
+          >
+            <span>
+              Quit Serion when battery is low
+              <small>
+                {battery === undefined
+                  ? "Reading battery..."
+                  : battery === null
+                    ? "No battery found on this computer"
+                    : `Battery ${battery.percent}%, ${battery.plugged ? "plugged in" : "on battery"}`}
+              </small>
+            </span>
+            <span className="switch" aria-hidden>
+              <span className="switch-knob" />
+            </span>
+          </button>
+          <label className={batteryOn ? "select-row reveal open" : "select-row reveal"}>
+            Low means
+            <select
+              value={level}
+              disabled={!batteryOn}
+              onChange={(e) => saveBattery(batteryOn, Number(e.target.value))}
+            >
+              {BATTERY_LEVELS.map((p) => (
+                <option key={p} value={p}>
+                  {p}% or less
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <BreakSettings settings={settings} onSettings={onSettings} />
+
+      <button type="button" className="quit-btn" onClick={() => invoke("quit")}>
+        <Power size={14} aria-hidden />
+        Quit Serion
+      </button>
+    </section>
+  );
+}
+
+/** Must match the choices in src-tauri/src/breaks.rs. */
+const BREAK_INTERVALS = [20, 30, 45, 60, 90, 120];
+const EYE_INTERVALS = [20, 25, 30, 45];
+const MAX_BREAK_MINUTES = 30;
+/** Eye break: remind only, or pause screen time for this many seconds. */
+const EYE_MODES = [
+  { value: "remind", label: "Reminder only" },
+  { value: "20", label: "Pause 20 s" },
+  { value: "60", label: "Pause 1 min" },
+  { value: "120", label: "Pause 2 min" },
+];
+
+/** Water, stretch and eye breaks: a switch each, options slide open under it. */
+function BreakSettings({ settings, onSettings }: { settings: Settings | null; onSettings: (s: Settings) => void }) {
+  const config = settings?.breaks;
+  if (!config) return null;
+  const save = async (patch: Partial<BreakConfig>) =>
+    onSettings(await invoke<Settings>("set_breaks", { config: { ...config, ...patch } }));
+
+  return (
+    <div className="setting-list">
+      <BreakRow
+        label="Water break"
+        note="The pill shows a glass. Screen time pauses."
+        on={config.water_every !== null}
+        onToggle={() => save({ water_every: config.water_every === null ? 45 : null })}
+      >
+        Every
+        <IntervalSelect value={config.water_every ?? 45} choices={BREAK_INTERVALS} onChange={(m) => save({ water_every: m })} />
+        for
+        <MinutesInput value={config.water_minutes} onCommit={(m) => save({ water_minutes: m })} />
+        min
+      </BreakRow>
+
+      <BreakRow
+        label="Stretch break"
+        note="The pill shows a dumbbell. Screen time pauses."
+        on={config.stretch_every !== null}
+        onToggle={() => save({ stretch_every: config.stretch_every === null ? 60 : null })}
+      >
+        Every
+        <IntervalSelect value={config.stretch_every ?? 60} choices={BREAK_INTERVALS} onChange={(m) => save({ stretch_every: m })} />
+        for
+        <MinutesInput value={config.stretch_minutes} onCommit={(m) => save({ stretch_minutes: m })} />
+        min
+      </BreakRow>
+
+      <BreakRow
+        label="Rest your eyes"
+        note="Look at something far away. Pausing is up to you."
+        on={config.eye_every !== null}
+        onToggle={() => save({ eye_every: config.eye_every === null ? 25 : null })}
+      >
+        Every
+        <IntervalSelect value={config.eye_every ?? 25} choices={EYE_INTERVALS} onChange={(m) => save({ eye_every: m })} />
+        <select
+          aria-label="Eye break mode"
+          value={config.eye_pause ? String(config.eye_seconds) : "remind"}
+          onChange={(e) =>
+            save(
+              e.target.value === "remind"
+                ? { eye_pause: false }
+                : { eye_pause: true, eye_seconds: Number(e.target.value) },
+            )
+          }
+        >
+          {EYE_MODES.map((m) => (
+            <option key={m.value} value={m.value}>
+              {m.label}
+            </option>
+          ))}
+        </select>
+      </BreakRow>
+    </div>
+  );
+}
+
+function BreakRow({
+  label,
+  note,
+  on,
+  onToggle,
+  children,
+}: {
+  label: string;
+  note: string;
+  on: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="setting-group">
+      <button type="button" role="switch" aria-checked={on} className="setting-row" onClick={onToggle}>
+        <span>
+          {label}
+          <small>{note}</small>
+        </span>
+        <span className="switch" aria-hidden>
+          <span className="switch-knob" />
+        </span>
+      </button>
+      <div className={on ? "break-options reveal open" : "break-options reveal"} inert={!on}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function IntervalSelect({ value, choices, onChange }: { value: number; choices: number[]; onChange: (m: number) => void }) {
+  return (
+    <select aria-label="Interval" value={value} onChange={(e) => onChange(Number(e.target.value))}>
+      {choices.map((m) => (
+        <option key={m} value={m}>
+          {m} min of screen time
+        </option>
+      ))}
+    </select>
+  );
+}
+
+/** Free minutes field: edits locally, saves a clamped value on Enter or leaving it. */
+function MinutesInput({ value, onCommit }: { value: number; onCommit: (m: number) => void }) {
+  const [text, setText] = useState(String(value));
+  useEffect(() => setText(String(value)), [value]);
+  const commit = () => {
+    const m = clamp(Number(text), 1, MAX_BREAK_MINUTES);
+    setText(String(m));
+    if (m !== value) onCommit(m);
+  };
+  return (
+    <input
+      type="number"
+      min={1}
+      max={MAX_BREAK_MINUTES}
+      aria-label="Break length in minutes"
+      value={text}
+      onChange={(e) => setText(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => e.key === "Enter" && commit()}
+    />
   );
 }
 

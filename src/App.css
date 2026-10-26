@@ -53,6 +53,8 @@ body,
 }
 
 .pill {
+  /* Small / Large: the whole pill scales, proportions and animations included. */
+  zoom: var(--zoom, 1);
   position: relative;
   box-sizing: border-box;
   flex: none;
@@ -191,6 +193,7 @@ body,
 /* Settings button: hidden until you hover the widget, then slides out of
    the pill with a small spring. */
 .settings-btn {
+  zoom: var(--zoom, 1);
   flex: none;
   width: 50px;
   height: 50px;
@@ -246,7 +249,7 @@ body,
 /* Settings panel: drops in under the bar, growing out of the button side. */
 .panel {
   position: absolute;
-  top: 58px;
+  top: calc(50px * var(--zoom, 1) + 8px); /* under the pill, whatever its size */
   left: 0;
   box-sizing: border-box;
   width: 226px;
@@ -572,6 +575,18 @@ body,
 .expand-btn:focus-visible {
   outline: 2px solid var(--panel-ink);
   outline-offset: -2px;
+}
+
+/* Break start: two soft pulses in the theme color, then it stays calm. */
+.pill.on-break {
+  animation: break-pulse 900ms ease-in-out 2;
+}
+
+@keyframes break-pulse {
+  50% {
+    transform: scale(1.04);
+    filter: brightness(1.12);
+  }
 }
 
 /* Timer alert: the pill turns red (App.tsx swaps --theme) and pulses. */

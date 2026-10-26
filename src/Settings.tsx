@@ -15,6 +15,27 @@ export const THEMES = [
 export const DEFAULT_THEME: string = THEMES[0].color;
 
 const THEME_KEY = "serion.theme";
+const SIZE_KEY = "serion.size";
+
+/** Pill sizes: Large is the original design, Small is the same pill at 80%. */
+export const SIZES = { small: 0.8, large: 1 } as const;
+export type Size = keyof typeof SIZES;
+
+export function loadSize(): Size {
+  try {
+    return localStorage.getItem(SIZE_KEY) === "small" ? "small" : "large";
+  } catch {
+    return "large";
+  }
+}
+
+export function saveSize(size: Size) {
+  try {
+    localStorage.setItem(SIZE_KEY, size);
+  } catch {
+    // Not saved; it still applies until quit.
+  }
+}
 const AUTOSTART_KEY = "serion.autostartChosen";
 
 /**
@@ -73,6 +94,29 @@ export function useAutostart() {
   return { on, toggle, available: CAN_AUTOSTART };
 }
 
+/** The six theme colors as a radio group; used by the pill panel and the dashboard. */
+export function ThemeSwatches({ theme, onTheme }: { theme: string; onTheme: (color: string) => void }) {
+  return (
+    <div className="swatches" role="radiogroup" aria-label="Theme color">
+      {THEMES.map((t, i) => (
+        <button
+          key={t.color}
+          type="button"
+          role="radio"
+          aria-checked={t.color === theme}
+          aria-label={t.name}
+          title={t.name}
+          className="swatch"
+          style={{ "--swatch": t.color, "--i": i } as CSSProperties}
+          onClick={() => onTheme(t.color)}
+        >
+          <Check className="swatch-check" size={14} strokeWidth={3} aria-hidden />
+        </button>
+      ))}
+    </div>
+  );
+}
+
 type Props = {
   open: boolean;
   theme: string;
@@ -86,23 +130,7 @@ export function SettingsPanel({ open, theme, onTheme, onQuit }: Props) {
   return (
     <div id="settings" className={open ? "panel open" : "panel"} role="dialog" aria-label="Settings" inert={!open}>
       <p className="panel-title">Theme</p>
-      <div className="swatches" role="radiogroup" aria-label="Theme color">
-        {THEMES.map((t, i) => (
-          <button
-            key={t.color}
-            type="button"
-            role="radio"
-            aria-checked={t.color === theme}
-            aria-label={t.name}
-            title={t.name}
-            className="swatch"
-            style={{ "--swatch": t.color, "--i": i } as CSSProperties}
-            onClick={() => onTheme(t.color)}
-          >
-            <Check className="swatch-check" size={14} strokeWidth={3} aria-hidden />
-          </button>
-        ))}
-      </div>
+      <ThemeSwatches theme={theme} onTheme={onTheme} />
       <button
         type="button"
         role="switch"

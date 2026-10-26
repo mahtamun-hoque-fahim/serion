@@ -31,11 +31,23 @@ pub struct Settings {
     pub retention_days: u32,
     /// Daily screen-time limit; None means no limit.
     pub limit_ms: Option<u64>,
+    /// Quit Serion when the battery runs low. Off by default.
+    pub battery_quit: bool,
+    /// "Low" for battery_quit, in percent.
+    pub battery_threshold: u8,
+    /// Water, stretch and eye breaks.
+    pub breaks: crate::breaks::Config,
 }
 
 impl Default for Settings {
     fn default() -> Self {
-        Self { retention_days: DEFAULT_RETENTION, limit_ms: None }
+        Self {
+            retention_days: DEFAULT_RETENTION,
+            limit_ms: None,
+            battery_quit: false,
+            battery_threshold: crate::battery::DEFAULT_THRESHOLD,
+            breaks: crate::breaks::Config::default(),
+        }
     }
 }
 
@@ -130,6 +142,10 @@ impl Store {
         if !RETENTION_CHOICES.contains(&s.retention_days) {
             s.retention_days = DEFAULT_RETENTION;
         }
+        if !crate::battery::THRESHOLD_CHOICES.contains(&s.battery_threshold) {
+            s.battery_threshold = crate::battery::DEFAULT_THRESHOLD;
+        }
+        s.breaks = s.breaks.sanitized();
         s
     }
 
@@ -198,16 +214,19 @@ mod tests {
     fn clear_removes_days_but_not_settings() {
         let s = temp_store("clear");
         s.save_day(&day("2026-10-26", 1));
-        s.save_settings(&Settings { retention_days: 365, limit_ms: Some(7_200_000) });
+        s.save_settings(&Settings { retention_days: 365, limit_ms: Some(7_200_000), ..Settings::default() });
         s.clear();
         assert_eq!(s.load_day("2026-10-26").total_ms, 0);
         assert_eq!(s.load_settings().retention_days, 365);
     }
 
     #[test]
-    fn invalid_retention_falls_back_to_default() {
+    fn invalid_settings_fall_back_to_defaults() {
         let s = temp_store("settings");
-        s.save_settings(&Settings { retention_days: 3, limit_ms: None });
-        assert_eq!(s.load_settings().retention_days, DEFAULT_RETENTION);
+        s.save_settings(&Settings { retention_days: 3, battery_threshold: 7, ..Settings::default() });
+        let loaded = s.load_settings();
+        assert_eq!(loaded.retention_days, DEFAULT_RETENTION);
+        assert_eq!(loaded.battery_threshold, crate::battery::DEFAULT_THRESHOLD);
+        assert!(!loaded.battery_quit);
     }
 }
