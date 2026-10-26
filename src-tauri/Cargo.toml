@@ -24,6 +24,7 @@ serde_json = "1"
 active-win-pos-rs = "0.11.0"
 user-idle = "0.6.0"
 chrono = { version = "0.4.45", default-features = false, features = ["clock"] }
+tauri-plugin-autostart = "2"
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration

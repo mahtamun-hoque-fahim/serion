@@ -25,20 +25,77 @@ body,
 }
 
 .pill {
+  position: relative;
   box-sizing: border-box;
   flex: none;
   width: 168px;
   height: 50px;
+  margin-left: 0;
   /* (50 - 36) / 2: the circle sits evenly inset; the gap keeps the time put. */
   padding: 7px;
   display: flex;
   align-items: center;
   gap: 23px;
+  overflow: hidden;
   border-radius: 999px;
   background: var(--theme);
-  transition: background-color 300ms ease-out;
+  transition:
+    width 620ms var(--spring),
+    margin-left 620ms var(--spring),
+    background-color 300ms ease-out;
   user-select: none;
-  cursor: default;
+  /* Open hand: the pill can be picked up and moved. */
+  cursor: grab;
+  touch-action: none;
+}
+
+.pill.dragging {
+  cursor: grabbing;
+}
+
+/* Launch: a 50px circle centered where the pill will be. Leaving .intro
+   widens it to both sides at once (width and left margin move together). */
+.pill.intro {
+  width: 50px;
+  margin-left: 59px; /* (168 - 50) / 2 */
+}
+
+.pill .logo,
+.pill .time {
+  transition: opacity 260ms ease-out 260ms;
+}
+
+.pill.intro .logo,
+.pill.intro .time {
+  opacity: 0;
+  transition: none;
+}
+
+.intro-mark {
+  position: absolute;
+  top: 13px;
+  left: 13px;
+  color: #ffffff;
+  opacity: 0;
+  transform: scale(0.4) rotate(-30deg);
+  transition:
+    opacity 180ms ease-in,
+    transform 220ms ease-in;
+  pointer-events: none;
+}
+
+/* The mark springs in on launch, then shrinks away as the pill opens. */
+.pill.intro .intro-mark {
+  opacity: 1;
+  transform: none;
+  animation: mark-in 560ms var(--spring) backwards;
+}
+
+@keyframes mark-in {
+  from {
+    opacity: 0;
+    transform: scale(0.3) rotate(-40deg);
+  }
 }
 
 .logo {
@@ -165,7 +222,7 @@ body,
   left: 0;
   box-sizing: border-box;
   width: 226px;
-  height: 132px;
+  height: 172px;
   padding: 14px;
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 22px;
@@ -290,12 +347,65 @@ body,
     transform 120ms ease-out;
 }
 
-.panel-row:hover {
+.panel-row + .panel-row {
+  margin-top: 2px;
+}
+
+.panel-row:hover:not(:disabled) {
   background: #f1f1f1;
 }
 
-.panel-row:active {
+.panel-row:active:not(:disabled) {
   transform: scale(0.98);
+}
+
+.panel-row:disabled {
+  color: #9a9a9a;
+  cursor: default;
+}
+
+/* "Start at login": label left, switch right. */
+.toggle-row {
+  justify-content: space-between;
+}
+
+.switch {
+  position: relative;
+  flex: none;
+  width: 30px;
+  height: 18px;
+  border-radius: 999px;
+  background: #d4d4d4;
+  transition: background-color 200ms ease-out;
+}
+
+.switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: transform 320ms var(--spring);
+}
+
+.toggle-row[aria-checked="true"] .switch {
+  background: var(--theme);
+}
+
+.toggle-row[aria-checked="true"] .switch-knob {
+  transform: translateX(12px);
+}
+
+/* The knob squashes a little while pressed, like a real switch. */
+.toggle-row:active:not(:disabled) .switch-knob {
+  width: 17px;
+}
+
+.toggle-row[aria-checked="true"]:active:not(:disabled) .switch-knob {
+  transform: translateX(9px);
 }
 
 .panel-row:focus-visible {

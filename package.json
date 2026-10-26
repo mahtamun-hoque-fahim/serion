@@ -12,6 +12,7 @@
   "dependencies": {
     "@fontsource/google-sans": "^5.3.2",
     "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-autostart": "^2.7.0",
     "lucide-react": "^1.61.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"

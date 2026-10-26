@@ -13,6 +13,7 @@ use tracker::{format_duration, is_real_app, State, Tracker, Window};
 const SAVE_EVERY: Duration = Duration::from_secs(10);
 
 /// Gap between the pill and the top edge of the screen, in physical pixels.
+/// The magnetic dock in src/drag.ts uses the same value.
 const TOP_MARGIN: i32 = 8;
 
 /// What survives a restart: the day and that day's committed total.
@@ -144,6 +145,11 @@ fn quit(app: AppHandle) {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        // Start at login; the UI turns it on for installed builds (Settings.tsx).
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            None,
+        ))
         .invoke_handler(tauri::generate_handler![quit])
         .setup(|app| {
             let window = app

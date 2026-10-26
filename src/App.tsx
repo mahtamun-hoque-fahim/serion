@@ -5,6 +5,8 @@ import { getCurrentWindow, LogicalSize } from "@tauri-apps/api/window";
 import { Eye, Hand, Moon, Settings } from "lucide-react";
 import "@fontsource/google-sans/latin-700.css";
 import { SettingsPanel, loadTheme, saveTheme } from "./Settings";
+import { SerionMark } from "./SerionMark";
+import { useMagneticDrag } from "./drag";
 import "./App.css";
 
 /** Matches the `Tick` struct the Rust loop emits every second. */
@@ -35,11 +37,13 @@ const PILL_W = 168;
 const PILL_H = 50;
 const GAP = 8;
 const BUTTON = 50;
-const PANEL_H = 132;
+const PANEL_H = 172;
 const WIDE = PILL_W + GAP + BUTTON;
 const TALL = PILL_H + GAP + PANEL_H;
 /** Longest exit transition in App.css; the window shrinks only after it. */
 const EXIT_MS = 220;
+/** How long the launch shows the Serion mark before it opens into the pill. */
+const INTRO_MS = 1000;
 
 /** Draws its lines in when mounted; remount it to replay. */
 function StateIcon({ state }: { state: Tick["state"] }) {
@@ -54,23 +58,33 @@ function StateIcon({ state }: { state: Tick["state"] }) {
       .forEach((shape) => shape.setAttribute("pathLength", "1"));
   }, []);
 
-  return (
-    <Icon ref={ref} className="state-icon" size={18} fill={fill} aria-hidden data-tauri-drag-region />
-  );
+  return <Icon ref={ref} className="state-icon" size={18} fill={fill} aria-hidden />;
 }
 
 export default function App() {
   const [tick, setTick] = useState<Tick>({ text: "0m", state: "hold" });
+  const [intro, setIntro] = useState(true);
   const [hover, setHover] = useState(false);
   const [open, setOpen] = useState(false);
   const [theme, setTheme] = useState(loadTheme);
   const windowSize = useRef({ w: PILL_W, h: PILL_H });
+  const { dragging, handlers } = useMagneticDrag(PILL_W);
+
+  // While you hold the pill it shows the hand at once, without waiting for
+  // the next tick (Serion in front counts as hold anyway).
+  const shownState = dragging ? "hold" : tick.state;
+  const showButton = !intro && ((hover && !dragging) || open);
 
   useEffect(() => {
     const unlisten = listen<Tick>("tick", (event) => setTick(event.payload));
     return () => {
       unlisten.then((stop) => stop());
     };
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIntro(false), INTRO_MS);
+    return () => clearTimeout(timer);
   }, []);
 
   // A widget has no use for the browser's own right-click menu
@@ -81,7 +95,9 @@ export default function App() {
     return () => document.removeEventListener("contextmenu", block);
   }, []);
 
-  useEffect(() => {
+  // Layout effect: the saved color is applied before the first paint, so the
+  // launch circle never flashes the default blue first.
+  useLayoutEffect(() => {
     document.documentElement.style.setProperty("--theme", theme);
     saveTheme(theme);
   }, [theme]);
@@ -91,7 +107,7 @@ export default function App() {
   // corner, so the pill never moves. Growing happens at once, before the
   // enter animation; shrinking waits for the exit animation to finish.
   useEffect(() => {
-    const w = hover || open ? WIDE : PILL_W;
+    const w = showButton ? WIDE : PILL_W;
     const h = open ? TALL : PILL_H;
     const shrinking = w < windowSize.current.w || h < windowSize.current.h;
     const timer = setTimeout(() => {
@@ -99,7 +115,7 @@ export default function App() {
       getCurrentWindow().setSize(new LogicalSize(w, h));
     }, shrinking ? EXIT_MS : 0);
     return () => clearTimeout(timer);
-  }, [hover, open]);
+  }, [showButton, open]);
 
   // Close on Esc, and when you click anywhere outside the widget.
   useEffect(() => {
@@ -114,34 +130,36 @@ export default function App() {
     };
   }, [open]);
 
+  const pillClass = ["pill", intro && "intro", dragging && "dragging"].filter(Boolean).join(" ");
+
   return (
     <div className="bar" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
       <div
-        className="pill"
-        data-tauri-drag-region
-        title={`${STATE_LABEL[tick.state]}. Right-click to quit.`}
+        className={pillClass}
+        title={`${STATE_LABEL[shownState]}. Right-click to quit.`}
         onContextMenu={(event) => {
           event.preventDefault();
           invoke("quit");
         }}
+        {...handlers}
       >
+        {/* Launch: the mark in a theme-colored circle, which then opens into the pill. */}
+        <SerionMark size={24} className="intro-mark" />
         {/* key = state: a state change mounts a fresh circle and icon, which
             replays the pop and then the draw. */}
-        <div key={tick.state} className="logo" data-tauri-drag-region aria-label={STATE_LABEL[tick.state]}>
-          <StateIcon state={tick.state} />
+        <div key={shownState} className="logo" aria-label={STATE_LABEL[shownState]}>
+          <StateIcon state={shownState} />
         </div>
-        <span className="time" data-tauri-drag-region>
-          {tick.text}
-        </span>
+        <span className="time">{tick.text}</span>
       </div>
 
       <button
         type="button"
-        className={hover || open ? "settings-btn show" : "settings-btn"}
+        className={showButton ? "settings-btn show" : "settings-btn"}
         aria-label="Settings"
         aria-expanded={open}
         aria-controls="settings"
-        tabIndex={hover || open ? 0 : -1}
+        tabIndex={showButton ? 0 : -1}
         onClick={() => setOpen((o) => !o)}
       >
         <Settings className="gear" size={20} aria-hidden />
