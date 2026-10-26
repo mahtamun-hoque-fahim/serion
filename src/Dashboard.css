@@ -1,0 +1,717 @@
+/* The window is transparent; the rounded card inside it is the app. */
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  background: transparent;
+}
+
+:root {
+  --theme: #0047ff;
+  /* Marks (bars, buttons, fills) use --accent: the theme color in light mode,
+     a lighter step of it in dark mode so it stays visible on dark surfaces. */
+  --accent: var(--theme);
+  --on-accent: #ffffff;
+  --ink: #111111;
+  --ink-2: #6b6b6b;
+  --ink-3: #9a9a9a;
+  --surface: #ffffff;
+  --sunken: #f5f5f6;
+  --line: #ececee;
+  --hover: #e9e9ec;
+  --scroll: #d6d6da;
+  --card-border: rgba(0, 0, 0, 0.08);
+  --danger-line: #f3c2cc;
+  --danger-ink: #be123c;
+  --danger-soft: #fff1f3;
+  color-scheme: light;
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --out: cubic-bezier(0.22, 1, 0.36, 1);
+  font-family: "Google Sans", system-ui, "Segoe UI", -apple-system, sans-serif;
+  color: var(--ink);
+}
+
+/* Dark mode: data-mode is set by appearance.ts (your choice, or Windows').
+   Its own steps, not an inverted light. */
+:root[data-mode="dark"] {
+  --accent: color-mix(in oklab, var(--theme) 78%, white);
+  --ink: #f2f2f3;
+  --ink-2: #a8a8b0;
+  --ink-3: #7c7c85;
+  --surface: #1b1b1e;
+  --sunken: #26262a;
+  --line: #313136;
+  --hover: #34343a;
+  --scroll: #45454c;
+  --card-border: rgba(255, 255, 255, 0.08);
+  --danger-line: #6b2333;
+  --danger-ink: #fb7185;
+  --danger-soft: #3a1820;
+  color-scheme: dark;
+}
+
+/* Graphite is near black: on a dark surface its marks turn light gray,
+   with dark text on top. */
+:root[data-mode="dark"][data-graphite="true"] {
+  --accent: #d4d4d8;
+  --on-accent: #111111;
+}
+
+/* Switching modes cross-fades the main surfaces instead of snapping. */
+.card,
+.tile,
+.block,
+.titlebar,
+.tabs {
+  transition:
+    background-color 250ms ease-out,
+    border-color 250ms ease-out,
+    color 250ms ease-out;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.shell {
+  height: 100%;
+  padding: 8px;
+}
+
+.card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
+  animation: card-in 420ms var(--out) backwards;
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(6px);
+  }
+}
+
+/* Title bar: drag to move, double-click to maximize. */
+.titlebar {
+  flex: none;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 12px 0 18px;
+  border-bottom: 1px solid var(--line);
+  user-select: none;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.brand-mark {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--on-accent);
+  transition: background-color 300ms ease-out;
+}
+
+/* Range tabs with an indicator that slides to the selected one. */
+.tabs {
+  position: relative;
+  display: flex;
+  margin: 0 auto;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--sunken);
+}
+
+.tab-indicator {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 46px;
+  height: calc(100% - 6px);
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  transform: translateX(calc(var(--i) * 46px));
+  transition: transform 420ms var(--spring);
+}
+
+.tab {
+  position: relative;
+  width: 46px;
+  height: 28px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 200ms ease-out;
+}
+
+.tab[aria-selected="true"] {
+  color: var(--ink);
+}
+
+.tab:hover {
+  color: var(--ink);
+}
+
+.window-buttons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Appearance: System / Light / Dark, with a sliding indicator like the tabs. */
+.mode-switch {
+  position: relative;
+  display: flex;
+  margin-right: 8px;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--sunken);
+}
+
+.mode-indicator {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 28px;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  transform: translateX(calc(var(--i) * 28px));
+  transition:
+    transform 420ms var(--spring),
+    background-color 250ms ease-out;
+}
+
+.mode-btn {
+  position: relative;
+  width: 28px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: color 200ms ease-out;
+}
+
+.mode-btn svg {
+  transition: transform 400ms var(--spring);
+}
+
+.mode-btn:hover {
+  color: var(--ink);
+}
+
+.mode-btn[aria-checked="true"] {
+  color: var(--ink);
+}
+
+/* The chosen icon gives a small turn as it is picked. */
+.mode-btn[aria-checked="true"] svg {
+  transform: rotate(-20deg) scale(1.08);
+}
+
+.mode-btn:active svg {
+  transform: scale(0.85);
+}
+
+.icon-btn {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink-2);
+  cursor: pointer;
+  transition:
+    background-color 150ms ease-out,
+    color 150ms ease-out,
+    transform 120ms ease-out;
+}
+
+.icon-btn:hover {
+  background: var(--sunken);
+  color: var(--ink);
+}
+
+.icon-btn.close:hover {
+  background: #e11d48;
+  color: #ffffff;
+}
+
+.icon-btn:active {
+  transform: scale(0.9);
+}
+
+.content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  /* A thin, rounded scrollbar instead of the default gray block. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll) transparent;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Headline numbers: stat tiles, not charts. */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--sunken);
+  animation: rise 480ms var(--out) backwards;
+  animation-delay: calc(80ms + var(--i) * 60ms);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.tile-label {
+  font-size: 12px;
+  color: var(--ink-2);
+}
+
+.tile-value {
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+}
+
+.tile-app {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tile-note {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+.block {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  animation: rise 480ms var(--out) 200ms backwards;
+}
+
+.block h2 {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.muted {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--ink-2);
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Chart: thin rounded bars on a recessive grid, text in ink colors. */
+.chart {
+  position: relative;
+}
+
+.chart-grid line {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.chart-grid text,
+.chart-label {
+  font-size: 11px;
+  fill: var(--ink-3);
+}
+
+.chart-bar {
+  fill: var(--accent);
+  transform-box: fill-box;
+  transform-origin: bottom;
+  animation: grow 560ms var(--out) backwards;
+  transition:
+    opacity 150ms ease-out,
+    fill 300ms ease-out;
+}
+
+.chart-bar.dim {
+  opacity: 0.4;
+}
+
+@keyframes grow {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+.chart-hit {
+  fill: transparent;
+}
+
+.chart-tip {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  /* Inverted: dark tip in light mode, light tip in dark mode. */
+  background: var(--ink);
+  color: var(--surface);
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translate(-50%, -100%);
+  animation: tip-in 140ms ease-out;
+}
+
+.chart-tip span {
+  color: color-mix(in srgb, var(--surface) 70%, transparent);
+}
+
+@keyframes tip-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-100% + 4px));
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Top apps: name and time over a thin share bar. */
+.app-bars {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.app-bars li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 12px;
+  font-size: 13px;
+  animation: rise 420ms var(--out) backwards;
+  animation-delay: calc(240ms + var(--i) * 40ms);
+}
+
+.app-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-time {
+  font-variant-numeric: tabular-nums;
+}
+
+.app-time small {
+  margin-left: 8px;
+  color: var(--ink-3);
+}
+
+.app-track {
+  grid-column: 1 / -1;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--sunken);
+}
+
+.app-fill {
+  display: block;
+  height: 100%;
+  width: calc(var(--share) * 100%);
+  border-radius: 999px;
+  background: var(--accent);
+  transform-origin: left;
+  animation: fill-in 700ms var(--out) backwards;
+  animation-delay: calc(300ms + var(--i) * 40ms);
+  transition: background-color 300ms ease-out;
+}
+
+@keyframes fill-in {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+/* Timers */
+.timer + .timer {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.timer-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.timer-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--ink-2);
+}
+
+.field input {
+  width: 52px;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--ink);
+  transition:
+    border-color 150ms ease-out,
+    box-shadow 150ms ease-out;
+}
+
+.field input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.btn,
+.chip {
+  height: 30px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease-out,
+    transform 120ms ease-out,
+    opacity 150ms ease-out;
+}
+
+.btn {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.btn:hover {
+  filter: brightness(1.1);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.chip {
+  background: var(--sunken);
+  color: var(--ink);
+}
+
+.chip:hover {
+  background: var(--hover);
+}
+
+.btn:active:not(:disabled),
+.chip:active {
+  transform: scale(0.94);
+}
+
+.text-btn {
+  border: 0;
+  background: transparent;
+  padding: 2px 4px;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: color 150ms ease-out;
+}
+
+.text-btn:hover {
+  color: var(--ink);
+}
+
+.meter {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--sunken);
+  overflow: hidden;
+}
+
+.meter-fill {
+  display: block;
+  height: 100%;
+  width: calc(var(--p) * 100%);
+  border-radius: 999px;
+  background: var(--accent);
+  transition:
+    width 600ms var(--out),
+    background-color 300ms ease-out;
+}
+
+.countdown {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  animation: rise 300ms var(--out);
+}
+
+/* Data */
+.select-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.select-row select {
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  font: inherit;
+  font-size: 12px;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.danger-btn {
+  margin-top: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--danger-line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--danger-ink);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease-out,
+    color 150ms ease-out,
+    transform 120ms ease-out;
+}
+
+.danger-btn:hover {
+  background: var(--danger-soft);
+}
+
+.danger-btn.confirming {
+  background: #e11d48;
+  border-color: #e11d48;
+  color: #ffffff;
+  animation: nudge 300ms ease-out;
+}
+
+@keyframes nudge {
+  30% {
+    transform: translateX(-3px);
+  }
+  60% {
+    transform: translateX(3px);
+  }
+}
+
+.danger-btn:active {
+  transform: scale(0.95);
+}
+
+button:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

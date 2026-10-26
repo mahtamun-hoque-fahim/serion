@@ -28,16 +28,18 @@ type Drag = {
 };
 
 /**
- * Drag the window by the element that gets these handlers.
+ * Drag the window by the element that gets these handlers. A press that
+ * moves less than CLICK_SLOP is a tap and calls `onTap` instead.
  *
  * A custom drag instead of Tauri's native one: during the native drag the page
  * gets no events, so it could not show a grab cursor or pull toward the dock.
  * Window positions are physical pixels; pointer positions are CSS pixels and
  * are converted with the window's scale factor.
  */
-export function useMagneticDrag(pillWidth: number) {
+export function useMagneticDrag(pillWidth: number, onTap: () => void) {
   const [dragging, setDragging] = useState(false);
   const drag = useRef<Drag | null>(null);
+  const pressed = useRef(false);
   const frame = useRef(0);
   const glideFrame = useRef(0);
 
@@ -61,10 +63,13 @@ export function useMagneticDrag(pillWidth: number) {
 
   async function onPointerDown(event: PointerEvent<HTMLElement>) {
     if (event.button !== 0) return;
+    // Recorded at once: a quick click can end before the reads below return.
+    pressed.current = true;
     event.currentTarget.setPointerCapture(event.pointerId);
     cancelAnimationFrame(glideFrame.current);
     const { screenX, screenY } = event;
     const [position, monitor, scale] = await Promise.all([win.outerPosition(), primaryMonitor(), win.scaleFactor()]);
+    if (!pressed.current) return; // already released: it was a click
     const dockX = monitor ? monitor.position.x + (monitor.size.width - pillWidth * scale) / 2 : position.x;
     const dockY = monitor ? monitor.position.y + TOP_MARGIN * scale : position.y;
     drag.current = {
@@ -111,9 +116,15 @@ export function useMagneticDrag(pillWidth: number) {
 
   function onPointerUp() {
     const d = drag.current;
+    const wasPressed = pressed.current;
+    pressed.current = false;
     drag.current = null;
     setDragging(false);
-    if (!d?.moved) return;
+    if (!wasPressed) return;
+    if (!d?.moved) {
+      onTap();
+      return;
+    }
     const offDock = d.x !== d.dockX || d.y !== d.dockY;
     if (offDock && Math.hypot(d.x - d.dockX, d.y - d.dockY) < SNAP * d.scale) {
       cancelAnimationFrame(frame.current);

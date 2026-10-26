@@ -1,0 +1,53 @@
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+}
+
+/* Two red pulses, the second softer, then gone. */
+.flash {
+  position: fixed;
+  inset: 0;
+  background: #e11d48;
+  opacity: 0;
+  animation: flash 1200ms ease-out forwards;
+}
+
+@keyframes flash {
+  0% {
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.5;
+  }
+  35% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.35;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Reduced motion: one gentle tint instead of pulses. It is an alert, so it
+   still shows. */
+@media (prefers-reduced-motion: reduce) {
+  .flash {
+    animation: flash-soft 1200ms linear forwards;
+  }
+
+  @keyframes flash-soft {
+    0%,
+    80% {
+      opacity: 0.25;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+}

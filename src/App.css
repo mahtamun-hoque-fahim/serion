@@ -12,7 +12,35 @@ body,
   /* Theme color, set from the settings panel (App.tsx). */
   --theme: #0047ff;
   --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* Panels (settings, top apps). The pill keeps the theme color in both modes. */
+  --panel-bg: #ffffff;
+  --panel-ink: #111111;
+  --panel-ink-2: #6b6b6b;
+  --panel-ink-3: #9a9a9a;
+  --panel-hover: #f1f1f1;
+  --panel-border: rgba(0, 0, 0, 0.08);
+  --switch-off: #d4d4d4;
+  --panel-accent: var(--theme);
   font-family: "Google Sans", system-ui, "Segoe UI", -apple-system, sans-serif;
+  color-scheme: light;
+}
+
+/* Dark mode: data-mode is set by appearance.ts (your choice, or Windows'). */
+:root[data-mode="dark"] {
+  --panel-bg: #1b1b1e;
+  --panel-ink: #f2f2f3;
+  --panel-ink-2: #a8a8b0;
+  --panel-ink-3: #6f6f78;
+  --panel-hover: #2a2a2f;
+  --panel-border: rgba(255, 255, 255, 0.1);
+  --switch-off: #3d3d44;
+  --panel-accent: color-mix(in oklab, var(--theme) 78%, white);
+  color-scheme: dark;
+}
+
+/* Graphite is near black: inside dark panels its marks turn light gray. */
+:root[data-mode="dark"][data-graphite="true"] {
+  --panel-accent: #d4d4d8;
 }
 
 /* Pill + settings button in a row, settings panel below.
@@ -224,10 +252,10 @@ body,
   width: 226px;
   height: 172px;
   padding: 14px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--panel-border);
   border-radius: 22px;
-  background: #ffffff;
-  color: #111111;
+  background: var(--panel-bg);
+  color: var(--panel-ink);
   transform-origin: top right;
   opacity: 0;
   transform: translateY(-8px) scale(0.94);
@@ -254,7 +282,7 @@ body,
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #6b6b6b;
+  color: var(--panel-ink-2);
 }
 
 .swatches {
@@ -302,14 +330,14 @@ body,
 }
 
 .swatch:focus-visible {
-  outline: 2px solid #111111;
+  outline: 2px solid var(--panel-ink);
   outline-offset: 3px;
 }
 
 /* Selected: a ring around the swatch and a check mark that pops in. */
 .swatch[aria-checked="true"] {
   box-shadow:
-    0 0 0 2px #ffffff,
+    0 0 0 2px var(--panel-bg),
     0 0 0 4px var(--swatch);
 }
 
@@ -336,7 +364,7 @@ body,
   border: 0;
   border-radius: 12px;
   background: transparent;
-  color: #111111;
+  color: var(--panel-ink);
   font: inherit;
   font-size: 13px;
   font-weight: 700;
@@ -352,7 +380,7 @@ body,
 }
 
 .panel-row:hover:not(:disabled) {
-  background: #f1f1f1;
+  background: var(--panel-hover);
 }
 
 .panel-row:active:not(:disabled) {
@@ -360,7 +388,7 @@ body,
 }
 
 .panel-row:disabled {
-  color: #9a9a9a;
+  color: var(--panel-ink-3);
   cursor: default;
 }
 
@@ -375,7 +403,7 @@ body,
   width: 30px;
   height: 18px;
   border-radius: 999px;
-  background: #d4d4d4;
+  background: var(--switch-off);
   transition: background-color 200ms ease-out;
 }
 
@@ -392,7 +420,7 @@ body,
 }
 
 .toggle-row[aria-checked="true"] .switch {
-  background: var(--theme);
+  background: var(--panel-accent);
 }
 
 .toggle-row[aria-checked="true"] .switch-knob {
@@ -409,8 +437,152 @@ body,
 }
 
 .panel-row:focus-visible {
-  outline: 2px solid #111111;
+  outline: 2px solid var(--panel-ink);
   outline-offset: -2px;
+}
+
+/* Top apps panel: grows out of the pill's side, rows slide in one by one. */
+.apps-panel {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  transform-origin: top left;
+}
+
+.apps-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.apps-row {
+  position: relative;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 8px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  transition: background-color 150ms ease-out;
+}
+
+/* A faint bar behind each row shows its share of the top app's time. */
+.apps-row::before {
+  content: "";
+  position: absolute;
+  inset: 4px auto 4px 0;
+  width: calc(var(--share) * 100%);
+  border-radius: 6px;
+  background: var(--panel-accent);
+  opacity: 0.1;
+  transform-origin: left;
+  transition: background-color 300ms ease-out;
+}
+
+.panel.open .apps-row {
+  animation: row-in 360ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  animation-delay: calc(60ms + var(--i) * 40ms);
+}
+
+.panel.open .apps-row::before {
+  animation: share-grow 600ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  animation-delay: calc(140ms + var(--i) * 40ms);
+}
+
+@keyframes row-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes share-grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+.apps-row:hover {
+  background: var(--panel-hover);
+}
+
+.apps-name {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--panel-ink);
+}
+
+.apps-time {
+  position: relative;
+  flex: none;
+  color: var(--panel-ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.apps-empty {
+  height: 30px;
+  margin: 0;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  color: var(--panel-ink-2);
+}
+
+/* Expand: opens the full Serion window. Nudges down on hover. */
+.expand-btn {
+  margin: auto auto 0;
+  width: 36px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--panel-ink);
+  cursor: pointer;
+  transition:
+    background-color 150ms ease-out,
+    transform 120ms ease-out;
+}
+
+.expand-btn svg {
+  transition: transform 300ms var(--spring);
+}
+
+.expand-btn:hover {
+  background: var(--panel-hover);
+}
+
+.expand-btn:hover svg {
+  transform: translateY(2px);
+}
+
+.expand-btn:active {
+  transform: scale(0.92);
+}
+
+.expand-btn:focus-visible {
+  outline: 2px solid var(--panel-ink);
+  outline-offset: -2px;
+}
+
+/* Timer alert: the pill turns red (App.tsx swaps --theme) and pulses. */
+.pill.alert {
+  animation: alert-pulse 700ms ease-in-out 3;
+}
+
+@keyframes alert-pulse {
+  50% {
+    transform: scale(1.06);
+  }
 }
 
 /* Reduced motion: everything appears at once, nothing pops, slides or draws. */
