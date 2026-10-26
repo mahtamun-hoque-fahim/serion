@@ -21,6 +21,8 @@ pub struct Window {
     pub width: f64,
     pub height: f64,
     pub minimized: bool,
+    /// The window belongs to Serion itself.
+    pub is_self: bool,
 }
 
 /// True when a real application is in front.
@@ -30,7 +32,9 @@ pub fn is_real_app(window: Option<&Window>) -> bool {
     // No foreground window: switching windows, locking, or locked.
     let Some(w) = window else { return false };
     // Hidden helper windows (0x0) and minimized windows are not being used.
-    if w.minimized || w.width <= 0.0 || w.height <= 0.0 {
+    // Serion itself never counts: when the last app is minimized, Windows
+    // hands focus to the next window in line, which is the always-on-top pill.
+    if w.is_self || w.minimized || w.width <= 0.0 || w.height <= 0.0 {
         return false;
     }
     match w.exe.as_str() {
@@ -118,7 +122,14 @@ mod tests {
     const MIN: u64 = 60 * SEC;
 
     fn win(exe: &str, title: &str) -> Window {
-        Window { exe: exe.into(), title: title.into(), width: 800.0, height: 600.0, minimized: false }
+        Window {
+            exe: exe.into(),
+            title: title.into(),
+            width: 800.0,
+            height: 600.0,
+            minimized: false,
+            is_self: false,
+        }
     }
 
     #[test]
@@ -135,6 +146,10 @@ mod tests {
         let mut minimized = win("firefox.exe", "New Tab");
         minimized.minimized = true;
         assert!(!is_real_app(Some(&minimized)));
+        // Focus handed to the pill after the last app was minimized.
+        let mut pill = win("serion.exe", "serion");
+        pill.is_self = true;
+        assert!(!is_real_app(Some(&pill)));
         let mut hidden = win("explorer.exe", "UnlockingWindow2");
         hidden.width = 0.0;
         assert!(!is_real_app(Some(&hidden)));

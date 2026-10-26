@@ -28,6 +28,22 @@ fn clock() -> String {
     )
 }
 
+/// (minimized, visible) for a handle formatted as "HWND(328646)".
+#[cfg(windows)]
+fn window_flags(window_id: &str) -> (bool, bool) {
+    use windows_sys::Win32::UI::WindowsAndMessaging::{IsIconic, IsWindowVisible};
+    let digits = window_id.trim_start_matches("HWND(").trim_end_matches(')');
+    match digits.parse::<isize>() {
+        Ok(hwnd) => unsafe { (IsIconic(hwnd as _) != 0, IsWindowVisible(hwnd as _) != 0) },
+        Err(_) => (false, false),
+    }
+}
+
+#[cfg(not(windows))]
+fn window_flags(_window_id: &str) -> (bool, bool) {
+    (false, true)
+}
+
 fn main() {
     println!("serion probe: Ctrl+C to stop");
     let mut last_key = String::new();
@@ -41,9 +57,10 @@ fn main() {
 
         let (key, line) = match get_active_window() {
             Ok(w) => {
-                let key = format!("{}|{}|{}", w.process_id, w.window_id, w.title);
+                let (minimized, visible) = window_flags(&w.window_id);
+                let key = format!("{}|{}|{}|{minimized}", w.process_id, w.window_id, w.title);
                 let line = format!(
-                    "app={:?} title={:?} pid={} hwnd={} path={:?} pos=({},{} {}x{})",
+                    "app={:?} title={:?} pid={} hwnd={} minimized={minimized} visible={visible} path={:?} pos=({},{} {}x{})",
                     w.app_name,
                     w.title,
                     w.process_id,

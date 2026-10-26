@@ -79,6 +79,7 @@ fn foreground() -> Option<Window> {
         .unwrap_or_default();
     Some(Window {
         exe,
+        is_self: w.process_id == u64::from(std::process::id()),
         minimized: is_minimized(&w.window_id),
         title: w.title,
         width: w.position.width,
