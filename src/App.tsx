@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
-import { Hand, Moon } from "lucide-react";
+import { Eye, Hand, Moon } from "lucide-react";
 import "@fontsource/google-sans/latin-700.css";
 import "./App.css";
 
@@ -18,11 +18,12 @@ const STATE_LABEL: Record<Tick["state"], string> = {
 };
 
 /**
- * Paused states swap the logo for an icon. The moon is filled (fill set to the
- * stroke color); the hand stays an outline because filling closes the gaps
- * between its fingers and it turns into a blob.
+ * Each state shows its own icon in the circle. The moon is filled (fill set to
+ * the stroke color); the eye and hand stay outlines because filling them hides
+ * the pupil and closes the gaps between the fingers.
  */
 const STATE_ICON = {
+  active: { Icon: Eye, fill: "none" },
   idle: { Icon: Moon, fill: "currentColor" },
   hold: { Icon: Hand, fill: "none" },
 };
@@ -37,7 +38,7 @@ export default function App() {
     };
   }, []);
 
-  const icon = tick.state === "active" ? null : STATE_ICON[tick.state];
+  const { Icon, fill } = STATE_ICON[tick.state];
 
   return (
     <div
@@ -49,13 +50,8 @@ export default function App() {
         invoke("quit");
       }}
     >
-      {/* Placeholder logo; its look doubles as the state indicator. */}
       <div className="logo" data-tauri-drag-region aria-label={STATE_LABEL[tick.state]}>
-        {icon ? (
-          <icon.Icon className="state-icon" size={20} fill={icon.fill} aria-hidden data-tauri-drag-region />
-        ) : (
-          "logo"
-        )}
+        <Icon className="state-icon" size={20} fill={fill} aria-hidden data-tauri-drag-region />
       </div>
       <span className="time" data-tauri-drag-region>
         {tick.text}
