@@ -51,7 +51,7 @@ pub enum State {
     /// No input for IDLE_LIMIT_MS or more.
     Idle,
     /// Desktop, lock screen, minimized everything, or just woke from sleep.
-    Away,
+    Hold,
 }
 
 /// Today's counter.
@@ -77,7 +77,7 @@ impl Tracker {
     pub fn tick(&mut self, elapsed_ms: u64, idle_ms: u64, real_app: bool) -> State {
         if elapsed_ms > MAX_TICK_MS {
             self.pending_ms = 0;
-            return State::Away;
+            return State::Hold;
         }
         if idle_ms >= IDLE_LIMIT_MS {
             self.pending_ms = 0;
@@ -91,7 +91,7 @@ impl Tracker {
             self.committed_ms += self.pending_ms;
             self.pending_ms = 0;
         }
-        if real_app { State::Active } else { State::Away }
+        if real_app { State::Active } else { State::Hold }
     }
 }
 
@@ -184,7 +184,7 @@ mod tests {
     fn desktop_and_lock_screen_do_not_count() {
         let mut t = Tracker::default();
         for _ in 0..30 {
-            assert_eq!(t.tick(SEC, 0, false), State::Away);
+            assert_eq!(t.tick(SEC, 0, false), State::Hold);
         }
         assert_eq!(t.committed_ms, 0);
     }
@@ -193,7 +193,7 @@ mod tests {
     fn sleep_gap_is_ignored() {
         let mut t = Tracker::default();
         t.tick(SEC, 30 * SEC, true); // pending before sleep
-        assert_eq!(t.tick(8 * 60 * MIN, 0, true), State::Away);
+        assert_eq!(t.tick(8 * 60 * MIN, 0, true), State::Hold);
         assert_eq!(t.committed_ms, 0);
         t.tick(SEC, 0, true);
         assert_eq!(t.committed_ms, SEC);

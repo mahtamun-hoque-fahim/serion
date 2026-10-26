@@ -8,51 +8,43 @@ body,
   background: transparent;
 }
 
+/* Size must match width/height of the "main" window in tauri.conf.json. */
 .pill {
   box-sizing: border-box;
-  width: 237px;
-  height: 71px;
-  padding: 6px;
+  width: 168px;
+  height: 50px;
+  padding: 4px;
   display: flex;
   align-items: center;
-  gap: 30px;
+  gap: 20px;
   border-radius: 999px;
   background: #0047ff;
-  font-family: system-ui, "Segoe UI", -apple-system, sans-serif;
+  font-family: "Google Sans", system-ui, "Segoe UI", -apple-system, sans-serif;
   user-select: none;
   cursor: default;
 }
 
 .logo {
   flex: none;
-  width: 59px;
-  height: 59px;
+  width: 42px;
+  height: 42px;
   display: grid;
   place-items: center;
   border-radius: 50%;
   background: #ffffff;
   color: #000000;
-  font-size: 12px;
-  font-weight: 600;
-  transition: opacity 300ms ease-out, transform 300ms ease-out;
+  font-size: 9px;
+  font-weight: 700;
 }
 
-/* Paused: the logo dims and shrinks a little, the time stays readable. */
-.logo.idle,
-.logo.away {
-  opacity: 0.55;
-  transform: scale(0.9);
+/* Idle (moon) and hold (hand) icons, in the brand blue. */
+.state-icon {
+  color: #0047ff;
 }
 
 .time {
   color: #ffffff;
-  font-size: 32px;
+  font-size: 23px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .logo {
-    transition: none;
-  }
 }
