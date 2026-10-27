@@ -606,6 +606,12 @@ async fn open_dashboard(app: AppHandle) -> Result<(), String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        // One copy only: two would stack their pills and overwrite each other's
+        // saves. A second launch exits and the running copy opens its dashboard.
+        // Registered first, as the plugin requires.
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            tauri::async_runtime::spawn(open_dashboard(app.clone()));
+        }))
         // Start at login; the UI turns it on for installed builds (Settings.tsx).
         // File pickers for the data folder, export and import.
         .plugin(tauri_plugin_dialog::init())

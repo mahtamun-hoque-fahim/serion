@@ -5,7 +5,7 @@ The single source of truth for anyone (person or agent) picking this project up.
 change that alters behavior, rules, files, workflow or status** (see
 "Keeping this file current" at the end).
 
-Last updated: 2026-10-27, version 1.0.0 installer.
+Last updated: 2026-10-27, single-instance guard after the 1.0.0 installer.
 
 ---
 
@@ -91,7 +91,7 @@ In PowerShell sessions prepend: `$env:Path="$env:USERPROFILE\.cargo\bin;$env:Pat
 | File | Role |
 |---|---|
 | `main.rs` | entry, calls `serion_lib::run()` |
-| `lib.rs` | app setup, the **1-second loop** (`run_tracker`), shared state `Core` behind a `Mutex`, all `#[tauri::command]`s, window creation (dashboard, alert flash), save on exit |
+| `lib.rs` | app setup (single-instance guard first), the **1-second loop** (`run_tracker`), shared state `Core` behind a `Mutex`, all `#[tauri::command]`s, window creation (dashboard, alert flash), save on exit |
 | `screen.rs` | **OS scan** each second (Windows API via `windows-sys`): foreground window, all open "Alt+Tab" windows in z-order (visible, not minimized, not cloaked, no owner, not tool windows), fullscreen check, monitor count, "display kept awake" (`CallNtPowerInformation(SystemExecutionState)` & `ES_DISPLAY_REQUIRED`). Stub on other OSes |
 | `tracker.rs` | **pure counting rules** (unit tested): `classify` (App / Shell / Desktop / Locked), `open_apps`, `credit`, `other_screens`, `Tracker` (pending vs committed time, per app), `format_duration` |
 | `breaks.rs` | water / stretch / eye breaks: config + validation, offer → start → run → end, skip, "away counts as break" (pure, tested) |
@@ -280,6 +280,11 @@ Each second the loop decides **who gets the second**:
 - Dev (`localhost:1420`) and the installed app (`tauri.localhost`) are
   different web origins, so `localStorage` prefs (theme, size, appearance) do
   not carry over between them.
+- **Two copies stack invisibly:** before the single-instance guard, autostart
+  plus a desktop-icon launch ran two Serions; both docked at the same spot, so
+  one pill hid the other and both saved the same files. The guard
+  (`tauri-plugin-single-instance`, keyed on the app identifier) also means a
+  dev build will not start while the installed app runs: quit one first.
 
 ## 10. Status
 
@@ -326,7 +331,8 @@ through the UI, battery quit.
 | `c8ed9d0` | Encrypted data, movable data folder, export/import |
 | `8e6520d` | PROJECT.md handoff, AGENTS.md / CLAUDE.md |
 | v1.0.0 | Release config (Serion 1.0.0, NSIS, publisher), installer at `E:\` |
-| (after v1.0.0) | Fixes found in the installed app: dashboard CSS not loaded in production, panels centered under the pill, more room for break names; installer at `E:\` rebuilt (version still 1.0.0) |
+| `d592bc7` | Fixes found in the installed app: dashboard CSS not loaded in production, panels centered under the pill, more room for break names; installer at `E:\` rebuilt (version still 1.0.0) |
+| (after `d592bc7`) | Single instance: a second launch (autostart plus the desktop icon) exits and opens the running copy's dashboard; installer at `E:` rebuilt |
 
 Decisions worth knowing (and *why*): Tauri over Electron for a 24/7 widget
 (memory); a custom drag because the native one blocks page events; offered
