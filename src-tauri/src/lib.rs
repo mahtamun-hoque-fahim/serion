@@ -498,6 +498,26 @@ fn clear_history(state: TauriState<AppState>) {
     core.dirty = false;
 }
 
+/// Move and resize the pill window in one step (physical px), so the pill
+/// does not jump when the window grows to the left for a centered panel.
+#[tauri::command]
+fn set_bounds(x: i32, y: i32, width: u32, height: u32, window: tauri::WebviewWindow) -> Result<(), String> {
+    #[cfg(windows)]
+    {
+        use windows_sys::Win32::UI::WindowsAndMessaging::{SetWindowPos, SWP_NOACTIVATE, SWP_NOZORDER};
+        let hwnd = window.hwnd().map_err(|e| e.to_string())?;
+        let flags = SWP_NOACTIVATE | SWP_NOZORDER;
+        // SAFETY: a valid handle for this window; SetWindowPos only reads its arguments.
+        let ok = unsafe { SetWindowPos(hwnd.0 as _, std::ptr::null_mut(), x, y, width as i32, height as i32, flags) };
+        if ok == 0 { Err("could not move the window".into()) } else { Ok(()) }
+    }
+    #[cfg(not(windows))]
+    {
+        window.set_position(PhysicalPosition::new(x, y)).map_err(|e| e.to_string())?;
+        window.set_size(tauri::PhysicalSize::new(width, height)).map_err(|e| e.to_string())
+    }
+}
+
 /// The data folder in use, and whether it is the default one.
 #[tauri::command]
 fn get_data_folder(state: TauriState<AppState>) -> (String, bool) {
@@ -612,6 +632,7 @@ pub fn run() {
             set_reading,
             set_display,
             monitor_count,
+            set_bounds,
             get_data_folder,
             set_data_folder,
             export_data,

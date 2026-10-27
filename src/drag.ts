@@ -55,7 +55,8 @@ const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), h
  * Window positions are physical pixels; pointer positions are CSS pixels and
  * are converted with the window's scale factor.
  */
-export function useMagneticDrag(pillWidth: number, pillHeight: number, onTap: () => void) {
+/** `offset`: how far (CSS px) the window currently reaches left of the pill. */
+export function useMagneticDrag(pillWidth: number, pillHeight: number, offset: () => number, onTap: () => void) {
   const [dragging, setDragging] = useState(false);
   const drag = useRef<Drag | null>(null);
   const pressed = useRef(false);
@@ -63,7 +64,10 @@ export function useMagneticDrag(pillWidth: number, pillHeight: number, onTap: ()
   const glideFrame = useRef(0);
 
   const win = getCurrentWindow();
-  const move = (x: number, y: number) => win.setPosition(new PhysicalPosition(Math.round(x), Math.round(y)));
+  // Positions here are the pill's; the window sits `offset` further left.
+  const scaleRef = useRef(1);
+  const move = (x: number, y: number) =>
+    win.setPosition(new PhysicalPosition(Math.round(x - offset() * scaleRef.current), Math.round(y)));
 
   function glideTo(fromX: number, fromY: number, toX: number, toY: number) {
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
@@ -94,6 +98,8 @@ export function useMagneticDrag(pillWidth: number, pillHeight: number, onTap: ()
       win.scaleFactor(),
     ]);
     if (!pressed.current) return; // already released: it was a click
+    scaleRef.current = scale;
+    const pillX = position.x + offset() * scale;
 
     const gap = EDGE_GAP * scale;
     // shortcut: edges come from the screen the drag starts on; dragging onto
@@ -112,13 +118,13 @@ export function useMagneticDrag(pillWidth: number, pillHeight: number, onTap: ()
     drag.current = {
       pointerX: screenX,
       pointerY: screenY,
-      windowX: position.x,
+      windowX: pillX,
       windowY: position.y,
-      dockX: primary ? primary.position.x + (primary.size.width - pillWidth * scale) / 2 : position.x,
+      dockX: primary ? primary.position.x + (primary.size.width - pillWidth * scale) / 2 : pillX,
       dockY: primary ? primary.position.y + gap : position.y,
       edges,
       scale,
-      x: position.x,
+      x: pillX,
       y: position.y,
       moved: false,
     };

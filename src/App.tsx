@@ -1,7 +1,8 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
-import { getCurrentWindow, LogicalSize, PhysicalPosition } from "@tauri-apps/api/window";
+import { getCurrentWindow, PhysicalPosition } from "@tauri-apps/api/window";
+import { flushSync } from "react-dom";
 import { BookOpen, CalendarDays, Dumbbell, Grab, Eye, EyeClosed, GlassWater, Hand, Moon, Settings } from "lucide-react";
 import "@fontsource/google-sans/latin-700.css";
 import { SIZES, SettingsPanel, THEMES, loadSize, loadTheme, saveTheme } from "./Settings";
@@ -104,16 +105,17 @@ export default function App() {
   const zoom = SIZES[size];
   const pillW = PILL_W * zoom;
   const pillH = PILL_H * zoom;
-  const wide = Math.max(pillW + GAP + BUTTON * zoom, PANEL_W);
   // Starts at the window size in tauri.conf.json (the Large pill).
-  const windowSize = useRef({ w: PILL_W, h: PILL_H });
+  const windowFrame = useRef({ offset: 0, w: PILL_W, h: PILL_H });
+  // How far the window reaches left of the pill (CSS px); see the window effect below.
+  const [offset, setOffset] = useState(0);
   const placedWidth = useRef(PILL_W);
   const togglePanel = (p: Panel) => setPanel((current) => (current === p ? "none" : p));
   const offers = tick.break_offers;
   const onBreak = tick.break_kind !== null;
   // A tap opens or tucks the break card while a break is offered or running;
   // otherwise it opens today's top apps.
-  const { dragging, handlers } = useMagneticDrag(pillW, pillH, () =>
+  const { dragging, handlers } = useMagneticDrag(pillW, pillH, () => windowFrame.current.offset, () =>
     togglePanel(offers.length || onBreak || breakDone ? "break" : "apps"),
   );
   const hoverRef = useRef(false);
@@ -332,9 +334,12 @@ export default function App() {
   }, [theme, alert]);
 
   // The transparent window still catches clicks, so it only grows while the
-  // button or a panel is shown. It grows right and down from its top-left
-  // corner, so the pill never moves. Growing happens at once, before the
-  // enter animation; shrinking waits for the exit animation to finish.
+  // button or a panel is shown. Panels are centered under the pill, so an open
+  // panel reaches left of it: the window then grows left by `targetOffset`
+  // and the pill moves right inside it by the same amount, staying put on
+  // screen. Window bounds (one Rust call) and layout (one synchronous render)
+  // change together. Growing happens at once, before the enter animation;
+  // shrinking waits for the exit animation to finish.
   const panelH =
     panel === "settings"
       ? SETTINGS_H
@@ -343,16 +348,29 @@ export default function App() {
         : panel === "break" && breakView
           ? breakCardHeight(breakView)
           : 0;
+  const panelW = panel === "break" ? BREAK_CARD_W : PANEL_W;
+  const targetOffset = panel === "none" ? 0 : Math.max(0, (panelW - pillW) / 2);
+  const rowW = showButton ? pillW + GAP + BUTTON * zoom : pillW;
+  const frameW = panel === "none" ? rowW : targetOffset + Math.max(rowW, (pillW + panelW) / 2);
+  const frameH = panel === "none" ? pillH : pillH + GAP + panelH;
   useEffect(() => {
-    const w = panel === "break" ? Math.max(wide, BREAK_CARD_W) : showButton || panel !== "none" ? wide : pillW;
-    const h = panel === "none" ? pillH : pillH + GAP + panelH;
-    const shrinking = w < windowSize.current.w || h < windowSize.current.h;
-    const timer = setTimeout(() => {
-      windowSize.current = { w, h };
-      getCurrentWindow().setSize(new LogicalSize(w, h));
+    const now = windowFrame.current;
+    const shrinking = frameW < now.w || frameH < now.h || targetOffset < now.offset;
+    const timer = setTimeout(async () => {
+      const win = getCurrentWindow();
+      const [pos, scale] = await Promise.all([win.outerPosition(), win.scaleFactor()]);
+      const pillX = pos.x + windowFrame.current.offset * scale;
+      windowFrame.current = { offset: targetOffset, w: frameW, h: frameH };
+      flushSync(() => setOffset(targetOffset));
+      invoke("set_bounds", {
+        x: Math.round(pillX - targetOffset * scale),
+        y: pos.y,
+        width: Math.round(frameW * scale),
+        height: Math.round(frameH * scale),
+      });
     }, shrinking ? EXIT_MS : 0);
     return () => clearTimeout(timer);
-  }, [showButton, panel, panelH, pillW, pillH, wide]);
+  }, [targetOffset, frameW, frameH]);
 
   // Close on Esc, and when you click anywhere outside the widget.
   useEffect(() => {
@@ -370,7 +388,12 @@ export default function App() {
   const pillClass = ["pill", intro && "intro", dragging && "dragging", alert && "alert", (onBreak || offers.length > 0) && "on-break"].filter(Boolean).join(" ");
 
   return (
-    <div className="bar" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
+    <div
+      className="bar"
+      style={{ "--offset": `${offset}px`, "--pill-w": `${pillW}px` } as CSSProperties}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+    >
       <div
         className={pillClass}
         title={onBreak || offers.length ? `${STATE_LABEL[shownState]}.` : `${STATE_LABEL[shownState]}. Click for your top apps, right-click to quit.`}

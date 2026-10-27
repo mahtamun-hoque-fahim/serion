@@ -1,11 +1,12 @@
 /* Break card: shares the panel look (App.css .panel); this is its layout and motion. */
 .break-card {
   width: 260px; /* BREAK_CARD_W in BreakCard.tsx */
+  margin-left: -17px; /* .panel centers 226px; this centers 260px */
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   padding: 12px;
-  transform-origin: top left;
+  transform-origin: top center;
 }
 
 .break-main {
@@ -358,8 +359,8 @@
 
 .offer-icon {
   flex: none;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   display: grid;
   place-items: center;
   border-radius: 50%;
@@ -427,7 +428,7 @@
 }
 
 .offer-skip {
-  width: 28px;
+  width: 24px;
   padding: 0;
   display: grid;
   place-items: center;

@@ -160,6 +160,12 @@ Each second the loop decides **who gets the second**:
 - Circle pop + line draw-on animation on every state change; launch intro (mark
   in a circle opens into the pill).
 - Hover → settings button; click → top-apps panel; right-click → quit.
+- Panels (top apps, settings, break card) are **centered under the pill** in
+  both sizes: an open panel makes the window reach left of the pill by
+  `offset`; Rust `set_bounds` moves and resizes the window in one
+  `SetWindowPos` call while the layout shifts the pill right by the same
+  `offset` (`--offset` on `.bar`), so the pill does not move on screen. The
+  drag hook converts between window and pill positions with that offset.
 - Custom drag, magnetic top-center dock and magnetic screen edges (work area).
 - Sizes: Small (80%, CSS `zoom`) / Large; keeps its center when resized.
 - Hides while a **fullscreen** app is in front (setting "Show over fullscreen"
@@ -259,6 +265,21 @@ Each second the loop decides **who gets the second**:
 - With "Hide from recordings" on, the pill is invisible to `CopyFromScreen`
   screenshots too.
 - Windows 11 Notepad is a Store app; test windows are easier as WinForms forms.
+- **Dev runs started from the Claude desktop app are sandboxed.** Claude is a
+  packaged (MSIX) app; every process it starts (the agent's shells, `npm run
+  tauri dev`) has its AppData writes silently redirected to
+  `C:\Users\HP\AppData\Local\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\com.serion.app`.
+  The installed app (started from the desktop) uses the real
+  `%APPDATA%\com.serion.app`. So dev data and installed data are separate, and
+  the agent's shell sees the redirected view, not the real folder. Copying data
+  into the real folder has to be done outside Claude (Explorer).
+- **Production builds and lazy imports:** with several `import()`s in one
+  expression inside `lazy()`, Vite/rolldown wired up only one view's CSS (the
+  dashboard rendered unstyled). Keep one `import()` per loader function
+  (`src/main.tsx`). Always look at the installed build, not only dev.
+- Dev (`localhost:1420`) and the installed app (`tauri.localhost`) are
+  different web origins, so `localStorage` prefs (theme, size, appearance) do
+  not carry over between them.
 
 ## 10. Status
 
@@ -305,6 +326,7 @@ through the UI, battery quit.
 | `c8ed9d0` | Encrypted data, movable data folder, export/import |
 | `8e6520d` | PROJECT.md handoff, AGENTS.md / CLAUDE.md |
 | v1.0.0 | Release config (Serion 1.0.0, NSIS, publisher), installer at `E:\` |
+| (after v1.0.0) | Fixes found in the installed app: dashboard CSS not loaded in production, panels centered under the pill, more room for break names; installer at `E:\` rebuilt (version still 1.0.0) |
 
 Decisions worth knowing (and *why*): Tauri over Electron for a 24/7 widget
 (memory); a custom drag because the native one blocks page events; offered

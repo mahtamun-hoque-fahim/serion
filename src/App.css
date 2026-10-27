@@ -49,7 +49,9 @@ body,
   position: relative;
   display: flex;
   gap: 8px;
-  width: 226px;
+  /* With a panel open the window reaches left of the pill; this keeps the
+     pill where it was on screen (App.tsx sets --offset and --pill-w). */
+  padding-left: var(--offset, 0px);
 }
 
 .pill {
@@ -250,7 +252,8 @@ body,
 .panel {
   position: absolute;
   top: calc(50px * var(--zoom, 1) + 8px); /* under the pill, whatever its size */
-  left: 0;
+  /* Centered under the pill: half of the 226px width to the left of its middle. */
+  left: calc(var(--offset, 0px) + var(--pill-w, 168px) / 2 - 113px);
   box-sizing: border-box;
   width: 226px;
   height: 172px;
@@ -259,7 +262,7 @@ body,
   border-radius: 22px;
   background: var(--panel-bg);
   color: var(--panel-ink);
-  transform-origin: top right;
+  transform-origin: top center;
   opacity: 0;
   transform: translateY(-8px) scale(0.94);
   visibility: hidden;
@@ -449,7 +452,7 @@ body,
   display: flex;
   flex-direction: column;
   padding: 12px;
-  transform-origin: top left;
+  transform-origin: top center;
 }
 
 .apps-list {
