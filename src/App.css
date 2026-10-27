@@ -140,6 +140,9 @@ body,
   background: #ffffff;
   /* Plays on every state change (the circle remounts, see App.tsx). */
   animation: logo-pop 420ms var(--spring);
+  /* Always its own layer: otherwise the icon is redrawn snapped to whole
+     pixels when the pop ends, a 1px jump in Small size (zoom 0.8). */
+  will-change: transform;
 }
 
 /* Dip in, overshoot a touch, settle: a soft pop before the icon draws. */

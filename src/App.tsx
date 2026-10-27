@@ -385,7 +385,7 @@ export default function App() {
     const shrinking = frameW < now.w || frameH < now.h || left > now.left;
     const timer = setTimeout(() => {
       region.current = { left, w: frameW, h: frameH };
-      invoke("set_region", {
+      invoke("set_hit_area", {
         x: Math.round(left * scale),
         y: 0,
         width: Math.round(frameW * scale),

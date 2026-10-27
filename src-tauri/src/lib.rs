@@ -499,7 +499,7 @@ fn clear_history(state: TauriState<AppState>) {
 }
 
 /// Move and resize the pill window in one step (physical px). Used only when
-/// the pill size changes; panels change the region instead (`set_region`).
+/// the pill size changes; panels change the hit area instead (`set_hit_area`).
 #[tauri::command]
 fn set_bounds(x: i32, y: i32, width: u32, height: u32, window: tauri::WebviewWindow) -> Result<(), String> {
     #[cfg(windows)]
@@ -518,33 +518,53 @@ fn set_bounds(x: i32, y: i32, width: u32, height: u32, window: tauri::WebviewWin
     }
 }
 
-/// Limit the pill window to one rectangle (physical px, relative to the
-/// window). Outside it, clicks go to whatever is underneath. The window itself
-/// keeps one size, so opening a panel never moves or resizes it (resizing made
-/// the pill jump for a frame).
+/// The part of the pill window that takes the mouse (physical px, relative to
+/// the window): pill, button and open panel. `None` until the page sets it.
+#[derive(Default)]
+struct HitArea(Mutex<Option<[i32; 4]>>);
+
+/// The pill window keeps one size, so opening a panel never moves or resizes
+/// it (that made the pill jump for a frame). Its transparent rest must not
+/// catch clicks: `watch_hit_area` lets the mouse through outside this area.
+/// A window region (SetWindowRgn) did that too, but sometimes painted the
+/// region as an opaque dark box on this transparent window.
 #[tauri::command]
-fn set_region(x: i32, y: i32, width: i32, height: i32, window: tauri::WebviewWindow) -> Result<(), String> {
-    #[cfg(windows)]
-    {
-        use windows_sys::Win32::Graphics::Gdi::{CreateRectRgn, DeleteObject, SetWindowRgn};
-        let hwnd = window.hwnd().map_err(|e| e.to_string())?;
-        // SAFETY: a valid handle for this window. After a successful
-        // SetWindowRgn the system owns the region; on failure we free it.
-        unsafe {
-            let region = CreateRectRgn(x, y, x + width, y + height);
-            if SetWindowRgn(hwnd.0 as _, region, 1) == 0 {
-                DeleteObject(region);
-                return Err("could not set the window region".into());
-            }
-        }
-        Ok(())
+fn set_hit_area(x: i32, y: i32, width: i32, height: i32, area: TauriState<HitArea>) {
+    if let Ok(mut current) = area.0.lock() {
+        *current = Some([x, y, width, height]);
     }
-    // shortcut: other OSes keep the whole fixed window clickable; give them
-    // their own click-through when Serion ships there.
-    #[cfg(not(windows))]
-    {
-        let _ = (x, y, width, height, window);
-        Ok(())
+}
+
+/// A mouse button is down: never turn click-through on mid-press, or a drag
+/// that outruns the pill would lose the mouse.
+#[cfg(windows)]
+fn mouse_held() -> bool {
+    use windows_sys::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VK_LBUTTON, VK_RBUTTON};
+    // SAFETY: GetAsyncKeyState only reads input state.
+    unsafe { GetAsyncKeyState(VK_LBUTTON as i32) < 0 || GetAsyncKeyState(VK_RBUTTON as i32) < 0 }
+}
+
+#[cfg(not(windows))]
+fn mouse_held() -> bool {
+    false
+}
+
+/// Every 25 ms: the pill window takes the mouse only while the cursor is over
+/// its hit area; elsewhere clicks pass through to what is underneath.
+fn watch_hit_area(app: AppHandle) {
+    let mut ignoring = false;
+    loop {
+        thread::sleep(Duration::from_millis(25));
+        let Some(window) = app.get_webview_window("main") else { continue };
+        let Some([x, y, width, height]) = app.state::<HitArea>().0.lock().ok().and_then(|a| *a) else { continue };
+        let (Ok(cursor), Ok(origin)) = (window.cursor_position(), window.outer_position()) else { continue };
+        let cx = cursor.x as i32 - origin.x;
+        let cy = cursor.y as i32 - origin.y;
+        let inside = cx >= x && cx < x + width && cy >= y && cy < y + height;
+        let ignore = !inside && !mouse_held();
+        if ignore != ignoring && window.set_ignore_cursor_events(ignore).is_ok() {
+            ignoring = ignore;
+        }
     }
 }
 
@@ -669,7 +689,7 @@ pub fn run() {
             set_display,
             monitor_count,
             set_bounds,
-            set_region,
+            set_hit_area,
             get_data_folder,
             set_data_folder,
             export_data,
@@ -723,6 +743,9 @@ pub fn run() {
 
             let handle = app.handle().clone();
             thread::spawn(move || run_tracker(handle));
+            app.manage(HitArea::default());
+            let handle = app.handle().clone();
+            thread::spawn(move || watch_hit_area(handle));
             Ok(())
         })
         .build(tauri::generate_context!())
