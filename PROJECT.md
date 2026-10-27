@@ -5,7 +5,7 @@ The single source of truth for anyone (person or agent) picking this project up.
 change that alters behavior, rules, files, workflow or status** (see
 "Keeping this file current" at the end).
 
-Last updated: 2026-10-27, after commit `c8ed9d0`.
+Last updated: 2026-10-27, version 1.0.0 installer.
 
 ---
 
@@ -70,8 +70,18 @@ cd src-tauri && cargo test --lib      # Rust unit tests (45 at last count)
 npx tsc --noEmit                      # frontend type-check
 npx tauri icon src-tauri/icons/app-icon.svg   # regenerate every icon size
 cd src-tauri && cargo run --example probe     # print what Windows reports for the foreground window
-npm run tauri build                   # installer (NOT yet run, see Status)
+npm run tauri build                   # release installer (NSIS), see "Installer" below
 ```
+
+**Installer:** `npm run tauri build` makes
+`C:/rust-target/serion/release/bundle/nsis/Serion_<version>_x64-setup.exe`; a
+copy of the latest one is kept at `E:\` for the owner. Config: NSIS only,
+installs for the current user (no admin), product name "Serion", publisher
+"Mahtamun Hoque Fahim", unsigned (SmartScreen shows "Windows protected your PC":
+More info, Run anyway). The NSIS uninstaller offers to delete app data; by
+default data is kept. Bump the version in `tauri.conf.json`, `Cargo.toml` and
+`package.json` together for each release. Stop the dev app before running the
+installed one, or two pills appear.
 
 In PowerShell sessions prepend: `$env:Path="$env:USERPROFILE\.cargo\bin;$env:Path"`.
 
@@ -264,8 +274,9 @@ credit, Start menu = hold, a full live break cycle, export/import/folder move
 through the UI, battery quit.
 
 **Missing / open:**
-1. **Installer never built** (`npm run tauri build`); Start at login therefore
-   never exercised. Next planned step.
+1. **Installer 1.0.0 built** (2026-10-27); next is the owner installing it and
+   using it daily. Start at login turns on at the first installed run and has
+   not been confirmed yet.
 2. macOS / Linux: `screen.rs`, `names.rs`, `battery.rs` are stubs → nothing
    counts there yet. Decide: port or declare v1 Windows-only.
 3. Unsigned → SmartScreen warning for other users; no auto-updater.
@@ -292,6 +303,8 @@ through the UI, battery quit.
 | `cf44017` | Breaks, dashboard settings, edge magnet, notch size, battery quit |
 | `efc3378` | Offered breaks, screen-scan counting rules, recording privacy |
 | `c8ed9d0` | Encrypted data, movable data folder, export/import |
+| `8e6520d` | PROJECT.md handoff, AGENTS.md / CLAUDE.md |
+| v1.0.0 | Release config (Serion 1.0.0, NSIS, publisher), installer at `E:\` |
 
 Decisions worth knowing (and *why*): Tauri over Electron for a 24/7 widget
 (memory); a custom drag because the native one blocks page events; offered

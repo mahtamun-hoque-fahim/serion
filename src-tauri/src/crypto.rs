@@ -43,11 +43,6 @@ pub fn open(sealed: &[u8]) -> Option<Vec<u8>> {
     cipher().decrypt(Nonce::from_slice(nonce), body).ok()
 }
 
-/// Starts like a Serion file (used to tell old plain JSON apart).
-pub fn is_sealed(bytes: &[u8]) -> bool {
-    bytes.starts_with(MAGIC)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -56,7 +51,7 @@ mod tests {
     fn round_trips_and_hides_the_content() {
         let plain = br#"{"day":"2026-10-27","total_ms":4463303}"#;
         let sealed = seal(plain);
-        assert!(is_sealed(&sealed));
+        assert!(sealed.starts_with(MAGIC));
         assert!(!sealed.windows(9).any(|w| w == b"total_ms\""), "plain text must not show");
         assert_eq!(open(&sealed).as_deref(), Some(plain.as_slice()));
     }
