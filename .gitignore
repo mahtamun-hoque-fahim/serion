@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Serion encryption key: never commit it (see src-tauri/build.rs)
+src-tauri/serion.key

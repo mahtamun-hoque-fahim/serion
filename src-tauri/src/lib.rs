@@ -1,15 +1,17 @@
 mod battery;
 mod breaks;
+mod crypto;
 mod history;
 mod names;
 mod screen;
 mod tracker;
 
+use std::path::PathBuf;
 use std::sync::{Mutex, MutexGuard};
 use std::thread;
 use std::time::{Duration, Instant, SystemTime};
 
-use history::{Day, Settings, Store, RETENTION_CHOICES};
+use history::{Day, ImportMode, Settings, Store, RETENTION_CHOICES};
 use serde::Serialize;
 use tauri::{
     AppHandle, Emitter, Manager, PhysicalPosition, RunEvent, State as TauriState, WebviewUrl, WebviewWindowBuilder,
@@ -59,6 +61,8 @@ struct Tick {
     reading: bool,
     /// A fullscreen app is in front and the pill should stay out of its way.
     hide_for_fullscreen: bool,
+    /// The data folder could not be written last time (a removed drive?).
+    storage_problem: bool,
 }
 
 #[derive(Serialize, Clone)]
@@ -93,6 +97,8 @@ struct Core {
     reading: Option<Reading>,
     /// A fullscreen app is in front right now.
     fullscreen: bool,
+    /// The last save failed; counting carries on in memory.
+    storage_problem: bool,
 }
 
 /// Reading mode, tied to the app it was switched on in.
@@ -104,6 +110,8 @@ struct Reading {
 struct AppState {
     core: Mutex<Core>,
     store: Store,
+    /// The default app data folder, where a chosen data folder is remembered.
+    default_dir: PathBuf,
 }
 
 impl AppState {
@@ -113,13 +121,15 @@ impl AppState {
     }
 
     fn save_today(&self, core: &mut Core) {
-        self.store.save_day(&Day {
-            day: core.day.clone(),
-            total_ms: core.tracker.committed_ms,
-            apps: core.tracker.apps.clone(),
-        });
-        core.dirty = false;
+        let saved = self.store.save_day(&today_record(core));
+        core.storage_problem = !saved;
+        core.dirty = !saved;
     }
+}
+
+/// Today's numbers as a Day, from memory.
+fn today_record(core: &Core) -> Day {
+    Day { day: core.day.clone(), total_ms: core.tracker.committed_ms, apps: core.tracker.apps.clone() }
 }
 
 fn today() -> String {
@@ -153,6 +163,7 @@ fn tick_payload(core: &Core, state: State, now: SystemTime) -> Tick {
         day: core.day.clone(),
         reading: core.reading.is_some(),
         hide_for_fullscreen: core.fullscreen && !core.settings.show_over_fullscreen,
+        storage_problem: core.storage_problem,
     }
 }
 
@@ -487,6 +498,69 @@ fn clear_history(state: TauriState<AppState>) {
     core.dirty = false;
 }
 
+/// The data folder in use, and whether it is the default one.
+#[tauri::command]
+fn get_data_folder(state: TauriState<AppState>) -> (String, bool) {
+    let root = state.store.root();
+    (root.to_string_lossy().into_owned(), root == state.default_dir)
+}
+
+/// Use another data folder: move everything there, or start fresh there
+/// (history empty, settings kept). None goes back to the default folder.
+#[tauri::command]
+fn set_data_folder(path: Option<String>, move_data: bool, state: TauriState<AppState>) -> Result<String, String> {
+    let target = path.map(PathBuf::from).unwrap_or_else(|| state.default_dir.clone());
+    if !target.is_absolute() {
+        return Err("Pick a full folder path.".into());
+    }
+    let mut core = state.lock();
+    state.save_today(&mut core);
+    state.store.move_to(&target, &state.default_dir, move_data, &core.settings)?;
+    if !move_data {
+        core.tracker = Tracker::default();
+        core.limit_alerted = false;
+    }
+    state.save_today(&mut core);
+    Ok(target.to_string_lossy().into_owned())
+}
+
+/// Write everything (history and settings) to one sealed export file.
+/// Returns how many days it holds.
+#[tauri::command]
+fn export_data(path: String, state: TauriState<AppState>) -> Result<usize, String> {
+    let core = state.lock();
+    let (bytes, days) = state.store.export(&core.settings, &today_record(&core));
+    std::fs::write(&path, bytes).map_err(|e| format!("Could not write the export: {e}"))?;
+    Ok(days)
+}
+
+#[derive(Serialize)]
+struct ImportReport {
+    written: usize,
+    /// Older than the history limit, so left out.
+    skipped: usize,
+}
+
+/// Bring in an export file. Refused if it is not a Serion export, was
+/// changed, or holds impossible values. Replace also takes its settings.
+#[tauri::command]
+fn import_data(path: String, mode: ImportMode, state: TauriState<AppState>) -> Result<ImportReport, String> {
+    let bytes = std::fs::read(&path).map_err(|e| format!("Could not read that file: {e}"))?;
+    let mut core = state.lock();
+    let bundle = history::open_bundle(&bytes, &core.day)?;
+    state.save_today(&mut core);
+    if mode == ImportMode::Replace {
+        core.settings = bundle.settings.clone();
+        state.store.save_settings(&core.settings);
+    }
+    let (written, skipped) = state.store.import(&bundle, mode, &core.day, core.settings.retention_days);
+    // Today may have changed: carry on from the merged numbers.
+    let merged = state.store.load_day(&core.day);
+    core.tracker = Tracker::new(merged.total_ms, merged.apps);
+    core.limit_alerted = core.settings.limit_ms.is_some_and(|l| core.tracker.committed_ms >= l);
+    Ok(ImportReport { written, skipped })
+}
+
 /// Show the dashboard, creating it the first time. Async: building a window
 /// inside a synchronous command can deadlock on Windows.
 #[tauri::command]
@@ -513,6 +587,8 @@ async fn open_dashboard(app: AppHandle) -> Result<(), String> {
 pub fn run() {
     tauri::Builder::default()
         // Start at login; the UI turns it on for installed builds (Settings.tsx).
+        // File pickers for the data folder, export and import.
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             None,
@@ -535,7 +611,11 @@ pub fn run() {
             open_dashboard,
             set_reading,
             set_display,
-            monitor_count
+            monitor_count,
+            get_data_folder,
+            set_data_folder,
+            export_data,
+            import_data
         ])
         .setup(|app| {
             let window = app
@@ -552,13 +632,15 @@ pub fn run() {
             }
             window.show()?;
 
-            let store = Store::new(app.path().app_data_dir()?);
+            let default_dir = app.path().app_data_dir()?;
+            let store = Store::new(Store::locate(&default_dir));
             let settings = store.load_settings();
             // Hidden from recordings and screenshots, if you asked for it.
             window.set_content_protected(settings.hide_from_capture)?;
             let day = today();
             store.prune(&day, settings.retention_days);
             store.migrate_today_json(&day);
+            store.seal_legacy();
             let saved = store.load_day(&day);
             let tracker = Tracker::new(saved.total_ms, saved.apps);
             let limit_alerted = settings.limit_ms.is_some_and(|l| tracker.committed_ms >= l);
@@ -575,8 +657,10 @@ pub fn run() {
                     last_app: None,
                     reading: None,
                     fullscreen: false,
+                    storage_problem: false,
                 }),
                 store,
+                default_dir,
             });
 
             let handle = app.handle().clone();

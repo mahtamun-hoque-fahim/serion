@@ -2,7 +2,8 @@ import { useEffect, useLayoutEffect, useMemo, useState, type CSSProperties } fro
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { Minus, Monitor, Moon, Power, Sun, Trash2, X } from "lucide-react";
+import { Download, FolderOpen, Minus, Monitor, Moon, Power, ShieldCheck, Sun, Trash2, Upload, X } from "lucide-react";
+import { open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialog";
 import { useAppearance, type Appearance } from "./appearance";
 import "@fontsource/google-sans/latin-700.css";
 import { BarChart, type Bar } from "./BarChart";
@@ -270,6 +271,7 @@ export default function Dashboard() {
               <Timers tick={tick} settings={settings} onSettings={setSettings} />
               <BreaksBlock settings={settings} onSettings={setSettings} />
               <DataBlock
+                tick={tick}
                 settings={settings}
                 onSettings={setSettings}
                 onCleared={() => setVersion((v) => v + 1)}
@@ -772,15 +774,29 @@ function DurationInput({ label, seconds, onCommit }: { label: string; seconds: n
 }
 
 function DataBlock({
+  tick,
   settings,
   onSettings,
   onCleared,
 }: {
+  tick: Tick;
   settings: Settings | null;
   onSettings: (s: Settings) => void;
+  /** History changed (cleared, imported, new folder): reload what is shown. */
   onCleared: () => void;
 }) {
   const [confirming, setConfirming] = useState(false);
+  const [folder, setFolder] = useState<{ path: string; isDefault: boolean } | null>(null);
+  // A choice waiting to be made: where to move, or which file to import.
+  const [pendingFolder, setPendingFolder] = useState<string | null>(null);
+  const [pendingImport, setPendingImport] = useState<string | null>(null);
+  const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null);
+
+  const loadFolder = () =>
+    invoke<[string, boolean]>("get_data_folder").then(([path, isDefault]) => setFolder({ path, isDefault }));
+  useEffect(() => {
+    loadFolder();
+  }, []);
 
   // The confirm state expires, so a stray second click later does nothing.
   useEffect(() => {
@@ -789,9 +805,78 @@ function DataBlock({
     return () => clearTimeout(timer);
   }, [confirming]);
 
+  /** Run a data action and show how it went. */
+  const run = async (action: () => Promise<string>) => {
+    try {
+      setStatus({ ok: true, text: await action() });
+    } catch (error) {
+      setStatus({ ok: false, text: String(error) });
+    }
+  };
+
+  const chooseFolder = async () => {
+    const picked = await openDialog({ directory: true, title: "Choose where Serion keeps its data" });
+    if (typeof picked === "string") setPendingFolder(picked);
+  };
+  const useFolder = (path: string | null, moveData: boolean) =>
+    run(async () => {
+      setPendingFolder(null);
+      const now = await invoke<string>("set_data_folder", { path, moveData });
+      await loadFolder();
+      onCleared();
+      return moveData ? `Your data now lives in ${now}` : `Started fresh in ${now}`;
+    });
+
+  const exportData = () =>
+    run(async () => {
+      const target = await saveDialog({
+        title: "Export Serion data",
+        defaultPath: `serion-export-${tick.day || "data"}.serion`,
+        filters: [{ name: "Serion export", extensions: ["serion"] }],
+      });
+      if (!target) return "Export cancelled.";
+      const days = await invoke<number>("export_data", { path: target });
+      return `Exported ${days} ${days === 1 ? "day" : "days"}.`;
+    });
+
+  const chooseImport = async () => {
+    const picked = await openDialog({
+      title: "Import Serion data",
+      filters: [{ name: "Serion export", extensions: ["serion"] }],
+    });
+    if (typeof picked === "string") setPendingImport(picked);
+  };
+  const importData = (mode: "keep_higher" | "prefer_file" | "replace") =>
+    run(async () => {
+      const path = pendingImport;
+      setPendingImport(null);
+      const report = await invoke<{ written: number; skipped: number }>("import_data", { path, mode });
+      if (mode === "replace") onSettings(await invoke<Settings>("get_settings"));
+      onCleared();
+      return `Imported ${report.written} ${report.written === 1 ? "day" : "days"}${
+        report.skipped ? `; ${report.skipped} older than your history limit left out` : ""
+      }.`;
+    });
+
   return (
     <section className="block">
       <h2>Data</h2>
+
+      <p className="privacy-note">
+        <ShieldCheck size={15} aria-hidden />
+        <span>
+          Your screen time is private. Serion stores it encrypted, so opening its files shows nothing readable. It never
+          leaves your computer unless you export it.
+        </span>
+      </p>
+
+      {tick.storage_problem && (
+        <p className="clash" role="alert">
+          Serion cannot write to its data folder right now. Counting continues and is saved as soon as the folder is
+          back, or choose another folder.
+        </p>
+      )}
+
       <label className="select-row">
         Keep history for
         <select
@@ -805,7 +890,81 @@ function DataBlock({
           ))}
         </select>
       </label>
-      <p className="muted">Older days are deleted. Saved as JSON files in Serion's app data folder.</p>
+      <p className="muted">Older days are deleted.</p>
+
+      <div className="data-folder">
+        <span className="data-folder-label">Data folder</span>
+        <span className="data-folder-path" title={folder?.path}>
+          {folder ? (folder.isDefault ? "Default (app data)" : folder.path) : "..."}
+        </span>
+        <span className="data-folder-actions">
+          <button type="button" className="chip" onClick={chooseFolder}>
+            <FolderOpen size={13} aria-hidden />
+            Change
+          </button>
+          {folder && !folder.isDefault && (
+            <button type="button" className="text-btn" onClick={() => setPendingFolder("")}>
+              Use default
+            </button>
+          )}
+        </span>
+      </div>
+      {pendingFolder !== null && (
+        <div className="data-choice" role="group" aria-label="What to do with your data">
+          <p>
+            {pendingFolder ? (
+              <>
+                Use <strong title={pendingFolder}>{pendingFolder}</strong>:
+              </>
+            ) : (
+              "Go back to the default folder:"
+            )}
+          </p>
+          <button type="button" className="btn" onClick={() => useFolder(pendingFolder || null, true)}>
+            Move my data there
+          </button>
+          <button type="button" className="chip" onClick={() => useFolder(pendingFolder || null, false)}>
+            Start fresh there
+          </button>
+          <button type="button" className="text-btn" onClick={() => setPendingFolder(null)}>
+            Cancel
+          </button>
+        </div>
+      )}
+
+      <div className="data-actions">
+        <button type="button" className="chip" onClick={exportData}>
+          <Upload size={13} aria-hidden />
+          Export
+        </button>
+        <button type="button" className="chip" onClick={chooseImport}>
+          <Download size={13} aria-hidden />
+          Import
+        </button>
+      </div>
+      {pendingImport && (
+        <div className="data-choice" role="group" aria-label="How to import">
+          <p>For days you already have:</p>
+          <button type="button" className="btn" onClick={() => importData("keep_higher")}>
+            Keep the higher numbers
+          </button>
+          <button type="button" className="chip" onClick={() => importData("prefer_file")}>
+            Use the file's numbers
+          </button>
+          <button type="button" className="chip danger-chip" onClick={() => importData("replace")}>
+            Replace everything
+          </button>
+          <button type="button" className="text-btn" onClick={() => setPendingImport(null)}>
+            Cancel
+          </button>
+        </div>
+      )}
+      {status && (
+        <p className={status.ok ? "data-status" : "data-status error"} role="status">
+          {status.text}
+        </p>
+      )}
+
       <button
         type="button"
         className={confirming ? "danger-btn confirming" : "danger-btn"}

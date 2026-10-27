@@ -18,6 +18,8 @@ export type Tick = {
   reading: boolean;
   /** A fullscreen app is in front and the pill should stay out of its way. */
   hide_for_fullscreen: boolean;
+  /** The data folder could not be written last time. */
+  storage_problem: boolean;
 };
 
 export type BreakKind = "water" | "stretch" | "eyes";
@@ -78,6 +80,7 @@ export const EMPTY_TICK: Tick = {
   day: "",
   reading: false,
   hide_for_fullscreen: false,
+  storage_problem: false,
 };
 
 /** Precise duration for the dashboard: "3h 12m", "42m", "0m". */
