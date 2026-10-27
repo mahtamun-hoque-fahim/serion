@@ -1,5 +1,6 @@
 /* Break card: shares the panel look (App.css .panel); this is its layout and motion. */
 .break-card {
+  width: 260px; /* BREAK_CARD_W in BreakCard.tsx */
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -31,7 +32,7 @@
 }
 
 .ring-track,
-.ring-left {
+.ring-fill {
   fill: none;
   stroke-width: 3;
 }
@@ -40,7 +41,7 @@
   stroke: var(--panel-hover);
 }
 
-.ring-left {
+.ring-fill {
   stroke: currentColor;
   stroke-linecap: round;
   stroke-dasharray: 1;
@@ -130,16 +131,6 @@
   }
 }
 
-/* Done: the full glass gives a small "cheers" tilt. */
-.art-water .glass {
-  transform-box: view-box;
-  transform-origin: 32px 55px;
-  transition: transform 500ms var(--spring);
-}
-
-.break-card.done .art-water .glass {
-  transform: rotate(-12deg);
-}
 
 /* --- Stretch: jumping jacks, about one per second ------------------------- */
 .art-stretch .arm,
@@ -317,35 +308,160 @@
   }
 }
 
-/* --- Done: the art fades, a check draws in the ring ------------------------ */
+/* --- Tick: draws in on Start (then the break's art takes over) and on finish */
 .break-check {
   position: absolute;
-  opacity: 0;
   color: var(--panel-accent);
+  animation: check-pop 420ms var(--spring) backwards;
 }
 
 .break-check path {
   stroke-dasharray: 24;
   stroke-dashoffset: 24;
+  animation: check-draw 420ms cubic-bezier(0.22, 1, 0.36, 1) 100ms forwards;
 }
 
-.break-card.done .art {
-  opacity: 0;
-  transform: scale(0.6);
-}
-
-.break-card.done .break-check {
-  opacity: 1;
-}
-
-.break-card.done .break-check path {
-  animation: check-draw 420ms cubic-bezier(0.22, 1, 0.36, 1) 120ms forwards;
+@keyframes check-pop {
+  from {
+    transform: scale(0.6);
+  }
 }
 
 @keyframes check-draw {
   to {
     stroke-dashoffset: 0;
   }
+}
+
+/* --- Offers: one row per due break, Start or Skip ------------------------ */
+.offer-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.offer-row {
+  height: 46px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: offer-in 380ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  animation-delay: calc(80ms + var(--i) * 60ms);
+}
+
+@keyframes offer-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+.offer-icon {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--panel-accent) 14%, transparent);
+  color: var(--panel-accent);
+}
+
+/* The offered icon nudges, so the row reads as "waiting for you". */
+.offer-icon svg {
+  animation: nudge-icon 2.4s ease-in-out infinite;
+}
+
+@keyframes nudge-icon {
+  0%,
+  70%,
+  100% {
+    transform: rotate(0);
+  }
+  78% {
+    transform: rotate(-12deg);
+  }
+  86% {
+    transform: rotate(10deg);
+  }
+  94% {
+    transform: rotate(-4deg);
+  }
+}
+
+.offer-text {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--panel-ink);
+}
+
+.offer-text,
+.offer-text small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.offer-text small {
+  font-size: 11px;
+  color: var(--panel-ink-3);
+}
+
+.offer-skip,
+.offer-start {
+  height: 28px;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    filter 150ms ease-out,
+    transform 120ms ease-out,
+    background-color 150ms ease-out;
+}
+
+.offer-skip {
+  width: 28px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  color: var(--panel-ink-2);
+}
+
+.offer-skip:hover {
+  background: var(--panel-hover);
+}
+
+.offer-start {
+  padding: 0 12px;
+  background: var(--panel-accent);
+  color: #ffffff;
+}
+
+:root[data-mode="dark"][data-graphite="true"] .offer-start {
+  color: #111111;
+}
+
+.offer-start:hover {
+  filter: brightness(1.08);
+}
+
+.offer-skip:active,
+.offer-start:active {
+  transform: scale(0.94);
+}
+
+.offer-skip:focus-visible,
+.offer-start:focus-visible {
+  outline: 2px solid var(--panel-ink);
+  outline-offset: 2px;
 }
 
 /* Text */
@@ -437,7 +553,7 @@
     transition: none !important;
   }
 
-  .break-card.done .break-check path {
+  .break-check path {
     stroke-dashoffset: 0;
   }
 

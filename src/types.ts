@@ -7,25 +7,40 @@ export type Tick = {
   /** Time left on the countdown, when one runs. */
   countdown_ms: number | null;
   limit_ms: number | null;
-  /** The running break: its kind, time left, full length, and whether it pauses counting. */
+  /** The running break: its kind, time left and full length. */
   break_kind: BreakKind | null;
   break_ms: number | null;
   break_total_ms: number | null;
-  break_pauses: boolean | null;
+  /** Due breaks waiting on the pill for Start or Skip, with their lengths. */
+  break_offers: { kind: BreakKind; seconds: number }[];
+  /** Today's date (YYYY-MM-DD); it changing means midnight passed. */
+  day: string;
+  reading: boolean;
+  /** A fullscreen app is in front and the pill should stay out of its way. */
+  hide_for_fullscreen: boolean;
 };
 
 export type BreakKind = "water" | "stretch" | "eyes";
 
 /** Matches breaks::Config in src-tauri/src/breaks.rs. */
 export type BreakConfig = {
+  /** Minutes of screen time between breaks; null when off. */
   water_every: number | null;
   stretch_every: number | null;
   eye_every: number | null;
-  water_minutes: number;
-  stretch_minutes: number;
-  eye_pause: boolean;
+  /** How long each break lasts, in seconds. */
+  water_seconds: number;
+  stretch_seconds: number;
   eye_seconds: number;
 };
+
+/** "20 s", "1 min", "2 min 30 s". */
+export function formatSeconds(seconds: number): string {
+  if (seconds < 60) return `${seconds} s`;
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return s ? `${m} min ${s} s` : `${m} min`;
+}
 
 /** One day from the history files (src-tauri/src/history.rs). */
 export type Day = {
@@ -40,6 +55,10 @@ export type Settings = {
   battery_quit: boolean;
   battery_threshold: number;
   breaks: BreakConfig;
+  show_over_fullscreen: boolean;
+  /** null: automatic, on while more than one screen is connected. */
+  other_screens: boolean | null;
+  hide_from_capture: boolean;
 };
 
 /** Current battery; null on machines without one. */
@@ -55,7 +74,10 @@ export const EMPTY_TICK: Tick = {
   break_kind: null,
   break_ms: null,
   break_total_ms: null,
-  break_pauses: null,
+  break_offers: [],
+  day: "",
+  reading: false,
+  hide_for_fullscreen: false,
 };
 
 /** Precise duration for the dashboard: "3h 12m", "42m", "0m". */

@@ -1,33 +1,26 @@
 //! Water, stretch and eye breaks. Pure logic, unit tested; the loop in
 //! lib.rs feeds it once a second.
 //!
-//! A break comes due after a set amount of *counted screen time* (not clock
-//! time), so idle or desktop-only time never brings one sooner. While a
-//! pausing break runs, nothing is counted as screen time. The eye break can
-//! also be a reminder only, which shows but does not pause counting.
+//! Each break you switch on comes due after its own amount of *counted
+//! screen time*. Due breaks are offered, not forced: they wait on the pill
+//! until you start one (or skip it). Only a started break pauses screen time.
 
 use serde::{Deserialize, Serialize};
 
-/// Minutes of screen time between water or stretch breaks.
-pub const INTERVAL_CHOICES: [u32; 6] = [20, 30, 45, 60, 90, 120];
-/// Minutes of screen time between eye breaks.
-pub const EYE_INTERVAL_CHOICES: [u32; 4] = [20, 25, 30, 45];
-/// Seconds an eye break lasts (20 s is the 20-20-20 rule).
-pub const EYE_SECONDS_CHOICES: [u32; 3] = [20, 60, 120];
-/// Water and stretch breaks last 1 to 30 minutes, as you set them.
-pub const MAX_LENGTH_MINUTES: u32 = 30;
-/// "Snooze" brings the same break back after this much more screen time.
-pub const SNOOZE_MS: u64 = 5 * 60_000;
-/// A reminder-only eye break shows this long.
-const EYE_REMINDER_MS: u64 = 20_000;
+/// How often a break can come: every 5 to 240 minutes of screen time.
+pub const EVERY_RANGE: std::ops::RangeInclusive<u32> = 5..=240;
+/// How long a break can last: 10 seconds to 30 minutes.
+pub const SECONDS_RANGE: std::ops::RangeInclusive<u32> = 10..=1800;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Kind {
     Water,
     Stretch,
     Eyes,
 }
+
+const KINDS: [Kind; 3] = [Kind::Water, Kind::Stretch, Kind::Eyes];
 
 /// Every break setting, as saved and as sent from the dashboard.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -37,11 +30,9 @@ pub struct Config {
     pub water_every: Option<u32>,
     pub stretch_every: Option<u32>,
     pub eye_every: Option<u32>,
-    /// How long water and stretch breaks last, in minutes.
-    pub water_minutes: u32,
-    pub stretch_minutes: u32,
-    /// Eye break: pause screen time for eye_seconds, or only remind.
-    pub eye_pause: bool,
+    /// How long each break lasts, in seconds.
+    pub water_seconds: u32,
+    pub stretch_seconds: u32,
     pub eye_seconds: u32,
 }
 
@@ -51,125 +42,147 @@ impl Default for Config {
             water_every: None,
             stretch_every: None,
             eye_every: None,
-            water_minutes: 1,
-            stretch_minutes: 3,
-            eye_pause: false,
+            water_seconds: 60,
+            stretch_seconds: 180,
             eye_seconds: 20,
         }
     }
 }
 
 impl Config {
-    /// Reject anything outside the offered choices (input from the UI).
+    fn every(&self, kind: Kind) -> Option<u32> {
+        match kind {
+            Kind::Water => self.water_every,
+            Kind::Stretch => self.stretch_every,
+            Kind::Eyes => self.eye_every,
+        }
+    }
+
+    fn seconds(&self, kind: Kind) -> u32 {
+        match kind {
+            Kind::Water => self.water_seconds,
+            Kind::Stretch => self.stretch_seconds,
+            Kind::Eyes => self.eye_seconds,
+        }
+    }
+
+    pub fn every_ms(&self, kind: Kind) -> Option<u64> {
+        self.every(kind).map(|m| u64::from(m) * 60_000)
+    }
+
+    pub fn length_ms(&self, kind: Kind) -> u64 {
+        u64::from(self.seconds(kind)) * 1000
+    }
+
+    /// Reject values out of range, and two switched-on breaks sharing an interval.
     pub fn validate(&self) -> Result<(), String> {
-        let in_list = |m: Option<u32>, list: &[u32]| m.is_none_or(|m| list.contains(&m));
-        let length_ok = |m: u32| (1..=MAX_LENGTH_MINUTES).contains(&m);
-        if !in_list(self.water_every, &INTERVAL_CHOICES) || !in_list(self.stretch_every, &INTERVAL_CHOICES) {
-            return Err(format!("break intervals must be one of {INTERVAL_CHOICES:?} minutes"));
+        for kind in KINDS {
+            if self.every(kind).is_some_and(|m| !EVERY_RANGE.contains(&m)) {
+                return Err(format!("a break comes every {} to {} minutes", EVERY_RANGE.start(), EVERY_RANGE.end()));
+            }
+            if !SECONDS_RANGE.contains(&self.seconds(kind)) {
+                return Err(format!("a break lasts {} to {} seconds", SECONDS_RANGE.start(), SECONDS_RANGE.end()));
+            }
         }
-        if !in_list(self.eye_every, &EYE_INTERVAL_CHOICES) {
-            return Err(format!("eye break interval must be one of {EYE_INTERVAL_CHOICES:?} minutes"));
-        }
-        if !length_ok(self.water_minutes) || !length_ok(self.stretch_minutes) {
-            return Err(format!("a break lasts 1 to {MAX_LENGTH_MINUTES} minutes"));
-        }
-        if !EYE_SECONDS_CHOICES.contains(&self.eye_seconds) {
-            return Err(format!("an eye break lasts one of {EYE_SECONDS_CHOICES:?} seconds"));
+        let on: Vec<u32> = KINDS.iter().filter_map(|&k| self.every(k)).collect();
+        if (1..on.len()).any(|i| on[..i].contains(&on[i])) {
+            return Err("two breaks cannot use the same interval".into());
         }
         Ok(())
     }
 
-    /// Bring a saved config back within the choices, field by field.
-    pub fn sanitized(mut self) -> Self {
+    /// A saved config that no longer validates falls back to all breaks off,
+    /// keeping lengths that are still in range.
+    pub fn sanitized(self) -> Self {
+        if self.validate().is_ok() {
+            return self;
+        }
         let d = Config::default();
-        let keep = |m: Option<u32>, list: &[u32]| m.filter(|m| list.contains(m));
-        self.water_every = keep(self.water_every, &INTERVAL_CHOICES);
-        self.stretch_every = keep(self.stretch_every, &INTERVAL_CHOICES);
-        self.eye_every = keep(self.eye_every, &EYE_INTERVAL_CHOICES);
-        if !(1..=MAX_LENGTH_MINUTES).contains(&self.water_minutes) {
-            self.water_minutes = d.water_minutes;
-        }
-        if !(1..=MAX_LENGTH_MINUTES).contains(&self.stretch_minutes) {
-            self.stretch_minutes = d.stretch_minutes;
-        }
-        if !EYE_SECONDS_CHOICES.contains(&self.eye_seconds) {
-            self.eye_seconds = d.eye_seconds;
-        }
-        self
-    }
-
-    fn every_ms(&self, kind: Kind) -> Option<u64> {
-        let minutes = match kind {
-            Kind::Water => self.water_every,
-            Kind::Stretch => self.stretch_every,
-            Kind::Eyes => self.eye_every,
-        };
-        minutes.map(|m| u64::from(m) * 60_000)
-    }
-
-    fn length_ms(&self, kind: Kind) -> u64 {
-        match kind {
-            Kind::Water => u64::from(self.water_minutes) * 60_000,
-            Kind::Stretch => u64::from(self.stretch_minutes) * 60_000,
-            Kind::Eyes if self.eye_pause => u64::from(self.eye_seconds) * 1000,
-            Kind::Eyes => EYE_REMINDER_MS,
+        let keep = |s: u32, default: u32| if SECONDS_RANGE.contains(&s) { s } else { default };
+        Config {
+            water_seconds: keep(self.water_seconds, d.water_seconds),
+            stretch_seconds: keep(self.stretch_seconds, d.stretch_seconds),
+            eye_seconds: keep(self.eye_seconds, d.eye_seconds),
+            ..d
         }
     }
 }
 
-/// The running break.
+/// The break that is running.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Active {
     pub kind: Kind,
     pub left_ms: u64,
     pub length_ms: u64,
-    /// Screen time is not counted while it runs.
-    pub pauses: bool,
 }
 
 #[derive(Default)]
 pub struct Breaks {
-    since_water_ms: u64,
-    since_stretch_ms: u64,
-    since_eyes_ms: u64,
+    since_ms: [u64; 3],
+    /// Due breaks waiting for you to start or skip them, in the order they came.
+    pub offered: Vec<Kind>,
     pub active: Option<Active>,
+}
+
+fn slot(kind: Kind) -> usize {
+    kind as usize
 }
 
 impl Breaks {
     /// `counted_ms`: screen time counted this tick. `elapsed_ms`: wall time.
-    /// Returns the break that started on this tick, if one did.
-    pub fn tick(&mut self, counted_ms: u64, elapsed_ms: u64, config: &Config) -> Option<Kind> {
+    pub fn tick(&mut self, counted_ms: u64, elapsed_ms: u64, config: &Config) {
         if let Some(mut active) = self.active {
             active.left_ms = active.left_ms.saturating_sub(elapsed_ms);
             self.active = (active.left_ms > 0).then_some(active);
-            return None;
+            return;
         }
-        self.since_water_ms += counted_ms;
-        self.since_stretch_ms += counted_ms;
-        self.since_eyes_ms += counted_ms;
-        // The longer break wins a tie: you can drink or rest your eyes during
-        // a stretch, so it resets the shorter ones too.
-        let due = |since: u64, kind: Kind| config.every_ms(kind).is_some_and(|every| since >= every);
-        let kind = if due(self.since_stretch_ms, Kind::Stretch) {
-            Kind::Stretch
-        } else if due(self.since_water_ms, Kind::Water) {
-            Kind::Water
-        } else if due(self.since_eyes_ms, Kind::Eyes) {
-            Kind::Eyes
-        } else {
-            return None;
-        };
-        self.since_eyes_ms = 0;
-        if kind != Kind::Eyes {
-            self.since_water_ms = 0;
+        for kind in KINDS {
+            let Some(every) = config.every_ms(kind) else {
+                self.since_ms[slot(kind)] = 0;
+                continue;
+            };
+            if self.offered.contains(&kind) {
+                continue; // already waiting on the pill
+            }
+            self.since_ms[slot(kind)] += counted_ms;
+            if self.since_ms[slot(kind)] >= every {
+                self.offered.push(kind);
+            }
         }
-        if kind == Kind::Stretch {
-            self.since_stretch_ms = 0;
+        // A break switched off while offered is withdrawn.
+        self.offered.retain(|&k| config.every(k).is_some());
+    }
+
+    /// Start an offered break. Any other offer is skipped: you chose this one.
+    pub fn start(&mut self, kind: Kind, config: &Config) -> bool {
+        if self.active.is_some() || !self.offered.contains(&kind) {
+            return false;
+        }
+        for other in std::mem::take(&mut self.offered) {
+            self.since_ms[slot(other)] = 0;
         }
         let length_ms = config.length_ms(kind);
-        let pauses = kind != Kind::Eyes || config.eye_pause;
-        self.active = Some(Active { kind, left_ms: length_ms, length_ms, pauses });
-        Some(kind)
+        self.active = Some(Active { kind, left_ms: length_ms, length_ms });
+        true
+    }
+
+    /// Not now: drop the offer; it comes back after its full interval.
+    pub fn skip(&mut self, kind: Kind) {
+        if let Some(i) = self.offered.iter().position(|&k| k == kind) {
+            self.offered.remove(i);
+            self.since_ms[slot(kind)] = 0;
+        }
+    }
+
+    /// You were away (idle, locked or asleep) for `away_ms`: every break that
+    /// short or shorter counts as taken. Its timer restarts and its offer goes.
+    pub fn away(&mut self, away_ms: u64, config: &Config) {
+        for kind in KINDS {
+            if config.every(kind).is_some() && config.length_ms(kind) <= away_ms {
+                self.since_ms[slot(kind)] = 0;
+                self.offered.retain(|&k| k != kind);
+            }
+        }
     }
 
     /// End the running break early: Done.
@@ -177,20 +190,9 @@ impl Breaks {
         self.active = None;
     }
 
-    /// End the running break and bring it back after SNOOZE_MS more screen time.
-    pub fn snooze(&mut self, config: &Config) {
-        let Some(active) = self.active.take() else { return };
-        let since = config.every_ms(active.kind).unwrap_or(0).saturating_sub(SNOOZE_MS);
-        match active.kind {
-            Kind::Water => self.since_water_ms = since,
-            Kind::Stretch => self.since_stretch_ms = since,
-            Kind::Eyes => self.since_eyes_ms = since,
-        }
-    }
-
-    /// Is screen time paused right now?
+    /// Screen time is paused only while a started break runs.
     pub fn pausing(&self) -> bool {
-        self.active.is_some_and(|a| a.pauses)
+        self.active.is_some()
     }
 }
 
@@ -202,85 +204,107 @@ mod tests {
     const MIN: u64 = 60 * SEC;
 
     fn config() -> Config {
-        Config { water_every: Some(30), water_minutes: 2, ..Config::default() }
+        Config { eye_every: Some(25), water_every: Some(60), ..Config::default() }
     }
 
     #[test]
-    fn water_break_after_its_screen_time_lasts_its_length() {
+    fn a_due_break_is_offered_and_waits_without_pausing() {
         let mut b = Breaks::default();
         let c = config();
-        for _ in 0..(30 * 60 - 1) {
-            assert_eq!(b.tick(SEC, SEC, &c), None);
-        }
-        assert_eq!(b.tick(SEC, SEC, &c), Some(Kind::Water));
-        assert!(b.pausing());
-        for _ in 0..119 {
-            b.tick(SEC, SEC, &c);
-        }
-        assert!(b.active.is_some());
-        b.tick(0, SEC, &c);
-        assert_eq!(b.active, None);
-    }
-
-    #[test]
-    fn uncounted_time_does_not_bring_a_break_sooner() {
-        let mut b = Breaks::default();
-        let c = Config { stretch_every: Some(30), eye_every: Some(20), ..config() };
-        for _ in 0..(60 * 60) {
-            b.tick(0, SEC, &c); // idle or desktop
-        }
-        assert_eq!(b.active, None);
-    }
-
-    #[test]
-    fn stretch_wins_a_tie_and_resets_the_shorter_breaks() {
-        let mut b = Breaks::default();
-        let c = Config { stretch_every: Some(30), eye_every: Some(30), ..config() };
-        assert_eq!(b.tick(30 * MIN, SEC, &c), Some(Kind::Stretch));
-        assert_eq!(b.active.map(|a| a.length_ms), Some(3 * MIN));
-        b.finish();
-        assert_eq!(b.tick(SEC, SEC, &c), None);
-    }
-
-    #[test]
-    fn eye_reminder_shows_without_pausing_unless_asked() {
-        let mut b = Breaks::default();
-        let reminder = Config { eye_every: Some(25), ..Config::default() };
-        assert_eq!(b.tick(25 * MIN, SEC, &reminder), Some(Kind::Eyes));
+        b.tick(25 * MIN - SEC, SEC, &c);
+        assert!(b.offered.is_empty());
+        b.tick(SEC, SEC, &c);
+        assert_eq!(b.offered, vec![Kind::Eyes]);
         assert!(!b.pausing());
-        assert_eq!(b.active.map(|a| a.length_ms), Some(20 * SEC));
+        // Ignored: it stays offered, not offered twice.
+        b.tick(10 * MIN, SEC, &c);
+        assert_eq!(b.offered, vec![Kind::Eyes]);
+    }
 
+    #[test]
+    fn starting_pauses_for_its_length_then_ends() {
         let mut b = Breaks::default();
-        let pause = Config { eye_every: Some(25), eye_pause: true, eye_seconds: 60, ..Config::default() };
-        b.tick(25 * MIN, SEC, &pause);
+        let c = Config { eye_seconds: 30, ..config() };
+        b.tick(25 * MIN, SEC, &c);
+        assert!(b.start(Kind::Eyes, &c));
         assert!(b.pausing());
-        assert_eq!(b.active.map(|a| a.length_ms), Some(MIN));
+        assert!(b.offered.is_empty());
+        for _ in 0..29 {
+            b.tick(0, SEC, &c);
+        }
+        assert!(b.pausing());
+        b.tick(0, SEC, &c);
+        assert!(!b.pausing());
     }
 
     #[test]
-    fn breaks_that_are_off_never_start() {
+    fn two_due_at_once_are_both_offered_and_you_pick_one() {
         let mut b = Breaks::default();
-        assert_eq!(b.tick(10 * 60 * MIN, SEC, &Config::default()), None);
+        let c = Config { eye_every: Some(20), water_every: Some(60), ..Config::default() };
+        b.tick(20 * MIN, SEC, &c); // eyes due alone
+        b.skip(Kind::Eyes);
+        b.tick(40 * MIN, SEC, &c); // minute 60: eyes and water both come due
+        assert_eq!(b.offered.len(), 2);
+        assert!(b.start(Kind::Water, &c));
+        assert!(b.offered.is_empty());
+        assert_eq!(b.active.map(|a| a.kind), Some(Kind::Water));
     }
 
     #[test]
-    fn snooze_brings_the_break_back_after_five_minutes() {
+    fn skip_restarts_that_break_and_cannot_start_what_is_not_offered() {
         let mut b = Breaks::default();
         let c = config();
-        b.tick(30 * MIN, SEC, &c);
-        b.snooze(&c);
-        assert_eq!(b.active, None);
-        assert_eq!(b.tick(5 * MIN - SEC, SEC, &c), None);
-        assert_eq!(b.tick(SEC, SEC, &c), Some(Kind::Water));
+        assert!(!b.start(Kind::Eyes, &c));
+        b.tick(25 * MIN, SEC, &c);
+        b.skip(Kind::Eyes);
+        assert!(b.offered.is_empty());
+        b.tick(24 * MIN, SEC, &c);
+        assert!(b.offered.is_empty());
+        b.tick(MIN, SEC, &c);
+        assert_eq!(b.offered, vec![Kind::Eyes]);
     }
 
     #[test]
-    fn validation_and_sanitizing_hold_to_the_choices() {
-        assert!(Config { water_every: Some(7), ..Config::default() }.validate().is_err());
-        assert!(Config { water_minutes: 0, ..Config::default() }.validate().is_err());
-        assert!(Config { eye_seconds: 5, ..Config::default() }.validate().is_err());
+    fn uncounted_time_brings_nothing_and_off_breaks_never_come() {
+        let mut b = Breaks::default();
+        for _ in 0..3600 {
+            b.tick(0, SEC, &config());
+        }
+        assert!(b.offered.is_empty());
+        b.tick(10 * 60 * MIN, SEC, &Config::default());
+        assert!(b.offered.is_empty());
+    }
+
+    #[test]
+    fn switching_a_break_off_withdraws_its_offer() {
+        let mut b = Breaks::default();
+        b.tick(25 * MIN, SEC, &config());
+        b.tick(0, SEC, &Config { eye_every: None, ..config() });
+        assert!(b.offered.is_empty());
+    }
+
+    #[test]
+    fn being_away_long_enough_counts_as_the_break() {
+        let mut b = Breaks::default();
+        let c = Config { stretch_every: Some(90), stretch_seconds: 600, ..config() }; // eyes 20 s, stretch 10 min
+        b.tick(25 * MIN, SEC, &c);
+        assert_eq!(b.offered, vec![Kind::Eyes]);
+        b.away(6 * MIN, &c); // a 6-minute absence covers the eye break, not the stretch
+        assert!(b.offered.is_empty());
+        b.tick(24 * MIN, SEC, &c);
+        assert!(b.offered.is_empty(), "eye timer restarted after the absence");
+        b.tick(41 * MIN, SEC, &c); // stretch reaches its 90 minutes
+        assert!(b.offered.contains(&Kind::Stretch));
+    }
+
+    #[test]
+    fn validation_rejects_shared_intervals_and_out_of_range_values() {
         assert!(config().validate().is_ok());
-        let fixed = Config { eye_every: Some(7), stretch_minutes: 99, ..Config::default() }.sanitized();
-        assert_eq!((fixed.eye_every, fixed.stretch_minutes), (None, 3));
+        assert!(Config { water_every: Some(25), ..config() }.validate().is_err());
+        assert!(Config { eye_every: Some(4), ..Config::default() }.validate().is_err());
+        assert!(Config { stretch_seconds: 5, ..Config::default() }.validate().is_err());
+        // Off breaks may keep any interval value: only switched-on ones count.
+        let saved = Config { water_every: Some(25), ..config() }.sanitized();
+        assert_eq!((saved.water_every, saved.eye_every), (None, None));
     }
 }

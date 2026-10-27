@@ -895,6 +895,18 @@ body,
   transform: none;
 }
 
+.breaks-intro {
+  margin: -6px 0 10px;
+}
+
+/* "Water break already comes every 45 min": shakes once, then stays. */
+.clash {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--danger-ink);
+  animation: nudge 300ms ease-out;
+}
+
 /* Break options: "Every [interval] for [minutes] min", under the switch. */
 .break-options {
   display: flex;

@@ -37,6 +37,14 @@ pub struct Settings {
     pub battery_threshold: u8,
     /// Water, stretch and eye breaks.
     pub breaks: crate::breaks::Config,
+    /// Keep the pill on top of fullscreen apps (videos, games). Off: it hides.
+    pub show_over_fullscreen: bool,
+    /// Also give per-app time to the app on top of each other screen.
+    /// None means automatic: on while more than one screen is connected.
+    pub other_screens: Option<bool>,
+    /// Leave the pill, its cards and the alert flash out of screen recordings,
+    /// screenshots and screen sharing (you still see them). Off by default.
+    pub hide_from_capture: bool,
 }
 
 impl Default for Settings {
@@ -47,6 +55,9 @@ impl Default for Settings {
             battery_quit: false,
             battery_threshold: crate::battery::DEFAULT_THRESHOLD,
             breaks: crate::breaks::Config::default(),
+            show_over_fullscreen: false,
+            other_screens: None,
+            hide_from_capture: false,
         }
     }
 }

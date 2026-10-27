@@ -268,6 +268,7 @@ export default function Dashboard() {
 
             <div className="stack">
               <Timers tick={tick} settings={settings} onSettings={setSettings} />
+              <BreaksBlock settings={settings} onSettings={setSettings} />
               <DataBlock
                 settings={settings}
                 onSettings={setSettings}
@@ -427,6 +428,16 @@ function SettingsBlock({
   const autostart = useAutostart();
   const [battery, setBattery] = useState<Battery | undefined>(undefined);
   const [size, setSize] = useState(loadSize);
+  const [monitors, setMonitors] = useState(1);
+  useEffect(() => {
+    invoke<number>("monitor_count").then(setMonitors);
+  }, []);
+  const overFullscreen = settings?.show_over_fullscreen ?? false;
+  // Unset means automatic: on while more than one screen is connected.
+  const otherScreens = settings?.other_screens ?? monitors > 1;
+  const hideFromCapture = settings?.hide_from_capture ?? false;
+  const saveDisplay = async (showOverFullscreen: boolean, other: boolean | null, hide = hideFromCapture) =>
+    onSettings(await invoke<Settings>("set_display", { showOverFullscreen, otherScreens: other, hideFromCapture: hide }));
 
   useEffect(() => {
     const read = () => invoke<Battery>("get_battery").then(setBattery);
@@ -491,6 +502,61 @@ function SettingsBlock({
           </span>
         </button>
 
+        <button
+          type="button"
+          role="switch"
+          aria-checked={overFullscreen}
+          className="setting-row"
+          disabled={!settings}
+          onClick={() => saveDisplay(!overFullscreen, settings?.other_screens ?? null)}
+        >
+          <span>
+            Show over fullscreen apps
+            <small>Off: the pill hides during videos and games, and peeks when a break is due.</small>
+          </span>
+          <span className="switch" aria-hidden>
+            <span className="switch-knob" />
+          </span>
+        </button>
+
+        <button
+          type="button"
+          role="switch"
+          aria-checked={hideFromCapture}
+          className="setting-row"
+          disabled={!settings}
+          onClick={() => saveDisplay(overFullscreen, settings?.other_screens ?? null, !hideFromCapture)}
+        >
+          <span>
+            Hide Serion from recordings & screenshots
+            <small>You still see the pill; OBS, screen sharing and screenshots do not. Your own screenshots will not show it either.</small>
+          </span>
+          <span className="switch" aria-hidden>
+            <span className="switch-knob" />
+          </span>
+        </button>
+
+        <button
+          type="button"
+          role="switch"
+          aria-checked={otherScreens}
+          className="setting-row"
+          disabled={!settings}
+          onClick={() => saveDisplay(overFullscreen, !otherScreens)}
+        >
+          <span>
+            Count apps on other screens
+            <small>
+              {settings?.other_screens == null
+                ? `Automatic: ${monitors > 1 ? "on" : "off"}, ${monitors} ${monitors === 1 ? "screen" : "screens"} connected`
+                : "The app on top of each other screen gets time too."}
+            </small>
+          </span>
+          <span className="switch" aria-hidden>
+            <span className="switch-knob" />
+          </span>
+        </button>
+
         <div className="setting-group">
           <button
             type="button"
@@ -531,8 +597,6 @@ function SettingsBlock({
         </div>
       </div>
 
-      <BreakSettings settings={settings} onSettings={onSettings} />
-
       <button type="button" className="quit-btn" onClick={() => invoke("quit")}>
         <Power size={14} aria-hidden />
         Quit Serion
@@ -541,146 +605,169 @@ function SettingsBlock({
   );
 }
 
-/** Must match the choices in src-tauri/src/breaks.rs. */
-const BREAK_INTERVALS = [20, 30, 45, 60, 90, 120];
-const EYE_INTERVALS = [20, 25, 30, 45];
-const MAX_BREAK_MINUTES = 30;
-/** Eye break: remind only, or pause screen time for this many seconds. */
-const EYE_MODES = [
-  { value: "remind", label: "Reminder only" },
-  { value: "20", label: "Pause 20 s" },
-  { value: "60", label: "Pause 1 min" },
-  { value: "120", label: "Pause 2 min" },
-];
+/** Must match EVERY_RANGE and SECONDS_RANGE in src-tauri/src/breaks.rs. */
+const EVERY_MIN = 5;
+const EVERY_MAX = 240;
+const SECONDS_MIN = 10;
+const SECONDS_MAX = 1800;
 
-/** Water, stretch and eye breaks: a switch each, options slide open under it. */
-function BreakSettings({ settings, onSettings }: { settings: Settings | null; onSettings: (s: Settings) => void }) {
+const BREAK_ROWS = [
+  { kind: "water", label: "Water break", note: "Drink a glass of water.", every: "water_every", seconds: "water_seconds", start: 45 },
+  { kind: "stretch", label: "Stretch break", note: "Stand up and move.", every: "stretch_every", seconds: "stretch_seconds", start: 60 },
+  { kind: "eyes", label: "Rest your eyes", note: "Look at something far away.", every: "eye_every", seconds: "eye_seconds", start: 25 },
+] as const;
+
+/**
+ * Breaks card: each break you switch on is offered after its own amount of
+ * screen time, then waits on the pill until you start it. Two breaks that
+ * are on cannot share an interval.
+ */
+function BreaksBlock({ settings, onSettings }: { settings: Settings | null; onSettings: (s: Settings) => void }) {
+  const [clash, setClash] = useState<{ kind: string; text: string } | null>(null);
   const config = settings?.breaks;
   if (!config) return null;
-  const save = async (patch: Partial<BreakConfig>) =>
+
+  const save = async (patch: Partial<BreakConfig>) => {
+    setClash(null);
     onSettings(await invoke<Settings>("set_breaks", { config: { ...config, ...patch } }));
+  };
+
+  /** The other switched-on break using `minutes`, if any. */
+  const takenBy = (minutes: number, self: string) =>
+    BREAK_ROWS.find((r) => r.kind !== self && config[r.every] === minutes);
+
+  const setEvery = (row: (typeof BREAK_ROWS)[number], minutes: number) => {
+    const other = takenBy(minutes, row.kind);
+    if (other) {
+      setClash({ kind: row.kind, text: `${other.label} already comes every ${minutes} min. Pick another time.` });
+      return;
+    }
+    save({ [row.every]: minutes });
+  };
+
+  /** Switching on picks the usual time, or the next free one. */
+  const toggle = (row: (typeof BREAK_ROWS)[number]) => {
+    if (config[row.every] !== null) return save({ [row.every]: null });
+    let minutes = row.start;
+    while (takenBy(minutes, row.kind)) minutes += 5;
+    save({ [row.every]: minutes });
+  };
 
   return (
-    <div className="setting-list">
-      <BreakRow
-        label="Water break"
-        note="The pill shows a glass. Screen time pauses."
-        on={config.water_every !== null}
-        onToggle={() => save({ water_every: config.water_every === null ? 45 : null })}
-      >
-        Every
-        <IntervalSelect value={config.water_every ?? 45} choices={BREAK_INTERVALS} onChange={(m) => save({ water_every: m })} />
-        for
-        <MinutesInput value={config.water_minutes} onCommit={(m) => save({ water_minutes: m })} />
-        min
-      </BreakRow>
-
-      <BreakRow
-        label="Stretch break"
-        note="The pill shows a dumbbell. Screen time pauses."
-        on={config.stretch_every !== null}
-        onToggle={() => save({ stretch_every: config.stretch_every === null ? 60 : null })}
-      >
-        Every
-        <IntervalSelect value={config.stretch_every ?? 60} choices={BREAK_INTERVALS} onChange={(m) => save({ stretch_every: m })} />
-        for
-        <MinutesInput value={config.stretch_minutes} onCommit={(m) => save({ stretch_minutes: m })} />
-        min
-      </BreakRow>
-
-      <BreakRow
-        label="Rest your eyes"
-        note="Look at something far away. Pausing is up to you."
-        on={config.eye_every !== null}
-        onToggle={() => save({ eye_every: config.eye_every === null ? 25 : null })}
-      >
-        Every
-        <IntervalSelect value={config.eye_every ?? 25} choices={EYE_INTERVALS} onChange={(m) => save({ eye_every: m })} />
-        <select
-          aria-label="Eye break mode"
-          value={config.eye_pause ? String(config.eye_seconds) : "remind"}
-          onChange={(e) =>
-            save(
-              e.target.value === "remind"
-                ? { eye_pause: false }
-                : { eye_pause: true, eye_seconds: Number(e.target.value) },
-            )
-          }
-        >
-          {EYE_MODES.map((m) => (
-            <option key={m.value} value={m.value}>
-              {m.label}
-            </option>
-          ))}
-        </select>
-      </BreakRow>
-    </div>
+    <section className="block">
+      <h2>Breaks</h2>
+      <p className="muted breaks-intro">
+        Each break is offered after its amount of screen time. Start it from the pill; screen time pauses while it
+        runs.
+      </p>
+      <div className="setting-list">
+        {BREAK_ROWS.map((row) => {
+          const every = config[row.every];
+          const on = every !== null;
+          return (
+            <div key={row.kind} className="setting-group">
+              <button type="button" role="switch" aria-checked={on} className="setting-row" onClick={() => toggle(row)}>
+                <span>
+                  {row.label}
+                  <small>{row.note}</small>
+                </span>
+                <span className="switch" aria-hidden>
+                  <span className="switch-knob" />
+                </span>
+              </button>
+              <div className={on ? "break-options reveal open" : "break-options reveal"} inert={!on}>
+                Every
+                <NumberInput
+                  label={`${row.label} interval in minutes`}
+                  value={every ?? row.start}
+                  min={EVERY_MIN}
+                  max={EVERY_MAX}
+                  onCommit={(m) => setEvery(row, m)}
+                />
+                min of screen time, for
+                <DurationInput
+                  label={`${row.label} length`}
+                  seconds={config[row.seconds]}
+                  onCommit={(s) => save({ [row.seconds]: s })}
+                />
+              </div>
+              {clash?.kind === row.kind && on && (
+                <p className="clash" role="alert">
+                  {clash.text}
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
-function BreakRow({
+/** Number field that edits freely and saves a clamped value on Enter or leaving it. */
+function NumberInput({
   label,
-  note,
-  on,
-  onToggle,
-  children,
+  value,
+  min,
+  max,
+  onCommit,
 }: {
   label: string;
-  note: string;
-  on: boolean;
-  onToggle: () => void;
-  children: React.ReactNode;
+  value: number;
+  min: number;
+  max: number;
+  onCommit: (n: number) => void;
 }) {
-  return (
-    <div className="setting-group">
-      <button type="button" role="switch" aria-checked={on} className="setting-row" onClick={onToggle}>
-        <span>
-          {label}
-          <small>{note}</small>
-        </span>
-        <span className="switch" aria-hidden>
-          <span className="switch-knob" />
-        </span>
-      </button>
-      <div className={on ? "break-options reveal open" : "break-options reveal"} inert={!on}>
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function IntervalSelect({ value, choices, onChange }: { value: number; choices: number[]; onChange: (m: number) => void }) {
-  return (
-    <select aria-label="Interval" value={value} onChange={(e) => onChange(Number(e.target.value))}>
-      {choices.map((m) => (
-        <option key={m} value={m}>
-          {m} min of screen time
-        </option>
-      ))}
-    </select>
-  );
-}
-
-/** Free minutes field: edits locally, saves a clamped value on Enter or leaving it. */
-function MinutesInput({ value, onCommit }: { value: number; onCommit: (m: number) => void }) {
   const [text, setText] = useState(String(value));
   useEffect(() => setText(String(value)), [value]);
   const commit = () => {
-    const m = clamp(Number(text), 1, MAX_BREAK_MINUTES);
-    setText(String(m));
-    if (m !== value) onCommit(m);
+    const n = clamp(Number(text), min, max);
+    setText(String(n));
+    if (n !== value) onCommit(n);
   };
   return (
     <input
       type="number"
-      min={1}
-      max={MAX_BREAK_MINUTES}
-      aria-label="Break length in minutes"
+      min={min}
+      max={max}
+      aria-label={label}
       value={text}
       onChange={(e) => setText(e.target.value)}
       onBlur={commit}
       onKeyDown={(e) => e.key === "Enter" && commit()}
     />
+  );
+}
+
+/** A length in seconds, entered as seconds or minutes. */
+function DurationInput({ label, seconds, onCommit }: { label: string; seconds: number; onCommit: (s: number) => void }) {
+  const [unit, setUnit] = useState<"sec" | "min">(seconds >= 60 && seconds % 60 === 0 ? "min" : "sec");
+  const factor = unit === "min" ? 60 : 1;
+  const commit = (amount: number, inUnit = factor) =>
+    onCommit(clamp(amount * inUnit, SECONDS_MIN, SECONDS_MAX));
+  return (
+    <>
+      <NumberInput
+        label={label}
+        value={Math.round(seconds / factor)}
+        min={unit === "min" ? 1 : SECONDS_MIN}
+        max={SECONDS_MAX / factor}
+        onCommit={(n) => commit(n)}
+      />
+      <select
+        aria-label={`${label} unit`}
+        value={unit}
+        onChange={(e) => {
+          const next = e.target.value as "sec" | "min";
+          setUnit(next);
+          // Keep the same number, now read in the new unit (20 sec -> 20 min).
+          commit(Math.round(seconds / factor), next === "min" ? 60 : 1);
+        }}
+      >
+        <option value="sec">sec</option>
+        <option value="min">min</option>
+      </select>
+    </>
   );
 }
 

@@ -2,10 +2,9 @@ mod battery;
 mod breaks;
 mod history;
 mod names;
+mod screen;
 mod tracker;
 
-use std::collections::HashMap;
-use std::path::PathBuf;
 use std::sync::{Mutex, MutexGuard};
 use std::thread;
 use std::time::{Duration, Instant, SystemTime};
@@ -13,9 +12,9 @@ use std::time::{Duration, Instant, SystemTime};
 use history::{Day, Settings, Store, RETENTION_CHOICES};
 use serde::Serialize;
 use tauri::{
-    AppHandle, Emitter, Manager, PhysicalPosition, State as TauriState, WebviewUrl, WebviewWindowBuilder,
+    AppHandle, Emitter, Manager, PhysicalPosition, RunEvent, State as TauriState, WebviewUrl, WebviewWindowBuilder,
 };
-use tracker::{format_duration, is_real_app, State, Tracker, Window};
+use tracker::{classify, credit, format_duration, open_apps, other_screens, Front, State, Tracker, IDLE_LIMIT_MS, MAX_TICK_MS};
 
 /// How often today's file is written to disk while it changes.
 const SAVE_EVERY: Duration = Duration::from_secs(10);
@@ -33,6 +32,11 @@ const MAX_TIMER_MINUTES: u32 = 24 * 60;
 /// Battery is read on the first tick, then every this many ticks (seconds).
 const BATTERY_EVERY: u64 = 30;
 
+/// Reading mode: idle only after this long without input...
+const READING_IDLE_MS: u64 = 20 * 60_000;
+/// ...and it switches itself off after this long, so it cannot inflate the day.
+const READING_MAX: Duration = Duration::from_secs(60 * 60);
+
 /// Sent to every window once a second.
 #[derive(Serialize, Clone)]
 struct Tick {
@@ -46,10 +50,22 @@ struct Tick {
     /// The running break, if any, and its time left.
     break_kind: Option<breaks::Kind>,
     break_ms: Option<u64>,
-    /// The running break's full length, for the countdown ring.
+    /// The running break's full length, for the progress ring.
     break_total_ms: Option<u64>,
-    /// False for an eye reminder that does not pause screen time.
-    break_pauses: Option<bool>,
+    /// Due breaks waiting on the pill for you to start or skip.
+    break_offers: Vec<BreakOffer>,
+    /// Today's date: a change means midnight passed (the pill flips a calendar).
+    day: String,
+    reading: bool,
+    /// A fullscreen app is in front and the pill should stay out of its way.
+    hide_for_fullscreen: bool,
+}
+
+#[derive(Serialize, Clone)]
+struct BreakOffer {
+    kind: breaks::Kind,
+    /// How long it will last once started.
+    seconds: u64,
 }
 
 #[derive(Serialize, Clone)]
@@ -72,6 +88,17 @@ struct Core {
     /// Low on battery at the last check; None before the first check.
     was_low: Option<bool>,
     breaks: breaks::Breaks,
+    /// The app that got the last second, for reading mode.
+    last_app: Option<String>,
+    reading: Option<Reading>,
+    /// A fullscreen app is in front right now.
+    fullscreen: bool,
+}
+
+/// Reading mode, tied to the app it was switched on in.
+struct Reading {
+    exe: String,
+    until: Instant,
 }
 
 struct AppState {
@@ -99,67 +126,6 @@ fn today() -> String {
     chrono::Local::now().format("%Y-%m-%d").to_string()
 }
 
-#[cfg(windows)]
-fn is_minimized(window_id: &str) -> bool {
-    use windows_sys::Win32::UI::WindowsAndMessaging::IsIconic;
-    // active-win-pos-rs formats the handle as "HWND(328646)".
-    let digits = window_id.trim_start_matches("HWND(").trim_end_matches(')');
-    match digits.parse::<isize>() {
-        Ok(hwnd) => unsafe { IsIconic(hwnd as _) != 0 },
-        Err(_) => false,
-    }
-}
-
-#[cfg(not(windows))]
-fn is_minimized(_window_id: &str) -> bool {
-    // shortcut: macOS and Linux never report a minimized window as foreground
-    // in our tests so far, revisit if probe output there shows otherwise.
-    false
-}
-
-/// `names` caches display names by exe path: resolving reads files and asks
-/// Windows, which is too slow to repeat every second.
-fn foreground(names: &mut HashMap<PathBuf, String>) -> Option<Window> {
-    let w = active_win_pos_rs::get_active_window().ok()?;
-    let mut exe = w
-        .process_path
-        .file_name()
-        .map(|n| n.to_string_lossy().to_lowercase())
-        .unwrap_or_default();
-    // Built-in apps (Settings, Calculator, Photos) draw their windows through
-    // this shared host, so the exe says nothing; the window title is the app.
-    if exe == "applicationframehost.exe" && !w.title.trim().is_empty() {
-        let title = w.title.trim().to_string();
-        exe = format!("uwp:{}", title.to_lowercase());
-        return Some(Window {
-            exe,
-            name: title,
-            is_self: false,
-            minimized: is_minimized(&w.window_id),
-            title: w.title,
-            width: w.position.width,
-            height: w.position.height,
-        });
-    }
-    let name = names
-        .entry(w.process_path.clone())
-        .or_insert_with(|| {
-            names::resolve(&w.process_path, w.process_id as u32)
-                .or_else(|| Some(w.app_name.trim().to_string()).filter(|n| !n.is_empty()))
-                .unwrap_or_else(|| exe.clone())
-        })
-        .clone();
-    Some(Window {
-        exe,
-        name,
-        is_self: w.process_id == u64::from(std::process::id()),
-        minimized: is_minimized(&w.window_id),
-        title: w.title,
-        width: w.position.width,
-        height: w.position.height,
-    })
-}
-
 fn tick_payload(core: &Core, state: State, now: SystemTime) -> Tick {
     Tick {
         text: format_duration(core.tracker.committed_ms),
@@ -178,7 +144,15 @@ fn tick_payload(core: &Core, state: State, now: SystemTime) -> Tick {
         break_kind: core.breaks.active.map(|a| a.kind),
         break_ms: core.breaks.active.map(|a| a.left_ms),
         break_total_ms: core.breaks.active.map(|a| a.length_ms),
-        break_pauses: core.breaks.active.map(|a| a.pauses),
+        break_offers: core
+            .breaks
+            .offered
+            .iter()
+            .map(|&kind| BreakOffer { kind, seconds: core.settings.breaks.length_ms(kind) / 1000 })
+            .collect(),
+        day: core.day.clone(),
+        reading: core.reading.is_some(),
+        hide_for_fullscreen: core.fullscreen && !core.settings.show_over_fullscreen,
     }
 }
 
@@ -190,6 +164,7 @@ fn show_flash(app: &AppHandle) {
     }
     let Some(main) = app.get_webview_window("main") else { return };
     let Ok(Some(monitor)) = main.primary_monitor() else { return };
+    let hide_from_capture = app.state::<AppState>().lock().settings.hide_from_capture;
     let scale = monitor.scale_factor();
     let size = monitor.size().to_logical::<f64>(scale);
     let origin = monitor.position().to_logical::<f64>(scale);
@@ -201,6 +176,7 @@ fn show_flash(app: &AppHandle) {
         .always_on_top(true)
         .skip_taskbar(true)
         .focused(false)
+        .content_protected(hide_from_capture)
         .resizable(false)
         .position(origin.x, origin.y)
         .inner_size(size.width, size.height)
@@ -217,10 +193,13 @@ fn alert(app: &AppHandle, kind: &str) {
 
 fn run_tracker(app: AppHandle) {
     let state = app.state::<AppState>();
-    let mut last_tick = SystemTime::now();
+    // Steady clock for durations: changing the clock or the timezone never
+    // adds or removes counted time. The wall clock only decides the date.
+    let mut last_tick = Instant::now();
     let mut last_save = Instant::now();
-    let mut names = HashMap::new();
+    let mut names = screen::NameCache::new();
     let mut ticks: u64 = 0;
+    let mut previous_idle_ms: u64 = 0;
 
     loop {
         thread::sleep(Duration::from_secs(1));
@@ -229,32 +208,54 @@ fn run_tracker(app: AppHandle) {
         let battery = if check_battery { battery::read() } else { None };
         let mut quit = false;
 
-        // Wall clock, so time spent asleep shows up as one long gap.
-        // A clock that jumped backwards counts as a gap too.
+        let elapsed_ms = last_tick.elapsed().as_millis() as u64;
+        last_tick = Instant::now();
         let now = SystemTime::now();
-        let elapsed_ms = now
-            .duration_since(last_tick)
-            .map(|d| d.as_millis() as u64)
-            .unwrap_or(u64::MAX);
-        last_tick = now;
 
-        // If idle time cannot be read, treat it as idle: showing too little
-        // is better than silently counting time nobody was there for.
-        let idle_ms = user_idle::UserIdle::get_time()
-            .map(|t| t.as_milliseconds() as u64)
-            .unwrap_or(u64::MAX);
-        let window = foreground(&mut names);
-        let app_in_front = window
-            .as_ref()
-            .filter(|w| is_real_app(Some(w)))
-            .map(|w| (w.exe.as_str(), w.name.as_str()));
+        let snap = screen::snapshot(&mut names);
+        // A video, call or game keeping the display on means you are there,
+        // even without touching the mouse or keyboard. Otherwise, if idle
+        // time cannot be read, treat it as idle: too little beats too much.
+        let idle_ms = if snap.awake {
+            0
+        } else {
+            user_idle::UserIdle::get_time().map(|t| t.as_milliseconds() as u64).unwrap_or(u64::MAX)
+        };
+        let open = open_apps(&snap.windows);
+        let main = credit(snap.foreground.as_ref(), &open);
 
         let mut alerts = Vec::new();
         let tick = {
             let mut core = state.lock();
 
+            // Reading mode ends when you move to another app, or after an hour.
+            if let Some(reading) = &core.reading {
+                if Instant::now() >= reading.until || main.is_some_and(|m| m.exe != reading.exe) {
+                    core.reading = None;
+                }
+            }
+            let idle_limit = if core.reading.is_some() { READING_IDLE_MS } else { IDLE_LIMIT_MS };
+
+            // Back after being away (idle, locked, asleep): breaks that short count as taken.
+            let away_ms = if elapsed_ms > MAX_TICK_MS {
+                elapsed_ms
+            } else if previous_idle_ms >= idle_limit && idle_ms < previous_idle_ms {
+                previous_idle_ms
+            } else {
+                0
+            };
+            previous_idle_ms = idle_ms;
+            if away_ms > 0 {
+                let c = &mut *core;
+                c.breaks.away(away_ms, &c.settings.breaks);
+            }
+
             let day = today();
             if day != core.day {
+                // Active time before 00:00 stays on the day it happened.
+                if idle_ms < idle_limit {
+                    core.tracker.commit();
+                }
                 state.save_today(&mut core);
                 core.day = day;
                 core.tracker = Tracker::default();
@@ -262,10 +263,21 @@ fn run_tracker(app: AppHandle) {
                 state.store.prune(&core.day, core.settings.retention_days);
             }
 
-            // Nothing counts during a pausing break (an eye reminder does not pause).
-            let pausing = core.breaks.pausing();
+            let use_other_screens = core.settings.other_screens.unwrap_or(snap.monitors > 1);
+            let extras: Vec<(&str, &str)> = match main {
+                Some(m) if use_other_screens => {
+                    other_screens(m, &open).into_iter().map(|w| (w.exe.as_str(), w.name.as_str())).collect()
+                }
+                _ => Vec::new(),
+            };
+            core.last_app = main.map(|m| m.exe.clone());
+            core.fullscreen =
+                snap.foreground.as_ref().is_some_and(|w| w.fullscreen && classify(Some(w)) == Front::App);
+
+            // Nothing counts while a started break runs.
+            let app_now = if core.breaks.pausing() { None } else { main.map(|w| (w.exe.as_str(), w.name.as_str())) };
             let before = core.tracker.committed_ms;
-            let tick_state = core.tracker.tick(elapsed_ms, idle_ms, if pausing { None } else { app_in_front });
+            let tick_state = core.tracker.tick(elapsed_ms, idle_ms, idle_limit, app_now, &extras);
             let counted = core.tracker.committed_ms - before;
             if counted > 0 {
                 core.dirty = true;
@@ -309,6 +321,46 @@ fn run_tracker(app: AppHandle) {
             alert(&app, kind);
         }
     }
+}
+
+/// Reading mode on or off. It needs an app in front to attach to; returns
+/// whether it is on now.
+#[tauri::command]
+fn set_reading(on: bool, state: TauriState<AppState>) -> bool {
+    let mut core = state.lock();
+    core.reading = match (on, core.last_app.clone()) {
+        (true, Some(exe)) => Some(Reading { exe, until: Instant::now() + READING_MAX }),
+        _ => None,
+    };
+    core.reading.is_some()
+}
+
+/// Fullscreen, multi-screen and screen-recording preferences.
+#[tauri::command]
+fn set_display(
+    show_over_fullscreen: bool,
+    other_screens: Option<bool>,
+    hide_from_capture: bool,
+    app: AppHandle,
+    state: TauriState<AppState>,
+) -> Settings {
+    let mut core = state.lock();
+    core.settings.show_over_fullscreen = show_over_fullscreen;
+    core.settings.other_screens = other_screens;
+    core.settings.hide_from_capture = hide_from_capture;
+    state.store.save_settings(&core.settings);
+    for label in ["main", "flash"] {
+        if let Some(window) = app.get_webview_window(label) {
+            let _ = window.set_content_protected(hide_from_capture);
+        }
+    }
+    core.settings.clone()
+}
+
+/// How many screens are connected (for the "other screens" setting).
+#[tauri::command]
+fn monitor_count() -> usize {
+    screen::snapshot(&mut screen::NameCache::new()).monitors
 }
 
 #[tauri::command]
@@ -405,18 +457,24 @@ fn set_breaks(config: breaks::Config, state: TauriState<AppState>) -> Result<Set
     Ok(core.settings.clone())
 }
 
+/// Start an offered break: screen time pauses for its length.
+#[tauri::command]
+fn start_break(kind: breaks::Kind, state: TauriState<AppState>) -> bool {
+    let mut core = state.lock();
+    let c = &mut *core;
+    c.breaks.start(kind, &c.settings.breaks)
+}
+
+/// Not now: drop an offered break until its next interval.
+#[tauri::command]
+fn skip_break(kind: breaks::Kind, state: TauriState<AppState>) {
+    state.lock().breaks.skip(kind);
+}
+
 /// End the running break early: Done.
 #[tauri::command]
 fn finish_break(state: TauriState<AppState>) {
     state.lock().breaks.finish();
-}
-
-/// End the running break and bring it back after 5 more minutes of screen time.
-#[tauri::command]
-fn snooze_break(state: TauriState<AppState>) {
-    let mut core = state.lock();
-    let c = &mut *core;
-    c.breaks.snooze(&c.settings.breaks);
 }
 
 /// Delete all saved days and reset today to zero. Settings stay.
@@ -469,11 +527,15 @@ pub fn run() {
             get_battery,
             set_breaks,
             finish_break,
-            snooze_break,
+            start_break,
+            skip_break,
             start_countdown,
             cancel_countdown,
             clear_history,
-            open_dashboard
+            open_dashboard,
+            set_reading,
+            set_display,
+            monitor_count
         ])
         .setup(|app| {
             let window = app
@@ -492,6 +554,8 @@ pub fn run() {
 
             let store = Store::new(app.path().app_data_dir()?);
             let settings = store.load_settings();
+            // Hidden from recordings and screenshots, if you asked for it.
+            window.set_content_protected(settings.hide_from_capture)?;
             let day = today();
             store.prune(&day, settings.retention_days);
             store.migrate_today_json(&day);
@@ -508,6 +572,9 @@ pub fn run() {
                     dirty: false,
                     was_low: None,
                     breaks: breaks::Breaks::default(),
+                    last_app: None,
+                    reading: None,
+                    fullscreen: false,
                 }),
                 store,
             });
@@ -516,6 +583,15 @@ pub fn run() {
             thread::spawn(move || run_tracker(handle));
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app, event| {
+            // However Serion closes, today's numbers are saved first.
+            if let RunEvent::ExitRequested { .. } | RunEvent::Exit = event {
+                if let Some(state) = app.try_state::<AppState>() {
+                    let mut core = state.lock();
+                    state.save_today(&mut core);
+                }
+            }
+        });
 }

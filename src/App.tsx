@@ -2,19 +2,19 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow, LogicalSize, PhysicalPosition } from "@tauri-apps/api/window";
-import { Dumbbell, Eye, EyeClosed, GlassWater, Hand, Moon, Settings } from "lucide-react";
+import { BookOpen, CalendarDays, Dumbbell, Grab, Eye, EyeClosed, GlassWater, Hand, Moon, Settings } from "lucide-react";
 import "@fontsource/google-sans/latin-700.css";
 import { SIZES, SettingsPanel, THEMES, loadSize, loadTheme, saveTheme } from "./Settings";
 import { TopAppsPanel, appsPanelHeight } from "./TopApps";
-import { BREAK_CARD_H, BreakCard } from "./BreakCard";
+import { BREAK_CARD_W, BREAK_ICON, BreakCard, breakCardHeight, type BreakView } from "./BreakCard";
 import { SerionMark } from "./SerionMark";
 import { useMagneticDrag } from "./drag";
 import { useAppearance } from "./appearance";
 import { EMPTY_TICK, formatClock, type BreakKind, type Tick } from "./types";
 import "./App.css";
 
-/** What the circle shows: the counting state, or a running break. */
-type Shown = Tick["state"] | BreakKind;
+/** What the circle shows: the counting state, a break, reading mode, or the midnight flip. */
+type Shown = Tick["state"] | BreakKind | "reading" | "calendar" | "grab";
 
 const STATE_LABEL: Record<Shown, string> = {
   active: "Counting",
@@ -23,6 +23,9 @@ const STATE_LABEL: Record<Shown, string> = {
   water: "Water break. Click for the break card",
   stretch: "Stretch break. Click for the break card",
   eyes: "Rest your eyes. Click for the break card",
+  reading: "Reading mode: counting, idle after 20 min",
+  calendar: "A new day: the count starts again",
+  grab: "Moving the pill, still counting",
 };
 
 /**
@@ -37,12 +40,24 @@ const STATE_ICON = {
   water: { Icon: GlassWater, fill: "none" },
   stretch: { Icon: Dumbbell, fill: "none" },
   eyes: { Icon: EyeClosed, fill: "none" },
+  reading: { Icon: BookOpen, fill: "none" },
+  calendar: { Icon: CalendarDays, fill: "none" },
+  grab: { Icon: Grab, fill: "none" },
 };
 
 /** The break card tucks back into the pill after this long, unless hovered. */
 const BREAK_TUCK_MS = 8000;
 /** After a break runs out, the check shows this long before the card closes. */
 const BREAK_DONE_MS = 1400;
+/** Start: the tick draws for this long before the break's animation takes over. */
+const BREAK_START_MS = 900;
+/** A counting state must hold this long before the pill shows it (no flicker on app switches). */
+const STEADY_MS = 2000;
+/** The midnight calendar flip shows this long. */
+const CALENDAR_MS = 3200;
+/** In fullscreen with a break due: the pill peeks this long, this often. */
+const PEEK_MS = 5000;
+const PEEK_EVERY_MS = 20 * 60_000;
 
 // Window sizes in CSS pixels at Large size. These must match App.css; the
 // pill and its button scale with the chosen size, the panels do not.
@@ -75,7 +90,7 @@ function StateIcon({ state }: { state: Shown }) {
       .forEach((shape) => shape.setAttribute("pathLength", "1"));
   }, []);
 
-  return <Icon ref={ref} className="state-icon" size={18} fill={fill} aria-hidden />;
+  return <Icon ref={ref} className={`state-icon state-${state}`} size={18} fill={fill} aria-hidden />;
 }
 
 export default function App() {
@@ -94,57 +109,156 @@ export default function App() {
   const windowSize = useRef({ w: PILL_W, h: PILL_H });
   const placedWidth = useRef(PILL_W);
   const togglePanel = (p: Panel) => setPanel((current) => (current === p ? "none" : p));
-  // During a break a tap opens or tucks the break card; otherwise it opens today's top apps.
+  const offers = tick.break_offers;
+  const onBreak = tick.break_kind !== null;
+  // A tap opens or tucks the break card while a break is offered or running;
+  // otherwise it opens today's top apps.
   const { dragging, handlers } = useMagneticDrag(pillW, pillH, () =>
-    togglePanel(tick.break_kind ? "break" : "apps"),
+    togglePanel(offers.length || onBreak || breakDone ? "break" : "apps"),
   );
   const hoverRef = useRef(false);
   hoverRef.current = hover;
+  // Start plays a tick before the break's animation: the kind you started, for that moment.
+  const [starting, setStarting] = useState<BreakKind | null>(null);
   // The last break, kept so the card can show its ending after the break is over.
-  const [lastBreak, setLastBreak] = useState<{ kind: BreakKind; total: number; pauses: boolean } | null>(null);
+  const [lastBreak, setLastBreak] = useState<{ kind: BreakKind; total: number } | null>(null);
   const [breakDone, setBreakDone] = useState(false);
   const previousBreak = useRef<BreakKind | null>(null);
+  const previousOffers = useRef<BreakKind[]>([]);
+  const tuckTimer = useRef(0);
 
-  // A break starting opens its card, which tucks back into the pill after a
-  // while (later if you are hovering it). A break running out shows the check,
-  // then closes the card.
+  /** Open the break card now; it tucks back into the pill later, unless hovered. */
+  const showBreakCard = () => {
+    setPanel("break");
+    clearTimeout(tuckTimer.current);
+    const tuck = () => {
+      if (hoverRef.current) tuckTimer.current = window.setTimeout(tuck, 1500);
+      else setPanel((p) => (p === "break" ? "none" : p));
+    };
+    tuckTimer.current = window.setTimeout(tuck, BREAK_TUCK_MS);
+  };
+  useEffect(() => () => clearTimeout(tuckTimer.current), []);
+
+  // A newly due break opens the card with its offer.
+  useEffect(() => {
+    const kinds = offers.map((o) => o.kind);
+    const fresh = kinds.some((k) => !previousOffers.current.includes(k));
+    previousOffers.current = kinds;
+    if (fresh) {
+      setBreakDone(false);
+      showBreakCard();
+    }
+  }, [offers]);
+
+  // A break running out on its own shows the check, then closes the card.
   useEffect(() => {
     const was = previousBreak.current;
     const now = tick.break_kind;
     previousBreak.current = now;
-    if (now && now !== was) {
-      setLastBreak({ kind: now, total: tick.break_total_ms ?? 0, pauses: tick.break_pauses ?? true });
-      setBreakDone(false);
-      setPanel("break");
-      let timer = 0;
-      const tuck = () => {
-        if (hoverRef.current) timer = window.setTimeout(tuck, 1500);
-        else setPanel((p) => (p === "break" ? "none" : p));
-      };
-      timer = window.setTimeout(tuck, BREAK_TUCK_MS);
-      return () => clearTimeout(timer);
-    }
+    if (now) setLastBreak({ kind: now, total: tick.break_total_ms ?? 0 });
     if (!now && was) {
       setBreakDone(true);
-      const timer = window.setTimeout(() => setPanel((p) => (p === "break" ? "none" : p)), BREAK_DONE_MS);
+      setPanel("break");
+      const timer = window.setTimeout(() => {
+        setBreakDone(false);
+        setPanel((p) => (p === "break" ? "none" : p));
+      }, BREAK_DONE_MS);
       return () => clearTimeout(timer);
     }
-  }, [tick.break_kind, tick.break_total_ms, tick.break_pauses]);
+  }, [tick.break_kind, tick.break_total_ms]);
 
-  /** Done or Snooze: the card closes straight away, no check animation. */
-  const endBreak = (command: "finish_break" | "snooze_break") => {
+  const startBreak = (kind: BreakKind) => {
+    setStarting(kind);
+    window.setTimeout(() => setStarting(null), BREAK_START_MS);
+    showBreakCard();
+    invoke("start_break", { kind });
+  };
+  const skipBreak = (kind: BreakKind) => {
+    invoke("skip_break", { kind });
+    if (offers.length <= 1) setPanel("none");
+  };
+  /** Done: ends the break at once, no check (you just said you are done). */
+  const finishBreak = () => {
     previousBreak.current = null;
     setPanel("none");
-    invoke(command);
+    invoke("finish_break");
   };
+
+  const breakView: BreakView | null = starting
+    ? { mode: "starting", kind: starting, leftMs: tick.break_ms ?? 0, totalMs: tick.break_total_ms ?? 0 }
+    : tick.break_kind
+      ? { mode: "active", kind: tick.break_kind, leftMs: tick.break_ms ?? 0, totalMs: tick.break_total_ms ?? 0 }
+      : breakDone && lastBreak
+        ? { mode: "done", kind: lastBreak.kind, leftMs: 0, totalMs: lastBreak.total }
+        : offers.length
+          ? { mode: "offer", offers }
+          : null;
+
   // Light/dark for the panels: follows the dashboard's switcher and Windows.
   useAppearance();
 
-  // While you hold the pill it shows the hand at once, without waiting for
-  // the next tick (Serion in front counts as hold anyway). A break shows its
-  // own icon and counts down instead of showing today's total.
-  const shownState: Shown = dragging ? "hold" : (tick.break_kind ?? tick.state);
-  const shownText = tick.break_kind ? formatClock(tick.break_ms ?? 0) : tick.text;
+  // Counting states (active, idle, hold) show only once they have held for
+  // STEADY_MS, so a one-second blip while switching apps never flashes the hand.
+  const [steadyState, setSteadyState] = useState<Tick["state"]>(tick.state);
+  useEffect(() => {
+    if (tick.state === steadyState) return;
+    const timer = setTimeout(() => setSteadyState(tick.state), STEADY_MS);
+    return () => clearTimeout(timer);
+  }, [tick.state, steadyState]);
+
+  // Midnight: a calendar flips in the circle and the time rolls to the new day's count.
+  const [newDay, setNewDay] = useState(false);
+  const seenDay = useRef("");
+  useEffect(() => {
+    if (!tick.day) return;
+    const first = seenDay.current === "";
+    const changed = seenDay.current !== tick.day;
+    seenDay.current = tick.day;
+    if (first || !changed) return;
+    setNewDay(true);
+    const timer = setTimeout(() => setNewDay(false), CALENDAR_MS);
+    return () => clearTimeout(timer);
+  }, [tick.day]);
+
+  // Fullscreen app in front: the pill steps out of the way. A due break
+  // still peeks for PEEK_MS, then again every PEEK_EVERY_MS until handled.
+  const [peeking, setPeeking] = useState(false);
+  const hasOffer = offers.length > 0;
+  useEffect(() => {
+    if (!tick.hide_for_fullscreen || !hasOffer) return setPeeking(false);
+    let hideTimer = 0;
+    const peek = () => {
+      setPeeking(true);
+      hideTimer = window.setTimeout(() => setPeeking(false), PEEK_MS);
+    };
+    peek();
+    const every = window.setInterval(peek, PEEK_EVERY_MS);
+    return () => {
+      clearInterval(every);
+      clearTimeout(hideTimer);
+    };
+  }, [tick.hide_for_fullscreen, hasOffer]);
+  const hidden = tick.hide_for_fullscreen && !peeking;
+  useEffect(() => {
+    const win = getCurrentWindow();
+    (hidden ? win.hide() : win.show()).catch(() => {});
+  }, [hidden]);
+
+  // While you drag the pill it shows a grabbing hand at once. That is not
+  // hold: with apps open, the app on top keeps the time. A running break
+  // shows its icon and counts down; an offered break shows its icon.
+  const shownState: Shown = dragging
+    ? "grab"
+    : (tick.break_kind ??
+      (offers.length === 1
+        ? offers[0].kind
+        : newDay
+          ? "calendar"
+          : tick.reading && steadyState === "active"
+            ? "reading"
+            : steadyState));
+  const shownText = onBreak ? formatClock(tick.break_ms ?? 0) : tick.text;
+  const breakProgress = onBreak && tick.break_total_ms ? 1 - (tick.break_ms ?? 0) / tick.break_total_ms : 0;
   const showButton = !intro && ((hover && !dragging) || panel === "settings");
 
   useEffect(() => {
@@ -226,11 +340,11 @@ export default function App() {
       ? SETTINGS_H
       : panel === "apps"
         ? appsPanelHeight(tick.top.length)
-        : panel === "break"
-          ? BREAK_CARD_H
+        : panel === "break" && breakView
+          ? breakCardHeight(breakView)
           : 0;
   useEffect(() => {
-    const w = showButton || panel !== "none" ? wide : pillW;
+    const w = panel === "break" ? Math.max(wide, BREAK_CARD_W) : showButton || panel !== "none" ? wide : pillW;
     const h = panel === "none" ? pillH : pillH + GAP + panelH;
     const shrinking = w < windowSize.current.w || h < windowSize.current.h;
     const timer = setTimeout(() => {
@@ -253,13 +367,13 @@ export default function App() {
     };
   }, [panel]);
 
-  const pillClass = ["pill", intro && "intro", dragging && "dragging", alert && "alert", tick.break_kind && "on-break"].filter(Boolean).join(" ");
+  const pillClass = ["pill", intro && "intro", dragging && "dragging", alert && "alert", (onBreak || offers.length > 0) && "on-break"].filter(Boolean).join(" ");
 
   return (
     <div className="bar" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
       <div
         className={pillClass}
-        title={tick.break_kind ? `${STATE_LABEL[shownState]}.` : `${STATE_LABEL[shownState]}. Click for your top apps, right-click to quit.`}
+        title={onBreak || offers.length ? `${STATE_LABEL[shownState]}.` : `${STATE_LABEL[shownState]}. Click for your top apps, right-click to quit.`}
         aria-expanded={panel === "apps"}
         aria-controls="top-apps"
         onContextMenu={(event) => {
@@ -272,10 +386,29 @@ export default function App() {
         <SerionMark size={24} className="intro-mark" />
         {/* key = state: a state change mounts a fresh circle and icon, which
             replays the pop and then the draw. */}
-        <div key={shownState} className="logo" aria-label={STATE_LABEL[shownState]}>
-          <StateIcon state={shownState} />
+        <div key={offers.length > 1 && !onBreak ? "offers" : shownState} className="logo" aria-label={STATE_LABEL[shownState]}>
+          {offers.length > 1 && !onBreak ? (
+            // Two or three breaks due at once: all their icons, you pick in the card.
+            <span className="offer-icons">
+              {offers.map(({ kind }) => {
+                const Icon = BREAK_ICON[kind];
+                return <Icon key={kind} size={12} strokeWidth={2.5} aria-hidden />;
+              })}
+            </span>
+          ) : (
+            <StateIcon state={shownState} />
+          )}
+          {onBreak && (
+            // Fills up around the icon as the break runs.
+            <svg className="break-progress" viewBox="0 0 36 36" aria-hidden>
+              <circle cx="18" cy="18" r="16" pathLength={1} style={{ strokeDashoffset: 1 - breakProgress }} />
+            </svg>
+          )}
         </div>
-        <span className="time">{shownText}</span>
+        {/* key = day: at midnight the new count slides in. */}
+        <span key={tick.day} className="time">
+          {shownText}
+        </span>
       </div>
 
       <button
@@ -299,21 +432,20 @@ export default function App() {
       <TopAppsPanel
         open={panel === "apps"}
         top={tick.top}
+        reading={tick.reading}
+        onReading={(on) => invoke("set_reading", { on })}
         onExpand={() => {
           setPanel("none");
           invoke("open_dashboard");
         }}
       />
-      {lastBreak && (
+      {breakView && (
         <BreakCard
           open={panel === "break"}
-          kind={lastBreak.kind}
-          leftMs={tick.break_ms}
-          totalMs={tick.break_total_ms ?? lastBreak.total}
-          pauses={lastBreak.pauses}
-          done={breakDone}
-          onDone={() => endBreak("finish_break")}
-          onSnooze={() => endBreak("snooze_break")}
+          view={breakView}
+          onStart={startBreak}
+          onSkip={skipBreak}
+          onDone={finishBreak}
         />
       )}
     </div>
