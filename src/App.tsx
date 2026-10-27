@@ -1,13 +1,12 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
-import { getCurrentWindow, PhysicalPosition } from "@tauri-apps/api/window";
-import { flushSync } from "react-dom";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { BookOpen, CalendarDays, Dumbbell, Grab, Eye, EyeClosed, GlassWater, Hand, Moon, Settings } from "lucide-react";
 import "@fontsource/google-sans/latin-700.css";
 import { SIZES, SettingsPanel, THEMES, loadSize, loadTheme, saveTheme } from "./Settings";
 import { TopAppsPanel, appsPanelHeight } from "./TopApps";
-import { BREAK_CARD_W, BREAK_ICON, BreakCard, breakCardHeight, type BreakView } from "./BreakCard";
+import { BREAK_CARD_MAX_H, BREAK_CARD_W, BREAK_ICON, BreakCard, breakCardHeight, type BreakView } from "./BreakCard";
 import { SerionMark } from "./SerionMark";
 import { useMagneticDrag } from "./drag";
 import { useAppearance } from "./appearance";
@@ -68,7 +67,9 @@ const GAP = 8;
 const BUTTON = 50;
 const PANEL_W = 226;
 const SETTINGS_H = 172;
-/** Longest exit transition in App.css; the window shrinks only after it. */
+/** Most apps the top-apps panel lists. Must match TOP_APPS in src-tauri/src/lib.rs. */
+const MAX_TOP_APPS = 5;
+/** Longest exit transition in App.css; the clickable area shrinks only after it. */
 const EXIT_MS = 220;
 /** How long the launch shows the Serion mark before it opens into the pill. */
 const INTRO_MS = 1000;
@@ -105,17 +106,20 @@ export default function App() {
   const zoom = SIZES[size];
   const pillW = PILL_W * zoom;
   const pillH = PILL_H * zoom;
-  // Starts at the window size in tauri.conf.json (the Large pill).
-  const windowFrame = useRef({ offset: 0, w: PILL_W, h: PILL_H });
-  // How far the window reaches left of the pill (CSS px); see the window effect below.
-  const [offset, setOffset] = useState(0);
-  const placedWidth = useRef(PILL_W);
+  // How far the window reaches left of the pill (CSS px), room for the widest
+  // panel centered under it. Fixed per size; see the window effects below.
+  const offset = Math.max(0, (Math.max(PANEL_W, BREAK_CARD_W) - pillW) / 2);
+  // Where the window is now: tauri.conf.json's Large pill at the window's left edge.
+  const placed = useRef({ offset: 0, pillW: PILL_W });
+  // The clickable region now (CSS px, from the window's left edge); none yet,
+  // so the first one applies at once.
+  const region = useRef({ left: Infinity, w: 0, h: 0 });
   const togglePanel = (p: Panel) => setPanel((current) => (current === p ? "none" : p));
   const offers = tick.break_offers;
   const onBreak = tick.break_kind !== null;
   // A tap opens or tucks the break card while a break is offered or running;
   // otherwise it opens today's top apps.
-  const { dragging, handlers } = useMagneticDrag(pillW, pillH, () => windowFrame.current.offset, () =>
+  const { dragging, handlers } = useMagneticDrag(pillW, pillH, () => placed.current.offset, () =>
     togglePanel(offers.length || onBreak || breakDone ? "break" : "apps"),
   );
   const hoverRef = useRef(false);
@@ -307,18 +311,41 @@ export default function App() {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  // A new size keeps the pill's center where it was (so a docked pill stays
-  // centered). The pill sits at the window's left edge, so the window moves
-  // by half the width change. Also runs at launch when Small is saved.
+  // The window's scale factor (physical px per CSS px); 0 until read. Moving
+  // to a screen with another scale redoes the window size and region.
+  const [scale, setScale] = useState(0);
   useEffect(() => {
-    const change = placedWidth.current - pillW;
-    if (change === 0) return;
-    placedWidth.current = pillW;
     const win = getCurrentWindow();
-    Promise.all([win.outerPosition(), win.scaleFactor()]).then(([pos, scale]) =>
-      win.setPosition(new PhysicalPosition(Math.round(pos.x + (change * scale) / 2), pos.y)),
-    );
-  }, [pillW]);
+    win.scaleFactor().then(setScale);
+    const unlisten = win.onScaleChanged(({ payload }) => setScale(payload.scaleFactor));
+    return () => {
+      unlisten.then((stop) => stop());
+    };
+  }, []);
+
+  // The window keeps one size, big enough for the widest and tallest panel,
+  // and never moves when a panel opens or closes: moving or resizing it showed
+  // the pill a frame out of place. Only its clickable region changes (below).
+  // A new pill size resizes it once, keeping the pill's center where it was
+  // (so a docked pill stays centered). Also runs at launch.
+  const windowW = offset + Math.max(pillW + GAP + BUTTON * zoom, (pillW + Math.max(PANEL_W, BREAK_CARD_W)) / 2);
+  const windowH = pillH + GAP + Math.max(SETTINGS_H, appsPanelHeight(MAX_TOP_APPS), BREAK_CARD_MAX_H);
+  useEffect(() => {
+    if (!scale) return;
+    getCurrentWindow()
+      .outerPosition()
+      .then((pos) => {
+        const was = placed.current;
+        const pillX = pos.x + (was.offset + (was.pillW - pillW) / 2) * scale;
+        placed.current = { offset, pillW };
+        invoke("set_bounds", {
+          x: Math.round(pillX - offset * scale),
+          y: pos.y,
+          width: Math.round(windowW * scale),
+          height: Math.round(windowH * scale),
+        });
+      });
+  }, [pillW, scale]);
 
   useLayoutEffect(() => {
     document.documentElement.style.setProperty("--zoom", String(zoom));
@@ -333,13 +360,11 @@ export default function App() {
     document.documentElement.dataset.graphite = String(!alert && theme === THEMES[1].color);
   }, [theme, alert]);
 
-  // The transparent window still catches clicks, so it only grows while the
-  // button or a panel is shown. Panels are centered under the pill, so an open
-  // panel reaches left of it: the window then grows left by `targetOffset`
-  // and the pill moves right inside it by the same amount, staying put on
-  // screen. Window bounds (one Rust call) and layout (one synchronous render)
-  // change together. Growing happens at once, before the enter animation;
-  // shrinking waits for the exit animation to finish.
+  // The transparent window would catch clicks everywhere, so only the pill,
+  // its button and an open panel are clickable; elsewhere clicks pass through.
+  // Panels are centered under the pill, so an open panel reaches left of it by
+  // `targetOffset`. The region grows at once, before the enter animation, and
+  // shrinks only after the exit animation.
   const panelH =
     panel === "settings"
       ? SETTINGS_H
@@ -354,23 +379,21 @@ export default function App() {
   const frameW = panel === "none" ? rowW : targetOffset + Math.max(rowW, (pillW + panelW) / 2);
   const frameH = panel === "none" ? pillH : pillH + GAP + panelH;
   useEffect(() => {
-    const now = windowFrame.current;
-    const shrinking = frameW < now.w || frameH < now.h || targetOffset < now.offset;
-    const timer = setTimeout(async () => {
-      const win = getCurrentWindow();
-      const [pos, scale] = await Promise.all([win.outerPosition(), win.scaleFactor()]);
-      const pillX = pos.x + windowFrame.current.offset * scale;
-      windowFrame.current = { offset: targetOffset, w: frameW, h: frameH };
-      flushSync(() => setOffset(targetOffset));
-      invoke("set_bounds", {
-        x: Math.round(pillX - targetOffset * scale),
-        y: pos.y,
+    if (!scale) return;
+    const left = offset - targetOffset;
+    const now = region.current;
+    const shrinking = frameW < now.w || frameH < now.h || left > now.left;
+    const timer = setTimeout(() => {
+      region.current = { left, w: frameW, h: frameH };
+      invoke("set_region", {
+        x: Math.round(left * scale),
+        y: 0,
         width: Math.round(frameW * scale),
         height: Math.round(frameH * scale),
       });
     }, shrinking ? EXIT_MS : 0);
     return () => clearTimeout(timer);
-  }, [targetOffset, frameW, frameH]);
+  }, [offset, targetOffset, frameW, frameH, scale]);
 
   // Close on Esc, and when you click anywhere outside the widget.
   useEffect(() => {

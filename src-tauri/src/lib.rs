@@ -498,8 +498,8 @@ fn clear_history(state: TauriState<AppState>) {
     core.dirty = false;
 }
 
-/// Move and resize the pill window in one step (physical px), so the pill
-/// does not jump when the window grows to the left for a centered panel.
+/// Move and resize the pill window in one step (physical px). Used only when
+/// the pill size changes; panels change the region instead (`set_region`).
 #[tauri::command]
 fn set_bounds(x: i32, y: i32, width: u32, height: u32, window: tauri::WebviewWindow) -> Result<(), String> {
     #[cfg(windows)]
@@ -515,6 +515,36 @@ fn set_bounds(x: i32, y: i32, width: u32, height: u32, window: tauri::WebviewWin
     {
         window.set_position(PhysicalPosition::new(x, y)).map_err(|e| e.to_string())?;
         window.set_size(tauri::PhysicalSize::new(width, height)).map_err(|e| e.to_string())
+    }
+}
+
+/// Limit the pill window to one rectangle (physical px, relative to the
+/// window). Outside it, clicks go to whatever is underneath. The window itself
+/// keeps one size, so opening a panel never moves or resizes it (resizing made
+/// the pill jump for a frame).
+#[tauri::command]
+fn set_region(x: i32, y: i32, width: i32, height: i32, window: tauri::WebviewWindow) -> Result<(), String> {
+    #[cfg(windows)]
+    {
+        use windows_sys::Win32::Graphics::Gdi::{CreateRectRgn, DeleteObject, SetWindowRgn};
+        let hwnd = window.hwnd().map_err(|e| e.to_string())?;
+        // SAFETY: a valid handle for this window. After a successful
+        // SetWindowRgn the system owns the region; on failure we free it.
+        unsafe {
+            let region = CreateRectRgn(x, y, x + width, y + height);
+            if SetWindowRgn(hwnd.0 as _, region, 1) == 0 {
+                DeleteObject(region);
+                return Err("could not set the window region".into());
+            }
+        }
+        Ok(())
+    }
+    // shortcut: other OSes keep the whole fixed window clickable; give them
+    // their own click-through when Serion ships there.
+    #[cfg(not(windows))]
+    {
+        let _ = (x, y, width, height, window);
+        Ok(())
     }
 }
 
@@ -639,6 +669,7 @@ pub fn run() {
             set_display,
             monitor_count,
             set_bounds,
+            set_region,
             get_data_folder,
             set_data_folder,
             export_data,

@@ -26,6 +26,9 @@ const OFFER_TITLE_H = 24;
 const OFFER_ROW_H = 46;
 const RUNNING_H = 156;
 
+/** Tallest the card gets: all three breaks offered, or a running break. */
+export const BREAK_CARD_MAX_H = Math.max(PAD * 2 + 2 + OFFER_TITLE_H + 3 * OFFER_ROW_H, RUNNING_H);
+
 export function breakCardHeight(view: BreakView) {
   return view.mode === "offer" ? PAD * 2 + 2 + OFFER_TITLE_H + view.offers.length * OFFER_ROW_H : RUNNING_H;
 }

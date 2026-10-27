@@ -49,8 +49,8 @@ body,
   position: relative;
   display: flex;
   gap: 8px;
-  /* With a panel open the window reaches left of the pill; this keeps the
-     pill where it was on screen (App.tsx sets --offset and --pill-w). */
+  /* The window reaches left of the pill, room for a centered panel
+     (App.tsx sets --offset and --pill-w). */
   padding-left: var(--offset, 0px);
 }
 

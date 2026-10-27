@@ -5,7 +5,7 @@ The single source of truth for anyone (person or agent) picking this project up.
 change that alters behavior, rules, files, workflow or status** (see
 "Keeping this file current" at the end).
 
-Last updated: 2026-10-27, single-instance guard after the 1.0.0 installer.
+Last updated: 2026-10-27, fixed-size pill window with a click-through region (no jump on panel open/close).
 
 ---
 
@@ -109,7 +109,7 @@ each window loads only its own CSS):
 | File | Role |
 |---|---|
 | `main.tsx` | routes `?view=dashboard` / `?view=flash` / default (pill); applies appearance before first paint |
-| `App.tsx` + `App.css` | **the pill window**: pill, state icon with draw-on animation, settings button + panel, top-apps panel, break card, window resizing, intro animation, steady-state debounce, fullscreen hide/peek, calendar flip, alert red |
+| `App.tsx` + `App.css` | **the pill window**: pill, state icon with draw-on animation, settings button + panel, top-apps panel, break card, fixed window size + clickable region, intro animation, steady-state debounce, fullscreen hide/peek, calendar flip, alert red |
 | `drag.ts` | custom drag (not Tauri's native one): grab cursor, magnetic dock at top center and magnetic screen edges, glide back, tap detection |
 | `Settings.tsx` | themes (6 presets), size (Small/Large), autostart hook, pill settings panel, shared `ThemeSwatches` |
 | `TopApps.tsx` | pill panel: today's top 5 apps, reading-mode switch, chevron to open the dashboard |
@@ -161,11 +161,15 @@ Each second the loop decides **who gets the second**:
   in a circle opens into the pill).
 - Hover → settings button; click → top-apps panel; right-click → quit.
 - Panels (top apps, settings, break card) are **centered under the pill** in
-  both sizes: an open panel makes the window reach left of the pill by
-  `offset`; Rust `set_bounds` moves and resizes the window in one
-  `SetWindowPos` call while the layout shifts the pill right by the same
-  `offset` (`--offset` on `.bar`), so the pill does not move on screen. The
-  drag hook converts between window and pill positions with that offset.
+  both sizes. The pill window has **one fixed size** per pill size, big enough
+  for the widest and tallest panel, and reaches left of the pill by a fixed
+  `offset` (`--offset` on `.bar`). Opening or closing a panel never moves or
+  resizes it; Rust `set_region` (`SetWindowRgn`) only changes which part is
+  clickable (pill, button, open panel), and clicks elsewhere pass through.
+  The region grows at once and shrinks after the exit animation (`EXIT_MS`).
+  `set_bounds` resizes the window only when the pill size or screen scale
+  changes. The drag hook converts between window and pill positions with
+  `offset`.
 - Custom drag, magnetic top-center dock and magnetic screen edges (work area).
 - Sizes: Small (80%, CSS `zoom`) / Large; keeps its center when resized.
 - Hides while a **fullscreen** app is in front (setting "Show over fullscreen"
@@ -285,6 +289,19 @@ Each second the loop decides **who gets the second**:
   one pill hid the other and both saved the same files. The guard
   (`tauri-plugin-single-instance`, keyed on the app identifier) also means a
   dev build will not start while the installed app runs: quit one first.
+- **Never move or resize the pill window for a panel.** Earlier builds grew
+  the window left and shifted the pill right inside it; the two changes land
+  on different screen frames, so the pill jumped about 72 px sideways for a
+  frame on every open and close (seen in a 60 fps recording, invisible in
+  window-position logs). Hence the fixed window plus `SetWindowRgn` region.
+- **Port 1420 can be reserved by Windows** (Hyper-V/WinNAT excluded port
+  ranges, `netsh interface ipv4 show excludedportrange protocol=tcp`); Vite
+  then fails with `EACCES`. Run dev on another port for that session:
+  `npx tauri dev --config '{"build":{"devUrl":"http://localhost:5199","beforeDevCommand":"npm run dev -- --port 5199 --strictPort"}}'`.
+- **Testing with computer-use:** the owner's buttons are swapped, so the
+  tool's `right_click` is a logical left click (and its `left_click` on the
+  pill would quit Serion). It also minimizes windows it was not granted, the
+  dev `serion.exe` included: grant `serion.exe` before the first screenshot.
 
 ## 10. Status
 
@@ -332,7 +349,8 @@ through the UI, battery quit.
 | `8e6520d` | PROJECT.md handoff, AGENTS.md / CLAUDE.md |
 | v1.0.0 | Release config (Serion 1.0.0, NSIS, publisher), installer at `E:\` |
 | `d592bc7` | Fixes found in the installed app: dashboard CSS not loaded in production, panels centered under the pill, more room for break names; installer at `E:\` rebuilt (version still 1.0.0) |
-| (after `d592bc7`) | Single instance: a second launch (autostart plus the desktop icon) exits and opens the running copy's dashboard; installer at `E:` rebuilt |
+| `ce0acac` | Single instance: a second launch (autostart plus the desktop icon) exits and opens the running copy's dashboard; installer at `E:\` rebuilt |
+| (after `ce0acac`) | Pill window keeps one size; panels change only its clickable region (`set_region`), so the pill no longer jumps a frame sideways on open/close; installer at `E:\` rebuilt |
 
 Decisions worth knowing (and *why*): Tauri over Electron for a 24/7 widget
 (memory); a custom drag because the native one blocks page events; offered
