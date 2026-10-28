@@ -113,11 +113,14 @@ export default function App() {
   const btn = BUTTON * zoom;
   // Space one hover button takes beside the pill.
   const need = GAP + btn;
+  // Space the tallest panel takes beside the pill.
+  const panelRoom = GAP + Math.max(SETTINGS_H, appsPanelHeight(MAX_TOP_APPS), BREAK_CARD_MAX_H);
   // The pill sits at a fixed spot in the window with this much room around it
-  // (CSS px): enough for a pair of buttons or a panel on any side, a panel
-  // also shifted sideways to stay on screen. See the window effects below.
-  const sideRoom = Math.max(2 * need, Math.max(PANEL_W, BREAK_CARD_W) - pillW);
-  const upDownRoom = Math.max(GAP + Math.max(SETTINGS_H, appsPanelHeight(MAX_TOP_APPS), BREAK_CARD_MAX_H), 2 * need);
+  // (CSS px): a docked button beside it or a panel shifted sideways to stay on
+  // screen; above and below, a row of buttons and a panel past them. See the
+  // window effects below.
+  const sideRoom = Math.max(need, Math.max(PANEL_W, BREAK_CARD_W) - pillW);
+  const upDownRoom = need + panelRoom;
   // Where the window is now: tauri.conf.json's Large pill at the window's top-left.
   const placed = useRef({ x: 0, y: 0, pillW: PILL_W });
   // Total clickable area now (CSS px²); none yet, so the first one applies at once.
@@ -393,33 +396,25 @@ export default function App() {
       unlisten.then((stop) => stop());
     };
   }, [pillW, scale]);
-  const placement = onScreen ? place(onScreen.pill, onScreen.area, need) : DOCKED;
-  const column = placement.buttons === "down" || placement.buttons === "up";
+  const placement = onScreen ? place(onScreen.pill, onScreen.area, need, panelRoom) : DOCKED;
   const shift = (width: number) => (onScreen ? panelShift(onScreen.pill, onScreen.area, width) : 0);
+  // Buttons between the pill and its panel: the panel opens this much further out.
+  const past = !placement.docked && placement.panelPastButtons ? need : 0;
 
-  // Hover shows expand and settings. In a column they share the panel's side,
-  // so an open panel takes their place there.
-  const showButtons = !intro && ((hover && !dragging) || panel === "settings") && !(column && panel !== "none");
+  // Hover shows expand and settings; they also stay while a panel opens past them.
+  const showButtons = !intro && ((hover && !dragging) || panel === "settings" || (past > 0 && panel !== "none"));
   // The two buttons, in window CSS px: [expand, settings].
   const buttonAt = (): [Rect, Rect] => {
-    const y = upDownRoom + (pillH - btn) / 2;
-    const left = sideRoom - need;
-    const right = sideRoom + pillW + GAP;
-    const at = (x: number, top: number): Rect => ({ x, y: top, w: btn, h: btn });
-    switch (placement.buttons) {
-      case "both":
-        return [at(left, y), at(right, y)];
-      case "right":
-        return [at(right, y), at(right + need, y)];
-      case "left":
-        return [at(left - need, y), at(left, y)];
-      default: {
-        const x = placement.column === "start" ? sideRoom : sideRoom + pillW - btn;
-        const first = placement.buttons === "down" ? upDownRoom + pillH + GAP : upDownRoom - need;
-        const step = placement.buttons === "down" ? need : -need;
-        return [at(x, first), at(x, first + step)];
-      }
+    const at = (x: number, y: number): Rect => ({ x, y, w: btn, h: btn });
+    if (placement.docked) {
+      const y = upDownRoom + (pillH - btn) / 2;
+      return [at(sideRoom - need, y), at(sideRoom + pillW + GAP, y)];
     }
+    // A row above or below, from the pill's wall-side end: expand at the wall.
+    const y = placement.buttonsUp ? upDownRoom - need : upDownRoom + pillH + GAP;
+    if (placement.align === "start") return [at(sideRoom, y), at(sideRoom + need, y)];
+    const end = sideRoom + pillW - btn;
+    return [at(end, y), at(end - need, y)];
   };
   const buttons = buttonAt();
   const pillRect: Rect = { x: sideRoom, y: upDownRoom, w: pillW, h: pillH };
@@ -454,8 +449,8 @@ export default function App() {
   const panelX = (width: number) => sideRoom + pillW / 2 - width / 2 + shift(width);
   const hits: Rect[] = [showButtons ? union([pillRect, ...buttons]) : pillRect];
   if (panel !== "none") {
-    // Reaches over the gap to the pill.
-    const y = placement.panelUp ? upDownRoom - GAP - panelH : upDownRoom + pillH;
+    // Reaches over the gap to the pill (or to the buttons it opens past).
+    const y = placement.panelUp ? upDownRoom - past - GAP - panelH : upDownRoom + pillH + past;
     hits.push({ x: panelX(panelW), y, w: panelW, h: panelH + GAP });
   }
   const hitKey = hits.map((r) => [r.x, r.y, r.w, r.h].map(Math.round).join(",")).join(";");
@@ -505,8 +500,8 @@ export default function App() {
           height: windowH,
           "--panel-x": `${panelX(PANEL_W)}px`,
           "--panel-x-wide": `${panelX(BREAK_CARD_W)}px`,
-          "--panel-top": placement.panelUp ? "auto" : `${upDownRoom + pillH + GAP}px`,
-          "--panel-bottom": placement.panelUp ? `${windowH - upDownRoom + GAP}px` : "auto",
+          "--panel-top": placement.panelUp ? "auto" : `${upDownRoom + pillH + past + GAP}px`,
+          "--panel-bottom": placement.panelUp ? `${windowH - upDownRoom + past + GAP}px` : "auto",
         } as CSSProperties
       }
       onMouseEnter={() => setHover(true)}

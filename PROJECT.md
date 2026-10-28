@@ -5,7 +5,7 @@ The single source of truth for anyone (person or agent) picking this project up.
 change that alters behavior, rules, files, workflow or status** (see
 "Keeping this file current" at the end).
 
-Last updated: 2026-10-28, expand + settings buttons and panels placed by free screen space, accent reading switch.
+Last updated: 2026-10-28, buttons and panel on opposite sides of the pill, by free screen space (owner sketches).
 
 ---
 
@@ -169,15 +169,17 @@ Each second the loop decides **who gets the second**:
   start at login and Quit). Both animate in (arrows spring apart; stick drops
   and ring turns) and on hover. Click the pill → top-apps panel; right-click
   → quit.
-- **Placement follows free screen space** (`layout.ts`, owner-approved):
-  room on both sides → expand left, settings right (the docked default);
-  against a side wall near the top or bottom → both side by side on the open
-  side; against a side wall elsewhere → a column toward the screen's vertical
-  middle, lined up with the pill's wall-side end. Panels open below the pill
-  in the upper half of the screen and above it in the lower half, centered on
-  the pill but shifted to stay on screen. In a column the buttons share the
-  panel's side, so an open panel takes their place. Re-measured 150 ms after
-  the window stops moving (`onMoved`).
+- **Placement follows free screen space** (`layout.ts`, from the owner's
+  sketches): docked at top center → expand left, settings right, panel below
+  (the default). Anywhere else the buttons and the panel sit above and below
+  the pill, on opposite sides: the panel prefers the outer side (toward the
+  nearest top or bottom edge) and takes the inner side when it does not fit;
+  the buttons take the other side, or, with no room there either (pill
+  touching the top or bottom edge), sit next to the pill with the panel
+  opening past them (they then stay shown while it is open). The buttons
+  line up with the pill's wall-side end: expand at the wall, settings toward
+  the middle. Panels are centered on the pill but shifted to stay on screen.
+  Re-measured 150 ms after the window stops moving (`onMoved`).
 - The pill window has **one fixed size** per pill size, with the pill at a
   fixed spot in its middle and room on every side for a button pair or a
   panel (it reaches past the screen edge; the transparent rest is
@@ -398,7 +400,8 @@ through the UI, battery quit.
 | `218fdc7` | Pill window keeps one size; panels change only its clickable region (`SetWindowRgn`), so the pill no longer jumps a frame sideways on open/close |
 | `25526bf` | Region replaced by cursor-polled click-through (`set_hit_area`, `watch_hit_area`): the region sometimes showed a dark box behind the pill. State icon no longer jumps 1 px when its pop ends (`will-change` on `.logo`); installer at `E:\` rebuilt |
 | `2f95149` | Notification sounds: chimes for timer alerts and breaks, played by Rust (`sound.rs`) so the webview's click-to-play rule cannot mute them; Sounds switch in the dashboard; hourglass icon while a countdown runs |
-| (after `2f95149`) | Expand + settings (power icon) hover buttons; buttons and panels placed by free screen space (`layout.ts`); multi-rect hit area; accent reading switch; chevron removed; installer at `E:\` rebuilt |
+| `3845bb0` | Expand + settings (power icon) hover buttons; buttons and panels placed by free screen space (`layout.ts`); multi-rect hit area; accent reading switch; chevron removed |
+| (after `3845bb0`) | Placement redone from the owner's edge sketches: buttons and panel on opposite sides of the pill (no side columns), panel past the buttons at the top/bottom edge, expand at the wall end; installer at `E:\` rebuilt |
 
 Decisions worth knowing (and *why*): Tauri over Electron for a 24/7 widget
 (memory); a custom drag because the native one blocks page events; offered
