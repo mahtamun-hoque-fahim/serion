@@ -1,14 +1,15 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
-import { getCurrentWindow } from "@tauri-apps/api/window";
-import { BookOpen, CalendarDays, Dumbbell, Grab, Eye, EyeClosed, GlassWater, Hand, Hourglass, Moon, Settings } from "lucide-react";
+import { currentMonitor, getCurrentWindow } from "@tauri-apps/api/window";
+import { BookOpen, CalendarDays, Dumbbell, Grab, Eye, EyeClosed, GlassWater, Hand, Hourglass, Maximize2, Moon, Power } from "lucide-react";
 import "@fontsource/google-sans/latin-700.css";
 import { SIZES, SettingsPanel, THEMES, loadSize, loadTheme, saveTheme } from "./Settings";
 import { TopAppsPanel, appsPanelHeight } from "./TopApps";
 import { BREAK_CARD_MAX_H, BREAK_CARD_W, BREAK_ICON, BreakCard, breakCardHeight, type BreakView } from "./BreakCard";
 import { SerionMark } from "./SerionMark";
 import { useMagneticDrag } from "./drag";
+import { DOCKED, panelShift, place, union, type Rect } from "./layout";
 import { useAppearance } from "./appearance";
 import { chime } from "./sound";
 import { EMPTY_TICK, formatClock, type BreakKind, type Tick } from "./types";
@@ -109,20 +110,24 @@ export default function App() {
   const zoom = SIZES[size];
   const pillW = PILL_W * zoom;
   const pillH = PILL_H * zoom;
-  // How far the window reaches left of the pill (CSS px), room for the widest
-  // panel centered under it. Fixed per size; see the window effects below.
-  const offset = Math.max(0, (Math.max(PANEL_W, BREAK_CARD_W) - pillW) / 2);
-  // Where the window is now: tauri.conf.json's Large pill at the window's left edge.
-  const placed = useRef({ offset: 0, pillW: PILL_W });
-  // The clickable region now (CSS px, from the window's left edge); none yet,
-  // so the first one applies at once.
-  const region = useRef({ left: Infinity, w: 0, h: 0 });
+  const btn = BUTTON * zoom;
+  // Space one hover button takes beside the pill.
+  const need = GAP + btn;
+  // The pill sits at a fixed spot in the window with this much room around it
+  // (CSS px): enough for a pair of buttons or a panel on any side, a panel
+  // also shifted sideways to stay on screen. See the window effects below.
+  const sideRoom = Math.max(2 * need, Math.max(PANEL_W, BREAK_CARD_W) - pillW);
+  const upDownRoom = Math.max(GAP + Math.max(SETTINGS_H, appsPanelHeight(MAX_TOP_APPS), BREAK_CARD_MAX_H), 2 * need);
+  // Where the window is now: tauri.conf.json's Large pill at the window's top-left.
+  const placed = useRef({ x: 0, y: 0, pillW: PILL_W });
+  // Total clickable area now (CSS px²); none yet, so the first one applies at once.
+  const hitArea = useRef(-1);
   const togglePanel = (p: Panel) => setPanel((current) => (current === p ? "none" : p));
   const offers = tick.break_offers;
   const onBreak = tick.break_kind !== null;
   // A tap opens or tucks the break card while a break is offered or running;
   // otherwise it opens today's top apps.
-  const { dragging, handlers } = useMagneticDrag(pillW, pillH, () => placed.current.offset, () =>
+  const { dragging, handlers } = useMagneticDrag(pillW, pillH, () => placed.current, () =>
     togglePanel(offers.length || onBreak || breakDone ? "break" : "apps"),
   );
   const hoverRef = useRef(false);
@@ -273,7 +278,6 @@ export default function App() {
               : steadyState));
   const shownText = onBreak ? formatClock(tick.break_ms ?? 0) : tick.text;
   const breakProgress = onBreak && tick.break_total_ms ? 1 - (tick.break_ms ?? 0) / tick.break_total_ms : 0;
-  const showButton = !intro && ((hover && !dragging) || panel === "settings");
 
   useEffect(() => {
     const unlisten = listen<Tick>("tick", (event) => setTick(event.payload));
@@ -336,29 +340,89 @@ export default function App() {
     };
   }, []);
 
-  // The window keeps one size, big enough for the widest and tallest panel,
+  // The window keeps one size, with the pill at a fixed spot in its middle,
   // and never moves when a panel opens or closes: moving or resizing it showed
-  // the pill a frame out of place. Only its clickable region changes (below).
+  // the pill a frame out of place. Only its clickable parts change (below).
   // A new pill size resizes it once, keeping the pill's center where it was
   // (so a docked pill stays centered). Also runs at launch.
-  const windowW = offset + Math.max(pillW + GAP + BUTTON * zoom, (pillW + Math.max(PANEL_W, BREAK_CARD_W)) / 2);
-  const windowH = pillH + GAP + Math.max(SETTINGS_H, appsPanelHeight(MAX_TOP_APPS), BREAK_CARD_MAX_H);
+  const windowW = 2 * sideRoom + pillW;
+  const windowH = 2 * upDownRoom + pillH;
   useEffect(() => {
     if (!scale) return;
     getCurrentWindow()
       .outerPosition()
       .then((pos) => {
         const was = placed.current;
-        const pillX = pos.x + (was.offset + (was.pillW - pillW) / 2) * scale;
-        placed.current = { offset, pillW };
+        const pillX = pos.x + (was.x + (was.pillW - pillW) / 2) * scale;
+        const pillY = pos.y + was.y * scale;
+        placed.current = { x: sideRoom, y: upDownRoom, pillW };
         invoke("set_bounds", {
-          x: Math.round(pillX - offset * scale),
-          y: pos.y,
+          x: Math.round(pillX - sideRoom * scale),
+          y: Math.round(pillY - upDownRoom * scale),
           width: Math.round(windowW * scale),
           height: Math.round(windowH * scale),
         });
       });
   }, [pillW, scale]);
+
+  // Where the pill is on its screen (CSS px), read again once it stops moving:
+  // the buttons and panels go where there is room (layout.ts).
+  const [onScreen, setOnScreen] = useState<{ pill: Rect; area: Rect } | null>(null);
+  const pillSize = useRef({ w: pillW, h: pillH });
+  pillSize.current = { w: pillW, h: pillH };
+  useEffect(() => {
+    const win = getCurrentWindow();
+    const measure = async () => {
+      const [pos, monitor, factor] = await Promise.all([win.outerPosition(), currentMonitor(), win.scaleFactor()]);
+      if (!monitor) return;
+      const { x, y } = placed.current;
+      const a = monitor.workArea;
+      setOnScreen({
+        pill: { x: pos.x / factor + x, y: pos.y / factor + y, w: pillSize.current.w, h: pillSize.current.h },
+        area: { x: a.position.x / factor, y: a.position.y / factor, w: a.size.width / factor, h: a.size.height / factor },
+      });
+    };
+    let timer = 0;
+    const unlisten = win.onMoved(() => {
+      clearTimeout(timer);
+      timer = window.setTimeout(measure, 150);
+    });
+    measure();
+    return () => {
+      clearTimeout(timer);
+      unlisten.then((stop) => stop());
+    };
+  }, [pillW, scale]);
+  const placement = onScreen ? place(onScreen.pill, onScreen.area, need) : DOCKED;
+  const column = placement.buttons === "down" || placement.buttons === "up";
+  const shift = (width: number) => (onScreen ? panelShift(onScreen.pill, onScreen.area, width) : 0);
+
+  // Hover shows expand and settings. In a column they share the panel's side,
+  // so an open panel takes their place there.
+  const showButtons = !intro && ((hover && !dragging) || panel === "settings") && !(column && panel !== "none");
+  // The two buttons, in window CSS px: [expand, settings].
+  const buttonAt = (): [Rect, Rect] => {
+    const y = upDownRoom + (pillH - btn) / 2;
+    const left = sideRoom - need;
+    const right = sideRoom + pillW + GAP;
+    const at = (x: number, top: number): Rect => ({ x, y: top, w: btn, h: btn });
+    switch (placement.buttons) {
+      case "both":
+        return [at(left, y), at(right, y)];
+      case "right":
+        return [at(right, y), at(right + need, y)];
+      case "left":
+        return [at(left - need, y), at(left, y)];
+      default: {
+        const x = placement.column === "start" ? sideRoom : sideRoom + pillW - btn;
+        const first = placement.buttons === "down" ? upDownRoom + pillH + GAP : upDownRoom - need;
+        const step = placement.buttons === "down" ? need : -need;
+        return [at(x, first), at(x, first + step)];
+      }
+    }
+  };
+  const buttons = buttonAt();
+  const pillRect: Rect = { x: sideRoom, y: upDownRoom, w: pillW, h: pillH };
 
   useLayoutEffect(() => {
     document.documentElement.style.setProperty("--zoom", String(zoom));
@@ -374,10 +438,10 @@ export default function App() {
   }, [theme, alert]);
 
   // The transparent window would catch clicks everywhere, so only the pill,
-  // its button and an open panel are clickable; elsewhere clicks pass through.
-  // Panels are centered under the pill, so an open panel reaches left of it by
-  // `targetOffset`. The region grows at once, before the enter animation, and
-  // shrinks only after the exit animation.
+  // its shown buttons and an open panel are clickable (each including the gap
+  // to the pill, so the mouse can cross it); elsewhere clicks pass through.
+  // The clickable parts grow at once, before the enter animation, and shrink
+  // only after the exit animation.
   const panelH =
     panel === "settings"
       ? SETTINGS_H
@@ -387,26 +451,26 @@ export default function App() {
           ? breakCardHeight(breakView)
           : 0;
   const panelW = panel === "break" ? BREAK_CARD_W : PANEL_W;
-  const targetOffset = panel === "none" ? 0 : Math.max(0, (panelW - pillW) / 2);
-  const rowW = showButton ? pillW + GAP + BUTTON * zoom : pillW;
-  const frameW = panel === "none" ? rowW : targetOffset + Math.max(rowW, (pillW + panelW) / 2);
-  const frameH = panel === "none" ? pillH : pillH + GAP + panelH;
+  const panelX = (width: number) => sideRoom + pillW / 2 - width / 2 + shift(width);
+  const hits: Rect[] = [showButtons ? union([pillRect, ...buttons]) : pillRect];
+  if (panel !== "none") {
+    // Reaches over the gap to the pill.
+    const y = placement.panelUp ? upDownRoom - GAP - panelH : upDownRoom + pillH;
+    hits.push({ x: panelX(panelW), y, w: panelW, h: panelH + GAP });
+  }
+  const hitKey = hits.map((r) => [r.x, r.y, r.w, r.h].map(Math.round).join(",")).join(";");
   useEffect(() => {
     if (!scale) return;
-    const left = offset - targetOffset;
-    const now = region.current;
-    const shrinking = frameW < now.w || frameH < now.h || left > now.left;
+    const area = hits.reduce((sum, r) => sum + r.w * r.h, 0);
+    const shrinking = area < hitArea.current;
     const timer = setTimeout(() => {
-      region.current = { left, w: frameW, h: frameH };
+      hitArea.current = area;
       invoke("set_hit_area", {
-        x: Math.round(left * scale),
-        y: 0,
-        width: Math.round(frameW * scale),
-        height: Math.round(frameH * scale),
+        rects: hits.map((r) => [r.x, r.y, r.w, r.h].map((v) => Math.round(v * scale))),
       });
     }, shrinking ? EXIT_MS : 0);
     return () => clearTimeout(timer);
-  }, [offset, targetOffset, frameW, frameH, scale]);
+  }, [hitKey, scale]);
 
   // Close on Esc, and when you click anywhere outside the widget.
   useEffect(() => {
@@ -423,64 +487,104 @@ export default function App() {
 
   const pillClass = ["pill", intro && "intro", dragging && "dragging", alert && "alert", (onBreak || offers.length > 0) && "on-break"].filter(Boolean).join(" ");
 
+  // A button grows out of the pill: it starts nudged toward it.
+  const fromPill = (r: Rect) => {
+    const dx = sideRoom + pillW / 2 - (r.x + r.w / 2);
+    const dy = upDownRoom + pillH / 2 - (r.y + r.h / 2);
+    const nudge = (d: number, other: number) => (Math.abs(d) > Math.abs(other) ? Math.sign(d) * 14 : 0);
+    return { "--from-x": `${nudge(dx, dy)}px`, "--from-y": `${nudge(dy, dx)}px` };
+  };
+  const slot = (r: Rect) => ({ left: r.x, top: r.y, width: r.w, height: r.h });
+
   return (
     <div
-      className="bar"
-      style={{ "--offset": `${offset}px`, "--pill-w": `${pillW}px` } as CSSProperties}
+      className={placement.panelUp ? "bar panels-up" : "bar"}
+      style={
+        {
+          width: windowW,
+          height: windowH,
+          "--panel-x": `${panelX(PANEL_W)}px`,
+          "--panel-x-wide": `${panelX(BREAK_CARD_W)}px`,
+          "--panel-top": placement.panelUp ? "auto" : `${upDownRoom + pillH + GAP}px`,
+          "--panel-bottom": placement.panelUp ? `${windowH - upDownRoom + GAP}px` : "auto",
+        } as CSSProperties
+      }
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
     >
-      <div
-        className={pillClass}
-        title={onBreak || offers.length ? `${STATE_LABEL[shownState]}.` : `${STATE_LABEL[shownState]}. Click for your top apps, right-click to quit.`}
-        aria-expanded={panel === "apps"}
-        aria-controls="top-apps"
-        onContextMenu={(event) => {
-          event.preventDefault();
-          invoke("quit");
-        }}
-        {...handlers}
-      >
-        {/* Launch: the mark in a theme-colored circle, which then opens into the pill. */}
-        <SerionMark size={24} className="intro-mark" />
-        {/* key = state: a state change mounts a fresh circle and icon, which
-            replays the pop and then the draw. */}
-        <div key={offers.length > 1 && !onBreak ? "offers" : shownState} className="logo" aria-label={STATE_LABEL[shownState]}>
-          {offers.length > 1 && !onBreak ? (
-            // Two or three breaks due at once: all their icons, you pick in the card.
-            <span className="offer-icons">
-              {offers.map(({ kind }) => {
-                const Icon = BREAK_ICON[kind];
-                return <Icon key={kind} size={12} strokeWidth={2.5} aria-hidden />;
-              })}
-            </span>
-          ) : (
-            <StateIcon state={shownState} />
-          )}
-          {onBreak && (
-            // Fills up around the icon as the break runs.
-            <svg className="break-progress" viewBox="0 0 36 36" aria-hidden>
-              <circle cx="18" cy="18" r="16" pathLength={1} style={{ strokeDashoffset: 1 - breakProgress }} />
-            </svg>
-          )}
+      <div className="slot" style={slot(pillRect)}>
+        <div
+          className={pillClass}
+          title={onBreak || offers.length ? `${STATE_LABEL[shownState]}.` : `${STATE_LABEL[shownState]}. Click for your top apps, right-click to quit.`}
+          aria-expanded={panel === "apps"}
+          aria-controls="top-apps"
+          onContextMenu={(event) => {
+            event.preventDefault();
+            invoke("quit");
+          }}
+          {...handlers}
+        >
+          {/* Launch: the mark in a theme-colored circle, which then opens into the pill. */}
+          <SerionMark size={24} className="intro-mark" />
+          {/* key = state: a state change mounts a fresh circle and icon, which
+              replays the pop and then the draw. */}
+          <div key={offers.length > 1 && !onBreak ? "offers" : shownState} className="logo" aria-label={STATE_LABEL[shownState]}>
+            {offers.length > 1 && !onBreak ? (
+              // Two or three breaks due at once: all their icons, you pick in the card.
+              <span className="offer-icons">
+                {offers.map(({ kind }) => {
+                  const Icon = BREAK_ICON[kind];
+                  return <Icon key={kind} size={12} strokeWidth={2.5} aria-hidden />;
+                })}
+              </span>
+            ) : (
+              <StateIcon state={shownState} />
+            )}
+            {onBreak && (
+              // Fills up around the icon as the break runs.
+              <svg className="break-progress" viewBox="0 0 36 36" aria-hidden>
+                <circle cx="18" cy="18" r="16" pathLength={1} style={{ strokeDashoffset: 1 - breakProgress }} />
+              </svg>
+            )}
+          </div>
+          {/* key = day: at midnight the new count slides in. */}
+          <span key={tick.day} className="time">
+            {shownText}
+          </span>
         </div>
-        {/* key = day: at midnight the new count slides in. */}
-        <span key={tick.day} className="time">
-          {shownText}
-        </span>
       </div>
 
-      <button
-        type="button"
-        className={showButton ? "settings-btn show" : "settings-btn"}
-        aria-label="Settings"
-        aria-expanded={panel === "settings"}
-        aria-controls="settings"
-        tabIndex={showButton ? 0 : -1}
-        onClick={() => togglePanel("settings")}
-      >
-        <Settings className="gear" size={20} aria-hidden />
-      </button>
+      <div className="slot" style={slot(buttons[0])}>
+        <button
+          type="button"
+          className={showButtons ? "pill-btn expand-btn show" : "pill-btn expand-btn"}
+          style={fromPill(buttons[0]) as CSSProperties}
+          aria-label="Open Serion"
+          title="Open Serion"
+          tabIndex={showButtons ? 0 : -1}
+          onClick={() => {
+            setPanel("none");
+            invoke("open_dashboard");
+          }}
+        >
+          <Maximize2 size={20} aria-hidden />
+        </button>
+      </div>
+      <div className="slot" style={slot(buttons[1])}>
+        <button
+          type="button"
+          className={showButtons ? "pill-btn power-btn show" : "pill-btn power-btn"}
+          style={fromPill(buttons[1]) as CSSProperties}
+          aria-label="Settings"
+          title="Settings"
+          aria-expanded={panel === "settings"}
+          aria-controls="settings"
+          tabIndex={showButtons ? 0 : -1}
+          onClick={() => togglePanel("settings")}
+        >
+          <Power size={20} aria-hidden />
+        </button>
+      </div>
 
       <SettingsPanel
         open={panel === "settings"}
@@ -493,10 +597,6 @@ export default function App() {
         top={tick.top}
         reading={tick.reading}
         onReading={(on) => invoke("set_reading", { on })}
-        onExpand={() => {
-          setPanel("none");
-          invoke("open_dashboard");
-        }}
       />
       {breakView && (
         <BreakCard

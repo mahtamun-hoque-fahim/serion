@@ -55,8 +55,13 @@ const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), h
  * Window positions are physical pixels; pointer positions are CSS pixels and
  * are converted with the window's scale factor.
  */
-/** `offset`: how far (CSS px) the window currently reaches left of the pill. */
-export function useMagneticDrag(pillWidth: number, pillHeight: number, offset: () => number, onTap: () => void) {
+/** `offset`: how far (CSS px) the window currently reaches left of and above the pill. */
+export function useMagneticDrag(
+  pillWidth: number,
+  pillHeight: number,
+  offset: () => { x: number; y: number },
+  onTap: () => void,
+) {
   const [dragging, setDragging] = useState(false);
   const drag = useRef<Drag | null>(null);
   const pressed = useRef(false);
@@ -64,10 +69,12 @@ export function useMagneticDrag(pillWidth: number, pillHeight: number, offset: (
   const glideFrame = useRef(0);
 
   const win = getCurrentWindow();
-  // Positions here are the pill's; the window sits `offset` further left.
+  // Positions here are the pill's; the window sits `offset` further left and up.
   const scaleRef = useRef(1);
   const move = (x: number, y: number) =>
-    win.setPosition(new PhysicalPosition(Math.round(x - offset() * scaleRef.current), Math.round(y)));
+    win.setPosition(
+      new PhysicalPosition(Math.round(x - offset().x * scaleRef.current), Math.round(y - offset().y * scaleRef.current)),
+    );
 
   function glideTo(fromX: number, fromY: number, toX: number, toY: number) {
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
@@ -99,7 +106,8 @@ export function useMagneticDrag(pillWidth: number, pillHeight: number, offset: (
     ]);
     if (!pressed.current) return; // already released: it was a click
     scaleRef.current = scale;
-    const pillX = position.x + offset() * scale;
+    const pillX = position.x + offset().x * scale;
+    const pillY = position.y + offset().y * scale;
 
     const gap = EDGE_GAP * scale;
     // shortcut: edges come from the screen the drag starts on; dragging onto
@@ -119,13 +127,13 @@ export function useMagneticDrag(pillWidth: number, pillHeight: number, offset: (
       pointerX: screenX,
       pointerY: screenY,
       windowX: pillX,
-      windowY: position.y,
+      windowY: pillY,
       dockX: primary ? primary.position.x + (primary.size.width - pillWidth * scale) / 2 : pillX,
-      dockY: primary ? primary.position.y + gap : position.y,
+      dockY: primary ? primary.position.y + gap : pillY,
       edges,
       scale,
       x: pillX,
-      y: position.y,
+      y: pillY,
       moved: false,
     };
   }

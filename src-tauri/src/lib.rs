@@ -519,10 +519,11 @@ fn set_bounds(x: i32, y: i32, width: u32, height: u32, window: tauri::WebviewWin
     }
 }
 
-/// The part of the pill window that takes the mouse (physical px, relative to
-/// the window): pill, button and open panel. `None` until the page sets it.
+/// The parts of the pill window that take the mouse, as `[x, y, width,
+/// height]` rectangles (physical px, relative to the window): the pill, each
+/// shown button and an open panel. `None` until the page sets them.
 #[derive(Default)]
-struct HitArea(Mutex<Option<[i32; 4]>>);
+struct HitArea(Mutex<Option<Vec<[i32; 4]>>>);
 
 /// The pill window keeps one size, so opening a panel never moves or resizes
 /// it (that made the pill jump for a frame). Its transparent rest must not
@@ -530,9 +531,9 @@ struct HitArea(Mutex<Option<[i32; 4]>>);
 /// A window region (SetWindowRgn) did that too, but sometimes painted the
 /// region as an opaque dark box on this transparent window.
 #[tauri::command]
-fn set_hit_area(x: i32, y: i32, width: i32, height: i32, area: TauriState<HitArea>) {
+fn set_hit_area(rects: Vec<[i32; 4]>, area: TauriState<HitArea>) {
     if let Ok(mut current) = area.0.lock() {
-        *current = Some([x, y, width, height]);
+        *current = Some(rects);
     }
 }
 
@@ -566,11 +567,11 @@ fn watch_hit_area(app: AppHandle) {
     loop {
         thread::sleep(Duration::from_millis(25));
         let Some(window) = app.get_webview_window("main") else { continue };
-        let Some([x, y, width, height]) = app.state::<HitArea>().0.lock().ok().and_then(|a| *a) else { continue };
+        let Some(rects) = app.state::<HitArea>().0.lock().ok().and_then(|a| a.clone()) else { continue };
         let (Ok(cursor), Ok(origin)) = (window.cursor_position(), window.outer_position()) else { continue };
         let cx = cursor.x as i32 - origin.x;
         let cy = cursor.y as i32 - origin.y;
-        let inside = cx >= x && cx < x + width && cy >= y && cy < y + height;
+        let inside = rects.iter().any(|&[x, y, w, h]| cx >= x && cx < x + w && cy >= y && cy < y + h);
         let ignore = !inside && !mouse_held();
         if ignore != ignoring && window.set_ignore_cursor_events(ignore).is_ok() {
             ignoring = ignore;

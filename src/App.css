@@ -45,13 +45,15 @@ body,
 
 /* Pill + settings button in a row, settings panel below.
    Sizes here must match the window sizes in App.tsx. */
+/* The whole window: the pill at a fixed spot in the middle, its buttons and
+   panels around it wherever there is room on screen (App.tsx sets the size,
+   the slots and the --panel-* positions). */
 .bar {
   position: relative;
-  display: flex;
-  gap: 8px;
-  /* The window reaches left of the pill, room for a centered panel
-     (App.tsx sets --offset and --pill-w). */
-  padding-left: var(--offset, 0px);
+}
+
+.slot {
+  position: absolute;
 }
 
 .pill {
@@ -195,9 +197,9 @@ body,
   font-variant-numeric: tabular-nums;
 }
 
-/* Settings button: hidden until you hover the widget, then slides out of
-   the pill with a small spring. */
-.settings-btn {
+/* Expand and settings buttons: hidden until you hover the widget, then they
+   spring out of the pill (App.tsx sets --from-x/--from-y toward the pill). */
+.pill-btn {
   zoom: var(--zoom, 1);
   flex: none;
   width: 50px;
@@ -211,7 +213,7 @@ body,
   color: #ffffff;
   cursor: pointer;
   opacity: 0;
-  transform: translateX(-14px) scale(0.6);
+  transform: translate(var(--from-x, 0px), var(--from-y, 0px)) scale(0.6);
   pointer-events: none;
   transition:
     opacity 160ms ease-in,
@@ -219,7 +221,7 @@ body,
     background-color 300ms ease-out;
 }
 
-.settings-btn.show {
+.pill-btn.show {
   opacity: 1;
   transform: none;
   pointer-events: auto;
@@ -229,34 +231,96 @@ body,
     background-color 300ms ease-out;
 }
 
-.settings-btn.show:active {
+.pill-btn.show:active {
   transform: scale(0.9);
   transition-duration: 200ms, 100ms, 300ms;
 }
 
-.settings-btn:focus-visible {
+.pill-btn:focus-visible {
   outline: 2px solid #ffffff;
   outline-offset: -6px;
 }
 
-.gear {
-  transition: transform 450ms var(--spring);
+.pill-btn svg path {
+  transition: transform 380ms var(--spring);
 }
 
-.settings-btn:hover .gear {
-  transform: rotate(45deg);
+/* Expand: the two corner arrows spring out from the middle as it appears,
+   and push further apart on hover. Paths 1-2 are the top-right arrow, 3-4
+   the bottom-left one. */
+.expand-btn.show svg path:nth-child(-n + 2) {
+  animation: arrow-out-tr 460ms var(--spring) 80ms backwards;
 }
 
-.settings-btn[aria-expanded="true"] .gear {
-  transform: rotate(90deg);
+.expand-btn.show svg path:nth-child(n + 3) {
+  animation: arrow-out-bl 460ms var(--spring) 80ms backwards;
 }
 
-/* Settings panel: drops in under the bar, growing out of the button side. */
+@keyframes arrow-out-tr {
+  from {
+    transform: translate(-4px, 4px);
+  }
+}
+
+@keyframes arrow-out-bl {
+  from {
+    transform: translate(4px, -4px);
+  }
+}
+
+.expand-btn:hover svg path:nth-child(-n + 2) {
+  transform: translate(1.5px, -1.5px);
+}
+
+.expand-btn:hover svg path:nth-child(n + 3) {
+  transform: translate(-1.5px, 1.5px);
+}
+
+/* Power: the stick drops in and the ring turns into place as it appears; on
+   hover the ring spins once and the stick dips like a pressed switch. Path 1
+   is the stick, path 2 the ring. */
+.power-btn svg path:nth-child(2) {
+  transform-origin: 12px 13px;
+  transform-box: view-box;
+}
+
+.power-btn.show svg path:nth-child(1) {
+  animation: stick-in 420ms var(--spring) 80ms backwards;
+}
+
+.power-btn.show svg path:nth-child(2) {
+  animation: ring-turn 520ms var(--spring) 60ms backwards;
+}
+
+@keyframes stick-in {
+  from {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes ring-turn {
+  from {
+    transform: rotate(-120deg);
+  }
+}
+
+.power-btn:hover svg path:nth-child(1),
+.power-btn[aria-expanded="true"] svg path:nth-child(1) {
+  transform: translateY(1.5px);
+}
+
+.power-btn:hover svg path:nth-child(2) {
+  transform: rotate(360deg);
+  transition-duration: 700ms;
+}
+
+/* Panels open on the side of the pill with room: below it in the upper half
+   of the screen, above it in the lower half (App.tsx sets --panel-*). */
 .panel {
   position: absolute;
-  top: calc(50px * var(--zoom, 1) + 8px); /* under the pill, whatever its size */
-  /* Centered under the pill: half of the 226px width to the left of its middle. */
-  left: calc(var(--offset, 0px) + var(--pill-w, 168px) / 2 - 113px);
+  top: var(--panel-top, auto);
+  bottom: var(--panel-bottom, auto);
+  left: var(--panel-x, 0px);
   box-sizing: border-box;
   width: 226px;
   height: 172px;
@@ -283,6 +347,15 @@ body,
     opacity 200ms ease-out,
     transform 380ms cubic-bezier(0.34, 1.3, 0.64, 1),
     visibility 0s;
+}
+
+/* Above the pill: grows upward out of it instead. */
+.panels-up .panel {
+  transform-origin: bottom center;
+}
+
+.panels-up .panel:not(.open) {
+  transform: translateY(8px) scale(0.94);
 }
 
 .panel-title {
@@ -544,45 +617,6 @@ body,
   color: var(--panel-ink-2);
 }
 
-/* Expand: opens the full Serion window. Nudges down on hover. */
-.expand-btn {
-  margin: auto auto 0;
-  width: 36px;
-  height: 30px;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  border: 0;
-  border-radius: 10px;
-  background: transparent;
-  color: var(--panel-ink);
-  cursor: pointer;
-  transition:
-    background-color 150ms ease-out,
-    transform 120ms ease-out;
-}
-
-.expand-btn svg {
-  transition: transform 300ms var(--spring);
-}
-
-.expand-btn:hover {
-  background: var(--panel-hover);
-}
-
-.expand-btn:hover svg {
-  transform: translateY(2px);
-}
-
-.expand-btn:active {
-  transform: scale(0.92);
-}
-
-.expand-btn:focus-visible {
-  outline: 2px solid var(--panel-ink);
-  outline-offset: -2px;
-}
-
 /* Reading mode: after drawing in, the book's pages flutter now and then. */
 .state-reading {
   animation:
@@ -657,14 +691,77 @@ body,
   }
 }
 
-.reading-row {
-  margin-top: 4px;
+/* Reading mode: a big accent switch at the foot of the top-apps panel. The
+   book knob slides from left (off) to right (on); the label moves aside. */
+.reading-cta {
+  position: relative;
+  flex: none;
+  margin-top: auto;
+  width: 100%;
+  height: 44px;
+  padding: 0 14px 0 50px;
+  display: flex;
+  align-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: var(--theme);
+  color: #ffffff;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    padding 380ms var(--spring),
+    filter 150ms ease-out,
+    transform 120ms ease-out,
+    background-color 300ms ease-out;
 }
 
-.reading-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+.reading-cta[aria-checked="true"] {
+  padding: 0 50px 0 16px;
+}
+
+.reading-cta:hover {
+  filter: brightness(1.08);
+}
+
+.reading-cta:active {
+  transform: scale(0.97);
+}
+
+.reading-cta:focus-visible {
+  outline: 2px solid var(--panel-ink);
+  outline-offset: 2px;
+}
+
+.reading-knob {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #ffffff;
+  color: var(--theme);
+  transition: transform 420ms var(--spring);
+}
+
+/* Panel inner width (226 - 2 x 12 padding - 2 x 1 border) minus the knob and its insets. */
+.reading-cta[aria-checked="true"] .reading-knob {
+  transform: translateX(152px) rotate(360deg);
+}
+
+.reading-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.reading-text small {
+  font-size: 11px;
+  opacity: 0.8;
 }
 
 /* Several breaks due at once: their icons side by side in the circle. */

@@ -1,17 +1,17 @@
 import type { CSSProperties } from "react";
-import { BookOpen, ChevronDown } from "lucide-react";
+import { BookOpen } from "lucide-react";
 import type { Tick } from "./types";
 
 // Panel layout in CSS pixels; App.tsx sizes the window from appsPanelHeight().
 const PADDING = 12;
 const TITLE_H = 26;
 const ROW_H = 30;
-const READING_H = 40;
-const FOOTER_H = 40;
+/** The reading switch and the gap above it. */
+const READING_H = 44 + 10;
 
 /** Height of the panel for `count` apps (an empty list still shows one row). */
 export function appsPanelHeight(count: number) {
-  return PADDING * 2 + 2 + TITLE_H + Math.max(count, 1) * ROW_H + READING_H + FOOTER_H;
+  return PADDING * 2 + 2 + TITLE_H + Math.max(count, 1) * ROW_H + READING_H;
 }
 
 type Props = {
@@ -19,11 +19,10 @@ type Props = {
   top: Tick["top"];
   reading: boolean;
   onReading: (on: boolean) => void;
-  onExpand: () => void;
 };
 
-/** Today's most used apps, dropped under the pill when you click it. */
-export function TopAppsPanel({ open, top, reading, onReading, onExpand }: Props) {
+/** Today's most used apps, opened from the pill when you click it. */
+export function TopAppsPanel({ open, top, reading, onReading }: Props) {
   const longest = top[0]?.ms || 1;
 
   return (
@@ -54,25 +53,23 @@ export function TopAppsPanel({ open, top, reading, onReading, onExpand }: Props)
           ))}
         </ol>
       )}
-      {/* Reading mode: keeps counting through long reads, for the app in front. */}
+      {/* Reading mode: keeps counting through long reads, for the app in front.
+          A big accent switch: the book knob slides across when it is on. */}
       <button
         type="button"
         role="switch"
         aria-checked={reading}
-        className="panel-row toggle-row reading-row"
+        className="reading-cta"
         title="Idle after 20 min instead of 5, for the app in front. Ends when you switch apps or after an hour."
         onClick={() => onReading(!reading)}
       >
-        <span className="reading-label">
-          <BookOpen size={14} aria-hidden />
+        <span className="reading-knob" aria-hidden>
+          <BookOpen size={16} />
+        </span>
+        <span className="reading-text">
           Reading mode
+          <small>{reading ? "On" : "Off"}</small>
         </span>
-        <span className="switch" aria-hidden>
-          <span className="switch-knob" />
-        </span>
-      </button>
-      <button type="button" className="expand-btn" aria-label="Open Serion" title="Open Serion" onClick={onExpand}>
-        <ChevronDown size={18} aria-hidden />
       </button>
     </div>
   );

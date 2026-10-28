@@ -5,7 +5,7 @@ The single source of truth for anyone (person or agent) picking this project up.
 change that alters behavior, rules, files, workflow or status** (see
 "Keeping this file current" at the end).
 
-Last updated: 2026-10-28, notification sounds played by Rust, hourglass icon during a countdown.
+Last updated: 2026-10-28, expand + settings buttons and panels placed by free screen space, accent reading switch.
 
 ---
 
@@ -111,9 +111,10 @@ each window loads only its own CSS):
 |---|---|
 | `main.tsx` | routes `?view=dashboard` / `?view=flash` / default (pill); applies appearance before first paint |
 | `App.tsx` + `App.css` | **the pill window**: pill, state icon with draw-on animation, settings button + panel, top-apps panel, break card, fixed window size + clickable hit area, intro animation, steady-state debounce, fullscreen hide/peek, calendar flip, alert red |
-| `drag.ts` | custom drag (not Tauri's native one): grab cursor, magnetic dock at top center and magnetic screen edges, glide back, tap detection |
+| `drag.ts` | custom drag (not Tauri's native one): grab cursor, magnetic dock at top center and magnetic screen edges, glide back, tap detection; converts window and pill positions with an x/y offset |
 | `Settings.tsx` | themes (6 presets), size (Small/Large), autostart hook, pill settings panel, shared `ThemeSwatches` |
-| `TopApps.tsx` | pill panel: today's top 5 apps, reading-mode switch, chevron to open the dashboard |
+| `TopApps.tsx` | pill panel: today's top 5 apps and the accent reading-mode switch |
+| `layout.ts` | where the hover buttons and panels go from the pill's free screen space (self-check: `node --experimental-strip-types scripts/layout.check.ts`) |
 | `BreakCard.tsx` + `.css`, `BreakArt.tsx` | break card (offer / starting tick / active / done) and the animated illustrations |
 | `Dashboard.tsx` + `.css` | dashboard window: range tabs, stat tiles, bar chart, top apps, Settings, Breaks, Timers, Data cards, appearance switch |
 | `BarChart.tsx` | single-series SVG bar chart with hover tooltip and screen-reader table |
@@ -163,19 +164,35 @@ Each second the loop decides **who gets the second**:
 - A state must last **2 s** before the pill shows it (no flicker on app switches).
 - Circle pop + line draw-on animation on every state change; launch intro (mark
   in a circle opens into the pill).
-- Hover → settings button; click → top-apps panel; right-click → quit.
-- Panels (top apps, settings, break card) are **centered under the pill** in
-  both sizes. The pill window has **one fixed size** per pill size, big enough
-  for the widest and tallest panel, and reaches left of the pill by a fixed
-  `offset` (`--offset` on `.bar`). Opening or closing a panel never moves or
-  resizes it. The page tells Rust which part is clickable (pill, button, open
-  panel) with `set_hit_area`; a Rust thread (`watch_hit_area`) checks the
-  cursor every 25 ms and turns click-through (`set_ignore_cursor_events`) on
-  outside that area, never while a mouse button is held. The area grows at
-  once and shrinks after the exit animation (`EXIT_MS`).
-  `set_bounds` resizes the window only when the pill size or screen scale
-  changes. The drag hook converts between window and pill positions with
-  `offset`.
+- Hover → two round buttons: **expand** (`Maximize2`, opens the dashboard)
+  and **settings** (a `Power` icon, opens the settings panel with theme,
+  start at login and Quit). Both animate in (arrows spring apart; stick drops
+  and ring turns) and on hover. Click the pill → top-apps panel; right-click
+  → quit.
+- **Placement follows free screen space** (`layout.ts`, owner-approved):
+  room on both sides → expand left, settings right (the docked default);
+  against a side wall near the top or bottom → both side by side on the open
+  side; against a side wall elsewhere → a column toward the screen's vertical
+  middle, lined up with the pill's wall-side end. Panels open below the pill
+  in the upper half of the screen and above it in the lower half, centered on
+  the pill but shifted to stay on screen. In a column the buttons share the
+  panel's side, so an open panel takes their place. Re-measured 150 ms after
+  the window stops moving (`onMoved`).
+- The pill window has **one fixed size** per pill size, with the pill at a
+  fixed spot in its middle and room on every side for a button pair or a
+  panel (it reaches past the screen edge; the transparent rest is
+  click-through). Opening or closing a panel never moves or resizes it. The
+  page tells Rust which parts are clickable (pill plus shown buttons, and an
+  open panel, each including the gap to the pill) with `set_hit_area`; a Rust
+  thread (`watch_hit_area`) checks the cursor every 25 ms and turns
+  click-through (`set_ignore_cursor_events`) on outside them, never while a
+  mouse button is held. They grow at once and shrink after the exit
+  animation (`EXIT_MS`). `set_bounds` resizes the window only when the pill
+  size or screen scale changes. The drag hook converts between window and
+  pill positions with the x/y offset.
+- Top-apps panel: today's top 5, then **reading mode as a big accent
+  switch** (the book knob slides across, "On"/"Off"). The old chevron to the
+  dashboard is gone (the expand button replaces it).
 - Custom drag, magnetic top-center dock and magnetic screen edges (work area).
 - Sizes: Small (80%, CSS `zoom`) / Large; keeps its center when resized.
 - Hides while a **fullscreen** app is in front (setting "Show over fullscreen"
@@ -380,7 +397,8 @@ through the UI, battery quit.
 | `ce0acac` | Single instance: a second launch (autostart plus the desktop icon) exits and opens the running copy's dashboard; installer at `E:\` rebuilt |
 | `218fdc7` | Pill window keeps one size; panels change only its clickable region (`SetWindowRgn`), so the pill no longer jumps a frame sideways on open/close |
 | `25526bf` | Region replaced by cursor-polled click-through (`set_hit_area`, `watch_hit_area`): the region sometimes showed a dark box behind the pill. State icon no longer jumps 1 px when its pop ends (`will-change` on `.logo`); installer at `E:\` rebuilt |
-| (after `25526bf`) | Notification sounds: chimes for timer alerts and breaks, played by Rust (`sound.rs`) so the webview's click-to-play rule cannot mute them; Sounds switch in the dashboard; hourglass icon while a countdown runs; installer at `E:\` rebuilt |
+| `2f95149` | Notification sounds: chimes for timer alerts and breaks, played by Rust (`sound.rs`) so the webview's click-to-play rule cannot mute them; Sounds switch in the dashboard; hourglass icon while a countdown runs |
+| (after `2f95149`) | Expand + settings (power icon) hover buttons; buttons and panels placed by free screen space (`layout.ts`); multi-rect hit area; accent reading switch; chevron removed; installer at `E:\` rebuilt |
 
 Decisions worth knowing (and *why*): Tauri over Electron for a 24/7 widget
 (memory); a custom drag because the native one blocks page events; offered
