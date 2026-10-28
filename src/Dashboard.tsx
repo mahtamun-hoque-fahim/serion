@@ -8,6 +8,7 @@ import { useAppearance, type Appearance } from "./appearance";
 import "@fontsource/google-sans/latin-700.css";
 import { BarChart, type Bar } from "./BarChart";
 import { SerionMark } from "./SerionMark";
+import { chime, loadSounds, saveSounds } from "./sound";
 import { THEMES, ThemeSwatches, loadSize, loadTheme, saveSize, saveTheme, useAutostart } from "./Settings";
 import { EMPTY_TICK, formatClock, formatHM, type Battery, type BreakConfig, type Day, type Settings, type Tick } from "./types";
 import "./Dashboard.css";
@@ -430,6 +431,7 @@ function SettingsBlock({
   const autostart = useAutostart();
   const [battery, setBattery] = useState<Battery | undefined>(undefined);
   const [size, setSize] = useState(loadSize);
+  const [sounds, setSounds] = useState(loadSounds);
   const [monitors, setMonitors] = useState(1);
   useEffect(() => {
     invoke<number>("monitor_count").then(setMonitors);
@@ -498,6 +500,26 @@ function SettingsBlock({
           <span>
             Start at login
             {!autostart.available && <small>Available in the installed app</small>}
+          </span>
+          <span className="switch" aria-hidden>
+            <span className="switch-knob" />
+          </span>
+        </button>
+
+        <button
+          type="button"
+          role="switch"
+          aria-checked={sounds}
+          className="setting-row"
+          onClick={() => {
+            saveSounds(!sounds);
+            setSounds(!sounds);
+            if (!sounds) chime("break");
+          }}
+        >
+          <span>
+            Sounds
+            <small>A soft chime for timers and breaks. Quiet while the pill hides for a fullscreen app.</small>
           </span>
           <span className="switch" aria-hidden>
             <span className="switch-knob" />

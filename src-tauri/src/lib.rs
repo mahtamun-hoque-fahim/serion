@@ -4,6 +4,7 @@ mod crypto;
 mod history;
 mod names;
 mod screen;
+mod sound;
 mod tracker;
 
 use std::path::PathBuf;
@@ -535,6 +536,15 @@ fn set_hit_area(x: i32, y: i32, width: i32, height: i32, area: TauriState<HitAre
     }
 }
 
+/// Play a notification chime ("alert" or "break"). The page decides when
+/// (and whether sounds are on); the OS plays it, see `sound.rs`.
+#[tauri::command]
+fn play_chime(kind: String) -> Result<(), String> {
+    let chime = sound::Chime::parse(&kind).ok_or_else(|| format!("unknown chime {kind}"))?;
+    sound::play(chime);
+    Ok(())
+}
+
 /// A mouse button is down: never turn click-through on mid-press, or a drag
 /// that outruns the pill would lose the mouse.
 #[cfg(windows)]
@@ -690,6 +700,7 @@ pub fn run() {
             monitor_count,
             set_bounds,
             set_hit_area,
+            play_chime,
             get_data_folder,
             set_data_folder,
             export_data,

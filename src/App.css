@@ -605,6 +605,26 @@ body,
   }
 }
 
+/* Countdown: after drawing in, the hourglass turns over every few seconds.
+   It looks the same upside down, so each loop restarts seamlessly. */
+.state-countdown {
+  animation:
+    icon-fill 200ms ease-out 600ms forwards,
+    hourglass-turn 4s cubic-bezier(0.65, 0, 0.35, 1) 1.2s infinite;
+  transform-origin: center;
+}
+
+@keyframes hourglass-turn {
+  0%,
+  72% {
+    transform: rotate(0deg);
+  }
+  90%,
+  100% {
+    transform: rotate(180deg);
+  }
+}
+
 /* Midnight: the calendar flips over once, like tearing off a page. */
 .state-calendar {
   animation:

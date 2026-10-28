@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { BookOpen, CalendarDays, Dumbbell, Grab, Eye, EyeClosed, GlassWater, Hand, Moon, Settings } from "lucide-react";
+import { BookOpen, CalendarDays, Dumbbell, Grab, Eye, EyeClosed, GlassWater, Hand, Hourglass, Moon, Settings } from "lucide-react";
 import "@fontsource/google-sans/latin-700.css";
 import { SIZES, SettingsPanel, THEMES, loadSize, loadTheme, saveTheme } from "./Settings";
 import { TopAppsPanel, appsPanelHeight } from "./TopApps";
@@ -10,11 +10,12 @@ import { BREAK_CARD_MAX_H, BREAK_CARD_W, BREAK_ICON, BreakCard, breakCardHeight,
 import { SerionMark } from "./SerionMark";
 import { useMagneticDrag } from "./drag";
 import { useAppearance } from "./appearance";
+import { chime } from "./sound";
 import { EMPTY_TICK, formatClock, type BreakKind, type Tick } from "./types";
 import "./App.css";
 
 /** What the circle shows: the counting state, a break, reading mode, or the midnight flip. */
-type Shown = Tick["state"] | BreakKind | "reading" | "calendar" | "grab";
+type Shown = Tick["state"] | BreakKind | "reading" | "calendar" | "grab" | "countdown";
 
 const STATE_LABEL: Record<Shown, string> = {
   active: "Counting",
@@ -26,6 +27,7 @@ const STATE_LABEL: Record<Shown, string> = {
   reading: "Reading mode: counting, idle after 20 min",
   calendar: "A new day: the count starts again",
   grab: "Moving the pill, still counting",
+  countdown: "Countdown running",
 };
 
 /**
@@ -43,6 +45,7 @@ const STATE_ICON = {
   reading: { Icon: BookOpen, fill: "none" },
   calendar: { Icon: CalendarDays, fill: "none" },
   grab: { Icon: Grab, fill: "none" },
+  countdown: { Icon: Hourglass, fill: "none" },
 };
 
 /** The break card tucks back into the pill after this long, unless hovered. */
@@ -153,6 +156,7 @@ export default function App() {
     if (fresh) {
       setBreakDone(false);
       showBreakCard();
+      if (!tick.hide_for_fullscreen) chime("break");
     }
   }, [offers]);
 
@@ -165,6 +169,7 @@ export default function App() {
     if (!now && was) {
       setBreakDone(true);
       setPanel("break");
+      if (!tick.hide_for_fullscreen) chime("break");
       const timer = window.setTimeout(() => {
         setBreakDone(false);
         setPanel((p) => (p === "break" ? "none" : p));
@@ -252,7 +257,8 @@ export default function App() {
 
   // While you drag the pill it shows a grabbing hand at once. That is not
   // hold: with apps open, the app on top keeps the time. A running break
-  // shows its icon and counts down; an offered break shows its icon.
+  // shows its icon and counts down; an offered break shows its icon. A
+  // running countdown shows the hourglass over counting, idle, hold and reading.
   const shownState: Shown = dragging
     ? "grab"
     : (tick.break_kind ??
@@ -260,9 +266,11 @@ export default function App() {
         ? offers[0].kind
         : newDay
           ? "calendar"
-          : tick.reading && steadyState === "active"
-            ? "reading"
-            : steadyState));
+          : tick.countdown_ms !== null
+            ? "countdown"
+            : tick.reading && steadyState === "active"
+              ? "reading"
+              : steadyState));
   const shownText = onBreak ? formatClock(tick.break_ms ?? 0) : tick.text;
   const breakProgress = onBreak && tick.break_total_ms ? 1 - (tick.break_ms ?? 0) / tick.break_total_ms : 0;
   const showButton = !intro && ((hover && !dragging) || panel === "settings");
@@ -274,11 +282,16 @@ export default function App() {
     };
   }, []);
 
-  // A timer fired: red for ALERT_MS. A second alert restarts the clock.
+  // Sounds stay quiet while the pill hides for a fullscreen app (videos, games).
+  const fullscreenRef = useRef(false);
+  fullscreenRef.current = tick.hide_for_fullscreen;
+
+  // A timer fired: red for ALERT_MS, and a chime. A second alert restarts the clock.
   useEffect(() => {
     let timer = 0;
     const unlisten = listen("alert", () => {
       setAlert(true);
+      if (!fullscreenRef.current) chime("alert");
       clearTimeout(timer);
       timer = window.setTimeout(() => setAlert(false), ALERT_MS);
     });

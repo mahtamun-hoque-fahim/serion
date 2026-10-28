@@ -5,7 +5,7 @@ The single source of truth for anyone (person or agent) picking this project up.
 change that alters behavior, rules, files, workflow or status** (see
 "Keeping this file current" at the end).
 
-Last updated: 2026-10-27, fixed-size pill window with cursor-based click-through (no jump, no dark box).
+Last updated: 2026-10-28, notification sounds played by Rust, hourglass icon during a countdown.
 
 ---
 
@@ -66,7 +66,7 @@ timers, breaks and data controls.
 
 ```bash
 npm run tauri dev                     # run the app (pill + dashboard), hot reload
-cd src-tauri && cargo test --lib      # Rust unit tests (45 at last count)
+cd src-tauri && cargo test --lib      # Rust unit tests (48 at last count)
 npx tsc --noEmit                      # frontend type-check
 npx tauri icon src-tauri/icons/app-icon.svg   # regenerate every icon size
 cd src-tauri && cargo run --example probe     # print what Windows reports for the foreground window
@@ -99,6 +99,7 @@ In PowerShell sessions prepend: `$env:Path="$env:USERPROFILE\.cargo\bin;$env:Pat
 | `crypto.rs` | AES-256-GCM seal/open; key from `serion.key` via `include_bytes!` (tested) |
 | `names.rs` | real app names: Store-app manifest `DisplayName` (incl. `ms-resource:` via `SHLoadIndirectString`) or exe `FileDescription` |
 | `battery.rs` | battery level (`GetSystemPowerStatus`) and "entered low" rule (tested) |
+| `sound.rs` | notification chimes: builds the WAV once, plays it with `PlaySoundW` (tested) |
 | `build.rs` | checks `serion.key` exists and is 32 bytes, else stops the build with instructions |
 | `examples/probe.rs` | debugging tool: prints foreground window + idle each second (only user of `active-win-pos-rs`) |
 
@@ -118,6 +119,7 @@ each window loads only its own CSS):
 | `BarChart.tsx` | single-series SVG bar chart with hover tooltip and screen-reader table |
 | `Flash.tsx` + `.css` | full-screen red flash for timer alerts (click-through window that closes itself) |
 | `appearance.ts` | System/Light/Dark choice; sets `data-mode` on `<html>` |
+| `sound.ts` | when to chime (asks Rust `play_chime`) and the Sounds on/off pref |
 | `SerionMark.tsx` | the Serion logo mark as an SVG component |
 | `types.ts` | shared types (mirror the Rust structs) and formatters |
 
@@ -155,7 +157,9 @@ Each second the loop decides **who gets the second**:
 **Pill**
 - States: eye = counting, moon = idle, hand = hold, glass / dumbbell / closed
   eye = breaks, book = reading mode, calendar flip at midnight, grabbing fist
-  while dragging (dragging is *not* hold).
+  while dragging (dragging is *not* hold), hourglass (turns over every 4 s)
+  while a countdown runs: over counting, idle, hold and reading, but breaks,
+  offers, midnight and dragging still win.
 - A state must last **2 s** before the pill shows it (no flicker on app switches).
 - Circle pop + line draw-on animation on every state change; launch intro (mark
   in a circle opens into the pill).
@@ -195,6 +199,14 @@ Each second the loop decides **who gets the second**:
   30-day averages beyond 90 days), top apps, Timers (daily limit + countdown),
   Settings, Breaks, Data, System/Light/Dark switch.
 - Timer alerts: whole-screen red flash + pill red for 5 s.
+- Sounds: a short two-note chime with an octave overtone. Firmer `alert`
+  chime for the daily limit and countdown; softer `break` chime for a new
+  break offer and a break that ran out. The page decides when (`sound.ts`);
+  Rust `play_chime` plays it (`sound.rs`: an in-memory WAV built once, played
+  with `PlaySoundW`, no audio file). Quiet while the pill hides for a
+  fullscreen app (`hide_for_fullscreen`); volume follows Windows. "Sounds"
+  switch in the dashboard Settings card, on by default; turning it on plays
+  a sample chime.
 
 **Settings** (dashboard Settings card unless noted)
 - Theme colors (also pill panel), notch size, start at login (installed builds
@@ -233,7 +245,7 @@ Each second the loop decides **who gets the second**:
   eye_every, water_seconds, stretch_seconds, eye_seconds}`,
   `show_over_fullscreen`, `other_screens` (null = automatic), `hide_from_capture`.
 - Frontend-only prefs in `localStorage`: `serion.theme`, `serion.size`,
-  `serion.appearance`, `serion.autostartChosen`.
+  `serion.appearance`, `serion.autostartChosen`, `serion.sounds`.
 
 ## 8. Design system
 
@@ -313,6 +325,11 @@ Each second the loop decides **who gets the second**:
   tool's `right_click` is a logical left click (and its `left_click` on the
   pill would quit Serion). It also minimizes windows it was not granted, the
   dev `serion.exe` included: grant `serion.exe` before the first screenshot.
+- **No Web Audio for notifications.** A webview page may not play sound until
+  it has been clicked, and the pill often never is, so the first chimes
+  (Web Audio in the page) could stay silent. Rust plays them instead. Test
+  sound with the pill untouched (open the dashboard with a second launch),
+  and measure the speaker peak rather than trusting the call returned.
 
 ## 10. Status
 
@@ -362,7 +379,8 @@ through the UI, battery quit.
 | `d592bc7` | Fixes found in the installed app: dashboard CSS not loaded in production, panels centered under the pill, more room for break names; installer at `E:\` rebuilt (version still 1.0.0) |
 | `ce0acac` | Single instance: a second launch (autostart plus the desktop icon) exits and opens the running copy's dashboard; installer at `E:\` rebuilt |
 | `218fdc7` | Pill window keeps one size; panels change only its clickable region (`SetWindowRgn`), so the pill no longer jumps a frame sideways on open/close |
-| (after `218fdc7`) | Region replaced by cursor-polled click-through (`set_hit_area`, `watch_hit_area`): the region sometimes showed a dark box behind the pill. State icon no longer jumps 1 px when its pop ends (`will-change` on `.logo`); installer at `E:\` rebuilt |
+| `25526bf` | Region replaced by cursor-polled click-through (`set_hit_area`, `watch_hit_area`): the region sometimes showed a dark box behind the pill. State icon no longer jumps 1 px when its pop ends (`will-change` on `.logo`); installer at `E:\` rebuilt |
+| (after `25526bf`) | Notification sounds: chimes for timer alerts and breaks, played by Rust (`sound.rs`) so the webview's click-to-play rule cannot mute them; Sounds switch in the dashboard; hourglass icon while a countdown runs; installer at `E:\` rebuilt |
 
 Decisions worth knowing (and *why*): Tauri over Electron for a 24/7 widget
 (memory); a custom drag because the native one blocks page events; offered
