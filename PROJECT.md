@@ -5,7 +5,7 @@ The single source of truth for anyone (person or agent) picking this project up.
 change that alters behavior, rules, files, workflow or status** (see
 "Keeping this file current" at the end).
 
-Last updated: 2026-10-28, buttons and panel on opposite sides of the pill, by free screen space (owner sketches).
+Last updated: 2026-10-29, version 1.1.0 released: user-facing README, MIT license.
 
 ---
 
@@ -86,6 +86,11 @@ installed one, or two pills appear.
 In PowerShell sessions prepend: `$env:Path="$env:USERPROFILE\.cargo\bin;$env:Path"`.
 
 ## 4. Architecture (file map)
+
+Repo root: `README.md` (for users: what it does, install, using the pill,
+privacy, build from source incl. making your own `serion.key`), `LICENSE`
+(MIT), `docs/` (README screenshots: `pill.png`, `dashboard.png`; retake them
+when the UI changes).
 
 ### Rust (`src-tauri/src/`)
 | File | Role |
@@ -364,16 +369,21 @@ credit, Start menu = hold, a full live break cycle, export/import/folder move
 through the UI, battery quit.
 
 **Missing / open:**
-1. **Installer 1.0.0 built** (2026-10-27); next is the owner installing it and
-   using it daily. Start at login turns on at the first installed run and has
-   not been confirmed yet.
+1. **Version 1.1.0** (2026-10-29): installer `Serion_1.1.0_x64-setup.exe`,
+   published as GitHub Release `v1.1.0` (tag on the release commit). The owner
+   uses the installed app daily. Start at login turns on at the first
+   installed run and has not been confirmed yet.
 2. macOS / Linux: `screen.rs`, `names.rs`, `battery.rs` are stubs → nothing
    counts there yet. Decide: port or declare v1 Windows-only.
 3. Unsigned → SmartScreen warning for other users; no auto-updater.
 4. Open question: the first click on the pill sometimes seemed to only
    activate the window (seen once during automated tests, unconfirmed).
 5. Cleanups: drop `active-win-pos-rs` (only the probe uses it); no frontend
-   tests; `README.md` is still the scaffold default.
+   tests.
+6. Releases: `gh` is not installed here, so a release is made on github.com
+   (new release, pick the tag, attach the installer). Each release: bump the
+   version in `tauri.conf.json`, `Cargo.toml`, `package.json` (and the root of
+   `package-lock.json`), build, tag `vX.Y.Z`, push the tag, then publish.
 
 ## 11. History (commits on `main`)
 
@@ -401,7 +411,8 @@ through the UI, battery quit.
 | `25526bf` | Region replaced by cursor-polled click-through (`set_hit_area`, `watch_hit_area`): the region sometimes showed a dark box behind the pill. State icon no longer jumps 1 px when its pop ends (`will-change` on `.logo`); installer at `E:\` rebuilt |
 | `2f95149` | Notification sounds: chimes for timer alerts and breaks, played by Rust (`sound.rs`) so the webview's click-to-play rule cannot mute them; Sounds switch in the dashboard; hourglass icon while a countdown runs |
 | `3845bb0` | Expand + settings (power icon) hover buttons; buttons and panels placed by free screen space (`layout.ts`); multi-rect hit area; accent reading switch; chevron removed |
-| (after `3845bb0`) | Placement redone from the owner's edge sketches: buttons and panel on opposite sides of the pill (no side columns), panel past the buttons at the top/bottom edge, expand at the wall end; installer at `E:\` rebuilt |
+| `ac19e07` | Placement redone from the owner's edge sketches: buttons and panel on opposite sides of the pill (no side columns), panel past the buttons at the top/bottom edge, expand at the wall end; installer at `E:\` rebuilt |
+| v1.1.0 | User-facing README (features, install, using the pill, privacy, build from source) with screenshots in `docs/`; MIT LICENSE; version 1.1.0, installer `Serion_1.1.0_x64-setup.exe` at `E:\` and on GitHub Releases |
 
 Decisions worth knowing (and *why*): Tauri over Electron for a 24/7 widget
 (memory); a custom drag because the native one blocks page events; offered
