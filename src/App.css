@@ -83,6 +83,11 @@ body,
   touch-action: none;
 }
 
+/* Icon mode: only the circle, the time clipped away (the width springs). */
+.pill.icon-only {
+  width: 50px;
+}
+
 .pill.dragging {
   cursor: grabbing;
 }

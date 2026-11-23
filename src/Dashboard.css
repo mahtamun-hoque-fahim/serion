@@ -718,7 +718,7 @@ body,
   margin-top: 16px;
 }
 
-/* Notch size: the range-tab style, left-aligned and with radio semantics. */
+/* Pill display and size: the range-tab style, left-aligned and with radio semantics. */
 .size-tabs {
   display: inline-flex;
   margin: 0;
@@ -1084,4 +1084,13 @@ select:focus-visible {
     animation: none !important;
     transition: none !important;
   }
+}
+
+/* Size has no meaning while the pill is hidden. */
+.size-tabs[aria-disabled="true"] {
+  opacity: 0.45;
+}
+
+.size-tabs[aria-disabled="true"] .tab {
+  cursor: default;
 }

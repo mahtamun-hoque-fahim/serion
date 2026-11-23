@@ -36,6 +36,36 @@ export function saveSize(size: Size) {
     // Not saved; it still applies until quit.
   }
 }
+
+const DISPLAY_KEY = "serion.display";
+
+/** Hidden: no pill (the tray icon is the way in). Icon: just the circle. Full: the pill. */
+export const DISPLAYS = ["hidden", "icon", "full"] as const;
+export type Display = (typeof DISPLAYS)[number];
+
+/**
+ * Saved display mode. New installs start hidden; installs from before the
+ * modes existed (they already saved a theme, size or autostart choice) keep
+ * the full pill they had.
+ */
+export function loadDisplay(): Display {
+  try {
+    const saved = localStorage.getItem(DISPLAY_KEY);
+    if (DISPLAYS.some((d) => d === saved)) return saved as Display;
+    const existing = [THEME_KEY, SIZE_KEY, AUTOSTART_KEY].some((k) => localStorage.getItem(k) !== null);
+    return existing ? "full" : "hidden";
+  } catch {
+    return "hidden";
+  }
+}
+
+export function saveDisplay(display: Display) {
+  try {
+    localStorage.setItem(DISPLAY_KEY, display);
+  } catch {
+    // Not saved; it still applies until quit.
+  }
+}
 const AUTOSTART_KEY = "serion.autostartChosen";
 
 /**

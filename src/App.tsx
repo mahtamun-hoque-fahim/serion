@@ -4,7 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { currentMonitor, getCurrentWindow } from "@tauri-apps/api/window";
 import { BookOpen, CalendarDays, Dumbbell, Grab, Eye, EyeClosed, GlassWater, Hand, Hourglass, Maximize2, Moon, Power } from "lucide-react";
 import "@fontsource/google-sans/latin-700.css";
-import { SIZES, SettingsPanel, THEMES, loadSize, loadTheme, saveTheme } from "./Settings";
+import { SIZES, SettingsPanel, THEMES, loadDisplay, loadSize, loadTheme, saveDisplay, saveTheme } from "./Settings";
 import { TopAppsPanel, appsPanelHeight } from "./TopApps";
 import { BREAK_CARD_MAX_H, BREAK_CARD_W, BREAK_ICON, BreakCard, breakCardHeight, type BreakView } from "./BreakCard";
 import { SerionMark } from "./SerionMark";
@@ -12,7 +12,7 @@ import { useMagneticDrag } from "./drag";
 import { DOCKED, panelShift, place, union, type Rect } from "./layout";
 import { useAppearance } from "./appearance";
 import { chime } from "./sound";
-import { EMPTY_TICK, formatClock, type BreakKind, type Tick } from "./types";
+import { EMPTY_TICK, formatClock, formatHM, type BreakKind, type Tick } from "./types";
 import "./App.css";
 
 /** What the circle shows: the counting state, a break, reading mode, or the midnight flip. */
@@ -107,8 +107,10 @@ export default function App() {
   const [theme, setTheme] = useState(loadTheme);
   const [alert, setAlert] = useState(false);
   const [size, setSize] = useState(loadSize);
+  const [display, setDisplay] = useState(loadDisplay);
   const zoom = SIZES[size];
-  const pillW = PILL_W * zoom;
+  // Icon mode: the pill narrows to its circle (the time is clipped away).
+  const pillW = (display === "icon" ? PILL_H : PILL_W) * zoom;
   const pillH = PILL_H * zoom;
   const btn = BUTTON * zoom;
   // Space one hover button takes beside the pill.
@@ -257,7 +259,10 @@ export default function App() {
       clearTimeout(hideTimer);
     };
   }, [tick.hide_for_fullscreen, hasOffer]);
-  const hidden = tick.hide_for_fullscreen && !peeking;
+  // Hidden mode: no pill, except while a break needs it (offered, starting,
+  // running or just finished), so you can start or skip it.
+  const breakShowing = offers.length > 0 || onBreak || breakDone || starting !== null;
+  const hidden = (tick.hide_for_fullscreen && !peeking) || (display === "hidden" && !breakShowing);
   useEffect(() => {
     const win = getCurrentWindow();
     (hidden ? win.hide() : win.show()).catch(() => {});
@@ -326,6 +331,7 @@ export default function App() {
     const onStorage = () => {
       setTheme(loadTheme());
       setSize(loadSize());
+      setDisplay(loadDisplay());
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
@@ -424,6 +430,8 @@ export default function App() {
   }, [zoom]);
 
   useEffect(() => saveTheme(theme), [theme]);
+  // Saved at once, so a new install keeps "hidden" once the theme is saved too.
+  useEffect(() => saveDisplay(display), [display]);
 
   // Layout effect: the color is applied before the first paint, so the
   // launch circle never flashes the default blue first.
@@ -480,7 +488,7 @@ export default function App() {
     };
   }, [panel]);
 
-  const pillClass = ["pill", intro && "intro", dragging && "dragging", alert && "alert", (onBreak || offers.length > 0) && "on-break"].filter(Boolean).join(" ");
+  const pillClass = ["pill", display === "icon" && "icon-only", intro && "intro", dragging && "dragging", alert && "alert", (onBreak || offers.length > 0) && "on-break"].filter(Boolean).join(" ");
 
   // A button grows out of the pill: it starts nudged toward it.
   const fromPill = (r: Rect) => {
@@ -590,6 +598,7 @@ export default function App() {
       <TopAppsPanel
         open={panel === "apps"}
         top={tick.top}
+        total={display === "icon" ? formatHM(tick.total_ms) : null}
         reading={tick.reading}
         onReading={(on) => invoke("set_reading", { on })}
       />

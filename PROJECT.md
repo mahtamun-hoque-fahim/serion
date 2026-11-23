@@ -5,7 +5,7 @@ The single source of truth for anyone (person or agent) picking this project up.
 change that alters behavior, rules, files, workflow or status** (see
 "Keeping this file current" at the end).
 
-Last updated: 2026-10-29, version 1.1.0 released: user-facing README, MIT license.
+Last updated: 2026-10-31, pill display modes (Hidden / Icon / Full), tray icon, Pill card.
 
 ---
 
@@ -117,11 +117,11 @@ each window loads only its own CSS):
 | `main.tsx` | routes `?view=dashboard` / `?view=flash` / default (pill); applies appearance before first paint |
 | `App.tsx` + `App.css` | **the pill window**: pill, state icon with draw-on animation, settings button + panel, top-apps panel, break card, fixed window size + clickable hit area, intro animation, steady-state debounce, fullscreen hide/peek, calendar flip, alert red |
 | `drag.ts` | custom drag (not Tauri's native one): grab cursor, magnetic dock at top center and magnetic screen edges, glide back, tap detection; converts window and pill positions with an x/y offset |
-| `Settings.tsx` | themes (6 presets), size (Small/Large), autostart hook, pill settings panel, shared `ThemeSwatches` |
+| `Settings.tsx` | themes (6 presets), size (Small/Large), display mode (Hidden/Icon/Full, with the migration rule), autostart hook, pill settings panel, shared `ThemeSwatches` |
 | `TopApps.tsx` | pill panel: today's top 5 apps and the accent reading-mode switch |
 | `layout.ts` | where the hover buttons and panels go from the pill's free screen space (self-check: `node --experimental-strip-types scripts/layout.check.ts`) |
 | `BreakCard.tsx` + `.css`, `BreakArt.tsx` | break card (offer / starting tick / active / done) and the animated illustrations |
-| `Dashboard.tsx` + `.css` | dashboard window: range tabs, stat tiles, bar chart, top apps, Settings, Breaks, Timers, Data cards, appearance switch |
+| `Dashboard.tsx` + `.css` | dashboard window: range tabs, stat tiles, bar chart, top apps, Pill (display + size), Settings, Breaks, Timers, Data cards, appearance switch |
 | `BarChart.tsx` | single-series SVG bar chart with hover tooltip and screen-reader table |
 | `Flash.tsx` + `.css` | full-screen red flash for timer alerts (click-through window that closes itself) |
 | `appearance.ts` | System/Light/Dark choice; sets `data-mode` on `<html>` |
@@ -201,6 +201,16 @@ Each second the loop decides **who gets the second**:
   switch** (the book knob slides across, "On"/"Off"). The old chevron to the
   dashboard is gone (the expand button replaces it).
 - Custom drag, magnetic top-center dock and magnetic screen edges (work area).
+- **Display modes** (dashboard "Pill" card, `serion.display`): **Hidden** (the
+  default for new installs: no pill, Serion keeps counting; the pill still
+  appears while a break is offered, starting, running or just finished),
+  **Icon** (the pill narrows to its circle; the top-apps title shows today'"'"'s
+  total) and **Full**. Installs from before the modes (a theme, size or
+  autostart choice already saved) start Full; the pill saves the mode at
+  launch so a new install stays Hidden. Size is greyed out while Hidden.
+- **Tray icon** (`add_tray` in `lib.rs`): click opens the dashboard; menu
+  "Open Serion" and "Quit Serion". New tray icons land in Windows'"'"' hidden-icons
+  overflow (^) until the user pins them.
 - Sizes: Small (80%, CSS `zoom`) / Large; keeps its center when resized.
 - Hides while a **fullscreen** app is in front (setting "Show over fullscreen"
   off by default); a due break peeks 5 s every 20 min.
@@ -269,7 +279,7 @@ Each second the loop decides **who gets the second**:
   eye_every, water_seconds, stretch_seconds, eye_seconds}`,
   `show_over_fullscreen`, `other_screens` (null = automatic), `hide_from_capture`.
 - Frontend-only prefs in `localStorage`: `serion.theme`, `serion.size`,
-  `serion.appearance`, `serion.autostartChosen`, `serion.sounds`.
+  `serion.appearance`, `serion.autostartChosen`, `serion.sounds`, `serion.display`.
 
 ## 8. Design system
 
@@ -413,6 +423,7 @@ through the UI, battery quit.
 | `3845bb0` | Expand + settings (power icon) hover buttons; buttons and panels placed by free screen space (`layout.ts`); multi-rect hit area; accent reading switch; chevron removed |
 | `ac19e07` | Placement redone from the owner's edge sketches: buttons and panel on opposite sides of the pill (no side columns), panel past the buttons at the top/bottom edge, expand at the wall end; installer at `E:\` rebuilt |
 | v1.1.0 | User-facing README (features, install, using the pill, privacy, build from source) with screenshots in `docs/`; MIT LICENSE; version 1.1.0, installer `Serion_1.1.0_x64-setup.exe` at `E:\` and on GitHub Releases |
+| (after v1.1.0) | Pill display modes Hidden (new default) / Icon / Full in a new dashboard "Pill" card with the size; tray icon (open dashboard, quit); the pill shows for breaks while hidden |
 
 Decisions worth knowing (and *why*): Tauri over Electron for a 24/7 widget
 (memory); a custom drag because the native one blocks page events; offered

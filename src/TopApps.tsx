@@ -17,12 +17,14 @@ export function appsPanelHeight(count: number) {
 type Props = {
   open: boolean;
   top: Tick["top"];
+  /** Today's total, shown in the title when the pill itself does not show it (icon mode). */
+  total: string | null;
   reading: boolean;
   onReading: (on: boolean) => void;
 };
 
 /** Today's most used apps, opened from the pill when you click it. */
-export function TopAppsPanel({ open, top, reading, onReading }: Props) {
+export function TopAppsPanel({ open, top, total, reading, onReading }: Props) {
   const longest = top[0]?.ms || 1;
 
   return (
@@ -34,7 +36,7 @@ export function TopAppsPanel({ open, top, reading, onReading }: Props) {
       aria-label="Most used apps today"
       inert={!open}
     >
-      <p className="panel-title">Today</p>
+      <p className="panel-title">{total ? `Today · ${total}` : "Today"}</p>
       {top.length === 0 ? (
         <p className="apps-empty">No app time yet today.</p>
       ) : (

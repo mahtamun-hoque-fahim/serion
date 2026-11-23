@@ -26,6 +26,9 @@ Serion runs on Windows 10 and 11 (64-bit).
   Serion waits 20 minutes instead of 5 before it calls you idle.
 - **Stays out of the way.** It hides while a video or game is fullscreen,
   and you can hide it from screen recordings and screenshots.
+- **As visible as you like.** Keep the pill hidden (the default: Serion counts
+  quietly and lives in the tray by the clock), show just its icon, or the full
+  pill with today's time.
 - **Make it yours.** Six themes, light or dark dashboard, small or large pill,
   sounds on or off, and you can drag the pill anywhere on the screen.
 
@@ -36,13 +39,19 @@ Serion runs on Windows 10 and 11 (64-bit).
    No release there yet? Build it yourself (see below).
 2. Run it. The installer is not signed yet, so Windows may show
    "Windows protected your PC". Click **More info**, then **Run anyway**.
-3. Serion starts and the pill appears at the top center of your screen.
-   Turn on **Start at login** in its settings if you want it every day.
+3. Serion starts quietly: its icon sits in the tray by the clock (Windows may
+   tuck it under the **^** arrow; drag it out to keep it visible). Click it
+   to open the dashboard. To see the pill on screen, choose **Icon** or
+   **Full** under **Pill** in the dashboard. Turn on **Start at login** there
+   too if you want Serion every day.
 
 To uninstall, use **Settings > Apps** in Windows. The uninstaller asks
 whether to delete your history too; by default it is kept.
 
 ## Using the pill
+
+The tray icon is always there: click it for the dashboard, right-click it to
+quit. With the pill showing (Icon or Full):
 
 | Do this | To get |
 |---|---|

@@ -376,10 +376,46 @@ fn monitor_count() -> usize {
 }
 
 #[tauri::command]
-fn quit(app: AppHandle, state: TauriState<AppState>) {
+fn quit(app: AppHandle) {
+    quit_app(&app);
+}
+
+/// Save today, then exit. Used by the pill, the settings panel and the tray.
+fn quit_app(app: &AppHandle) {
+    let state = app.state::<AppState>();
     let mut core = state.lock();
     state.save_today(&mut core);
     app.exit(0);
+}
+
+/// Tray icon by the clock: the way back to Serion while the pill is hidden.
+/// Click opens the dashboard; the menu also offers Quit.
+fn add_tray(app: &AppHandle) -> tauri::Result<()> {
+    use tauri::menu::{Menu, MenuItem};
+    use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
+    let open = MenuItem::with_id(app, "open", "Open Serion", true, None::<&str>)?;
+    let quit = MenuItem::with_id(app, "quit", "Quit Serion", true, None::<&str>)?;
+    let mut tray = TrayIconBuilder::with_id("main")
+        .tooltip("Serion")
+        .menu(&Menu::with_items(app, &[&open, &quit])?)
+        .show_menu_on_left_click(false)
+        .on_menu_event(|app, event| match event.id.as_ref() {
+            "open" => {
+                tauri::async_runtime::spawn(open_dashboard(app.clone()));
+            }
+            "quit" => quit_app(app),
+            _ => {}
+        })
+        .on_tray_icon_event(|tray, event| {
+            if let TrayIconEvent::Click { button: MouseButton::Left, button_state: MouseButtonState::Up, .. } = event {
+                tauri::async_runtime::spawn(open_dashboard(tray.app_handle().clone()));
+            }
+        });
+    if let Some(icon) = app.default_window_icon() {
+        tray = tray.icon(icon.clone());
+    }
+    tray.build(app)?;
+    Ok(())
 }
 
 /// The last `days` days, oldest first; today comes from memory, so it is live.
@@ -755,6 +791,7 @@ pub fn run() {
 
             let handle = app.handle().clone();
             thread::spawn(move || run_tracker(handle));
+            add_tray(app.handle())?;
             app.manage(HitArea::default());
             let handle = app.handle().clone();
             thread::spawn(move || watch_hit_area(handle));

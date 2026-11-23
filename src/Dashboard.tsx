@@ -9,7 +9,7 @@ import "@fontsource/google-sans/latin-700.css";
 import { BarChart, type Bar } from "./BarChart";
 import { SerionMark } from "./SerionMark";
 import { chime, loadSounds, saveSounds } from "./sound";
-import { THEMES, ThemeSwatches, loadSize, loadTheme, saveSize, saveTheme, useAutostart } from "./Settings";
+import { THEMES, ThemeSwatches, loadDisplay, loadSize, loadTheme, saveDisplay, saveSize, saveTheme, useAutostart, type Display, type Size } from "./Settings";
 import { EMPTY_TICK, formatClock, formatHM, type Battery, type BreakConfig, type Day, type Settings, type Tick } from "./types";
 import "./Dashboard.css";
 
@@ -257,6 +257,7 @@ export default function Dashboard() {
                   </ol>
                 )}
               </section>
+              <PillBlock />
               <SettingsBlock
                 theme={theme}
                 onTheme={(color) => {
@@ -417,6 +418,95 @@ const BATTERY_LEVELS = [10, 15, 20, 30];
 const BATTERY_REFRESH_MS = 30_000;
 
 /** The pill's settings plus the detailed ones that only live here. */
+/** A row of choices with a sliding highlight (the pill's display and size). */
+function Choices<T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+  disabled = false,
+}: {
+  label: string;
+  options: readonly { value: T; text: string }[];
+  value: T;
+  onChange: (value: T) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div
+      className="tabs size-tabs"
+      role="radiogroup"
+      aria-label={label}
+      aria-disabled={disabled}
+      style={{ "--i": options.findIndex((o) => o.value === value) } as CSSProperties}
+    >
+      <span className="tab-indicator" aria-hidden />
+      {options.map((o) => (
+        <button
+          key={o.value}
+          type="button"
+          role="radio"
+          aria-checked={value === o.value}
+          className="tab"
+          disabled={disabled}
+          onClick={() => onChange(o.value)}
+        >
+          {o.text}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** How the pill shows on screen, and its size. */
+function PillBlock() {
+  const [display, setDisplay] = useState(loadDisplay);
+  const [size, setSize] = useState(loadSize);
+
+  return (
+    <section className="block">
+      <h2>Pill</h2>
+
+      <p className="setting-label">Display</p>
+      <Choices
+        label="Pill display"
+        options={[
+          { value: "hidden", text: "Hidden" },
+          { value: "icon", text: "Icon" },
+          { value: "full", text: "Full" },
+        ]}
+        value={display}
+        onChange={(d: Display) => {
+          saveDisplay(d);
+          setDisplay(d);
+        }}
+      />
+      <p className="muted">
+        {display === "hidden"
+          ? "No pill. Serion keeps counting; open it from the tray icon by the clock. It still shows for breaks."
+          : display === "icon"
+            ? "Just the icon. Click it for today's time and top apps."
+            : "The icon and today's time."}
+      </p>
+
+      <p className="setting-label spaced">Size</p>
+      <Choices
+        label="Pill size"
+        options={[
+          { value: "small", text: "Small" },
+          { value: "large", text: "Large" },
+        ]}
+        value={size}
+        disabled={display === "hidden"}
+        onChange={(s: Size) => {
+          saveSize(s);
+          setSize(s);
+        }}
+      />
+    </section>
+  );
+}
+
 function SettingsBlock({
   theme,
   onTheme,
@@ -430,7 +520,6 @@ function SettingsBlock({
 }) {
   const autostart = useAutostart();
   const [battery, setBattery] = useState<Battery | undefined>(undefined);
-  const [size, setSize] = useState(loadSize);
   const [sounds, setSounds] = useState(loadSounds);
   const [monitors, setMonitors] = useState(1);
   useEffect(() => {
@@ -461,31 +550,6 @@ function SettingsBlock({
 
       <p className="setting-label">Theme</p>
       <ThemeSwatches theme={theme} onTheme={onTheme} />
-
-      <p className="setting-label spaced">Notch size</p>
-      <div
-        className="tabs size-tabs"
-        role="radiogroup"
-        aria-label="Notch size"
-        style={{ "--i": size === "small" ? 0 : 1 } as CSSProperties}
-      >
-        <span className="tab-indicator" aria-hidden />
-        {(["small", "large"] as const).map((s) => (
-          <button
-            key={s}
-            type="button"
-            role="radio"
-            aria-checked={size === s}
-            className="tab"
-            onClick={() => {
-              saveSize(s);
-              setSize(s);
-            }}
-          >
-            {s === "small" ? "Small" : "Large"}
-          </button>
-        ))}
-      </div>
 
       <div className="setting-list">
         <button
