@@ -417,7 +417,6 @@ function Timers({
 const BATTERY_LEVELS = [10, 15, 20, 30];
 const BATTERY_REFRESH_MS = 30_000;
 
-/** The pill's settings plus the detailed ones that only live here. */
 /** A row of choices with a sliding highlight (the pill's display and size). */
 function Choices<T extends string>({
   label,

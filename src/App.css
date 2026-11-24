@@ -11,6 +11,9 @@ body,
 :root {
   /* Theme color, set from the settings panel (App.tsx). */
   --theme: #0047ff;
+  /* The pill's height; App.tsx sizes the window from PILL_H, so keep the two
+     numbers equal or the circle will not fit the window it is drawn in. */
+  --pill-h: 50px;
   --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   /* Panels (settings, top apps). The pill keeps the theme color in both modes. */
   --panel-bg: #ffffff;
@@ -63,7 +66,7 @@ body,
   box-sizing: border-box;
   flex: none;
   width: 168px;
-  height: 50px;
+  height: var(--pill-h);
   margin-left: 0;
   /* (50 - 36) / 2: the circle sits evenly inset; the gap keeps the time put. */
   padding: 7px;
@@ -85,7 +88,7 @@ body,
 
 /* Icon mode: only the circle, the time clipped away (the width springs). */
 .pill.icon-only {
-  width: 50px;
+  width: var(--pill-h);
 }
 
 .pill.dragging {
@@ -95,7 +98,7 @@ body,
 /* Launch: a 50px circle centered where the pill will be. Leaving .intro
    widens it to both sides at once (width and left margin move together). */
 .pill.intro {
-  width: 50px;
+  width: var(--pill-h);
   margin-left: 59px; /* (168 - 50) / 2 */
 }
 

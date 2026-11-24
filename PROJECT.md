@@ -5,7 +5,9 @@ The single source of truth for anyone (person or agent) picking this project up.
 change that alters behavior, rules, files, workflow or status** (see
 "Keeping this file current" at the end).
 
-Last updated: 2026-10-31, pill display modes (Hidden / Icon / Full), tray icon, Pill card.
+Last updated: 2026-11-24, version 1.2.0: pill display modes (Hidden / Icon /
+Full) and the tray icon, installed over 1.1.0 and verified live on the owner's
+machine, including the mode surviving a restart.
 
 ---
 
@@ -39,8 +41,8 @@ timers, breaks and data controls.
 - **No emojis** anywhere in code or UI. Icons: **lucide-react only**.
 - Commits: on `main`, only when asked ("commit the working tree changes with a
   sensible message"). **Ask before pushing**; push only when told. Commit
-  message body is detailed; it ends with
-  `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
+  message body is detailed; do not add co-author trailers (the owner asked for
+  these to be removed on 2026-11-23).
 - "Activate tauri" / "the notch is gone" means: (re)start the dev app
   (`npm run tauri dev`) and make sure the pill is on screen.
 - The owner tests by using the app and sends screenshots. They work in Windows
@@ -204,12 +206,12 @@ Each second the loop decides **who gets the second**:
 - **Display modes** (dashboard "Pill" card, `serion.display`): **Hidden** (the
   default for new installs: no pill, Serion keeps counting; the pill still
   appears while a break is offered, starting, running or just finished),
-  **Icon** (the pill narrows to its circle; the top-apps title shows today'"'"'s
+  **Icon** (the pill narrows to its circle; the top-apps title shows today's
   total) and **Full**. Installs from before the modes (a theme, size or
   autostart choice already saved) start Full; the pill saves the mode at
   launch so a new install stays Hidden. Size is greyed out while Hidden.
 - **Tray icon** (`add_tray` in `lib.rs`): click opens the dashboard; menu
-  "Open Serion" and "Quit Serion". New tray icons land in Windows'"'"' hidden-icons
+  "Open Serion" and "Quit Serion". New tray icons land in Windows' hidden-icons
   overflow (^) until the user pins them.
 - Sizes: Small (80%, CSS `zoom`) / Large; keeps its center when resized.
 - Hides while a **fullscreen** app is in front (setting "Show over fullscreen"
@@ -243,7 +245,8 @@ Each second the loop decides **who gets the second**:
   a sample chime.
 
 **Settings** (dashboard Settings card unless noted)
-- Theme colors (also pill panel), notch size, start at login (installed builds
+- Theme colors (also pill panel), pill display mode and pill size (both in the
+  dashboard "Pill" card), start at login (installed builds
   only), show over fullscreen, hide from recordings, count other screens, quit
   when battery is low (off; 10/15/20/30%, acts only on *entering* low), Quit.
 
@@ -364,6 +367,14 @@ Each second the loop decides **who gets the second**:
   (Web Audio in the page) could stay silent. Rust plays them instead. Test
   sound with the pill untouched (open the dashboard with a second launch),
   and measure the speaker peak rather than trusting the call returned.
+- **Settings live in the webview's localStorage** (`...\com.serion.app\EBWebView\
+  Default\Local Storage\leveldb`), not in the encrypted store, so a damaged
+  Chromium log loses them silently: leveldb drops everything from the first bad
+  checksum to the end of `000003.log` at every start, so writes appear to work
+  and then vanish on relaunch. The symptom is "the setting never sticks" with
+  no error anywhere. Check the tail of `leveldb\LOG` for `Corruption: checksum
+  mismatch`; the cure is to quit and move the `leveldb` folder aside (the
+  profile rebuilds, preferences return to defaults).
 
 ## 10. Status
 
@@ -371,7 +382,10 @@ Each second the loop decides **who gets the second**:
 Win+M hold, fullscreen hide, drag + magnet + edges, grab icon, launch intro,
 themes, sizes, dark mode panels and dashboard, top apps list, dashboard render,
 countdown alert flash, break card visuals (light/dark), capture exclusion,
-encrypted migration of real data.
+encrypted migration of real data, pill display modes Hidden / Icon / Full
+(switching, the icon-mode time, and the mode surviving a restart), the tray
+icon (tooltip, "Open Serion" opens the dashboard while the pill is hidden,
+"Quit Serion" exits and saves), and a 1.2.0 build installed over 1.1.0.
 
 **Built, covered by unit tests, not yet seen live:** reading mode, display-awake
 (video/call) counting, midnight flip, fullscreen break peek, other-screens
@@ -424,6 +438,8 @@ through the UI, battery quit.
 | `ac19e07` | Placement redone from the owner's edge sketches: buttons and panel on opposite sides of the pill (no side columns), panel past the buttons at the top/bottom edge, expand at the wall end; installer at `E:\` rebuilt |
 | v1.1.0 | User-facing README (features, install, using the pill, privacy, build from source) with screenshots in `docs/`; MIT LICENSE; version 1.1.0, installer `Serion_1.1.0_x64-setup.exe` at `E:\` and on GitHub Releases |
 | (after v1.1.0) | Pill display modes Hidden (new default) / Icon / Full in a new dashboard "Pill" card with the size; tray icon (open dashboard, quit); the pill shows for breaks while hidden |
+| `c2d018b` | That feature as committed before building: `display` preference, `icon-only` pill, tray, dashboard Pill card |
+| (after `c2d018b`) | Fixes from the live run: a tray failure no longer aborts startup, one `--pill-h` value for the pill's height and icon/intro width, orphan comment removed |
 
 Decisions worth knowing (and *why*): Tauri over Electron for a 24/7 widget
 (memory); a custom drag because the native one blocks page events; offered

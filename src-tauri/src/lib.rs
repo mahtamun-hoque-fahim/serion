@@ -791,7 +791,11 @@ pub fn run() {
 
             let handle = app.handle().clone();
             thread::spawn(move || run_tracker(handle));
-            add_tray(app.handle())?;
+            // A tray that fails to appear must not take the app down with it:
+            // the pill and the dashboard still work without one.
+            if let Err(err) = add_tray(app.handle()) {
+                eprintln!("serion: tray icon unavailable: {err}");
+            }
             app.manage(HitArea::default());
             let handle = app.handle().clone();
             thread::spawn(move || watch_hit_area(handle));
