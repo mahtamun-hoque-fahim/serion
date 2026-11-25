@@ -5,9 +5,10 @@ The single source of truth for anyone (person or agent) picking this project up.
 change that alters behavior, rules, files, workflow or status** (see
 "Keeping this file current" at the end).
 
-Last updated: 2026-11-24, version 1.2.0: pill display modes (Hidden / Icon /
-Full) and the tray icon, installed over 1.1.0 and verified live on the owner's
-machine, including the mode surviving a restart.
+Last updated: 2026-11-25, version 1.2.1: the dashboard's Breaks row no longer
+cuts off its unit dropdown at the window's 760px minimum. 1.2.0 (pill display
+modes Hidden / Icon / Full and the tray icon) is installed over 1.1.0 and
+verified live on the owner's machine, including the mode surviving a restart.
 
 ---
 
@@ -375,6 +376,13 @@ Each second the loop decides **who gets the second**:
   no error anywhere. Check the tail of `leveldb\LOG` for `Corruption: checksum
   mismatch`; the cure is to quit and move the `leveldb` folder aside (the
   profile rebuilds, preferences return to defaults).
+- **`.reveal` caps the row it opens.** The dashboard's collapsible rows open by
+  animating `max-height` (44px) with `overflow: hidden`, so a row that wraps to
+  two lines is silently cut off instead of pushing the card taller. The Breaks
+  row does exactly that between the 760px minimum and about 830px; it gets its
+  own taller ceiling in that width range. Any new row inside `.reveal` that can
+  wrap needs the same treatment, and the check is
+  `scrollHeight > clientHeight` in devtools, not the eye.
 
 ## 10. Status
 
@@ -385,7 +393,8 @@ countdown alert flash, break card visuals (light/dark), capture exclusion,
 encrypted migration of real data, pill display modes Hidden / Icon / Full
 (switching, the icon-mode time, and the mode surviving a restart), the tray
 icon (tooltip, "Open Serion" opens the dashboard while the pill is hidden,
-"Quit Serion" exits and saves), and a 1.2.0 build installed over 1.1.0.
+"Quit Serion" exits and saves), a 1.2.0 build installed over 1.1.0, and the
+Breaks row wrapping cleanly at the 760px minimum in the installed 1.2.1.
 
 **Built, covered by unit tests, not yet seen live:** reading mode, display-awake
 (video/call) counting, midnight flip, fullscreen break peek, other-screens
@@ -440,6 +449,7 @@ through the UI, battery quit.
 | (after v1.1.0) | Pill display modes Hidden (new default) / Icon / Full in a new dashboard "Pill" card with the size; tray icon (open dashboard, quit); the pill shows for breaks while hidden |
 | `c2d018b` | That feature as committed before building: `display` preference, `icon-only` pill, tray, dashboard Pill card |
 | (after `c2d018b`) | Fixes from the live run: a tray failure no longer aborts startup, one `--pill-h` value for the pill's height and icon/intro width, orphan comment removed |
+| (after that) | 1.2.1: the Breaks row's "Every … for 1 min" line no longer clips its unit dropdown at the 760px minimum (taller reveal ceiling below 830px), and the sentence breaks as two units so "for 1 min" stays together |
 
 Decisions worth knowing (and *why*): Tauri over Electron for a 24/7 widget
 (memory); a custom drag because the native one blocks page events; offered

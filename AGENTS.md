@@ -88,3 +88,24 @@ Newest last. Date, decision, reason.
   blind clicking over someone's film is not acceptable. Tray verification is
   deferred until the desktop is free, and future UI probes will take a
   full-screen capture and confirm the scene before clicking.
+- **2026-11-25 — the Breaks clipping is a reveal height, not a flex bug.** At
+  the window's 760px minimum the "Every … for … min" line needs two lines
+  (72px), but `.reveal.open` caps it at 44px `overflow: hidden`, so the unit
+  dropdown was cut off. A `@media (max-width: 829px)` rule raises that one row
+  to 88px; from about 830px up it still fits on one line (38px) and keeps the
+  original animation. Measured: 760/780/800/820 → 72px with no clipping,
+  830+ → 38px.
+- **2026-11-25 — the break sentence breaks as two units.** "Every 45 min of
+  screen time," and "for 1 min" are now separate spans, so the wrap keeps the
+  unit with its number instead of leaving the dropdown alone on line two. The
+  text still reads in full; only the break point changed.
+- **2026-11-25 — 1.2.1, not a second 1.2.0.** The 1.2.0 installer was already
+  built, installed and pushed; this fix changes behavior, so it ships as 1.2.1
+  in all four version files. Same rule as before: one version number, one
+  behavior.
+- **2026-11-25 — layout fixes are proved in the running page before a build.**
+  Both the taller reveal and the two-span sentence were injected into the
+  installed 1.2.0 page over CDP and measured before spending a 3-minute build
+  on them. A `PrintWindow` capture with `PW_RENDERFULLCONTENT` (flag 2) reads a
+  covered window's own pixels, so checks no longer need the owner's desktop to
+  be free.

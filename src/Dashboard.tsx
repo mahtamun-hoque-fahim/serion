@@ -763,20 +763,25 @@ function BreaksBlock({ settings, onSettings }: { settings: Settings | null; onSe
                 </span>
               </button>
               <div className={on ? "break-options reveal open" : "break-options reveal"} inert={!on}>
-                Every
-                <NumberInput
-                  label={`${row.label} interval in minutes`}
-                  value={every ?? row.start}
-                  min={EVERY_MIN}
-                  max={EVERY_MAX}
-                  onCommit={(m) => setEvery(row, m)}
-                />
-                min of screen time, for
-                <DurationInput
-                  label={`${row.label} length`}
-                  seconds={config[row.seconds]}
-                  onCommit={(s) => save({ [row.seconds]: s })}
-                />
+                <span>
+                  Every
+                  <NumberInput
+                    label={`${row.label} interval in minutes`}
+                    value={every ?? row.start}
+                    min={EVERY_MIN}
+                    max={EVERY_MAX}
+                    onCommit={(m) => setEvery(row, m)}
+                  />
+                  min of screen time,
+                </span>
+                <span>
+                  for
+                  <DurationInput
+                    label={`${row.label} length`}
+                    seconds={config[row.seconds]}
+                    onCommit={(s) => save({ [row.seconds]: s })}
+                  />
+                </span>
               </div>
               {clash?.kind === row.kind && on && (
                 <p className="clash" role="alert">

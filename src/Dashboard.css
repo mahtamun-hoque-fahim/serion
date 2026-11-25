@@ -895,6 +895,16 @@ body,
   transform: none;
 }
 
+/* "Every 45 min of screen time, for 1 min" needs two lines (72px) between the
+   window's 760px minimum and about 830px, where it still fits on one (38px).
+   The reveal's 44px cap cut off the unit dropdown there, so below that width
+   this row gets a taller ceiling. Wider windows keep the original animation. */
+@media (max-width: 829px) {
+  .break-options.reveal.open {
+    max-height: 88px;
+  }
+}
+
 .breaks-intro {
   margin: -6px 0 10px;
 }
@@ -919,6 +929,16 @@ body,
 
 .break-options.open {
   padding: 2px 0 8px;
+}
+
+/* The sentence breaks as two units — "Every 45 min of screen time," then
+   "for 1 min" — so the unit dropdown is never left alone on the second line
+   when the row wraps at the window's narrow width. */
+.break-options > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
 }
 
 .break-options select,

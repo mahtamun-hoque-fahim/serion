@@ -3748,7 +3748,7 @@ dependencies = [
 
 [[package]]
 name = "serion"
-version = "1.2.0"
+version = "1.2.1"
 dependencies = [
  "active-win-pos-rs",
  "aes-gcm",

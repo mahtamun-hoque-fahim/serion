@@ -1,6 +1,6 @@
 [package]
 name = "serion"
-version = "1.2.0"
+version = "1.2.1"
 description = "Shows how long you have actually used your computer today"
 authors = ["Mahtamun Hoque Fahim"]
 license = "MIT"
