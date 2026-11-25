@@ -1,5 +1,9 @@
 # Serion
 
+![Version](https://img.shields.io/github/v/release/mahtamun-hoque-fahim/serion?style=flat-square&color=0047ff)
+![License](https://img.shields.io/github/license/mahtamun-hoque-fahim/serion?style=flat-square)
+![Stars](https://img.shields.io/github/stars/mahtamun-hoque-fahim/serion?style=flat-square)
+
 A small pill at the top of your screen that shows how long you have
 **actually** used your computer today, not just how long it has been switched on.
 

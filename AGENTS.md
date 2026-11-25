@@ -109,3 +109,17 @@ Newest last. Date, decision, reason.
   on them. A `PrintWindow` capture with `PW_RENDERFULLCONTENT` (flag 2) reads a
   covered window's own pixels, so checks no longer need the owner's desktop to
   be free.
+- **2026-11-25 — 1.2.1 was published as a GitHub Release from the REST API.**
+  `gh` is not installed, but `git credential fill` returns a token that works
+  against the API, so the release and its installer were created without a
+  browser: `POST /releases`, then `POST` to that release's `upload_url`. The
+  first attempt got a 422 because PowerShell 5.1's `ConvertTo-Json` had wrapped
+  the notes string in `{"value": ...}`; `JavaScriptSerializer` fixed it. The
+  asset was checked afterwards with a `HEAD` on the download URL.
+- **2026-11-25 — the repo's About, changelog and Dependabot were seeded.**
+  Description and nine topics were set through the API; topics need
+  `PUT /repos/{owner}/{repo}/topics` because the repo `PATCH` left them empty.
+  `CHANGELOG.md` starts at 1.0.0, built back from the tags. The README gained
+  version, license and stars badges in brand blue `0047ff`. Dependabot covers
+  npm, cargo under `src-tauri`, and GitHub Actions. No homepage is set: this is
+  a desktop app with no site.

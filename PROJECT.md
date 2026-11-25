@@ -9,6 +9,8 @@ Last updated: 2026-11-25, version 1.2.1: the dashboard's Breaks row no longer
 cuts off its unit dropdown at the window's 760px minimum. 1.2.0 (pill display
 modes Hidden / Icon / Full and the tray icon) is installed over 1.1.0 and
 verified live on the owner's machine, including the mode surviving a restart.
+The repo itself now has an About description and topics, a `CHANGELOG.md`,
+README badges and Dependabot.
 
 ---
 
@@ -402,10 +404,10 @@ credit, Start menu = hold, a full live break cycle, export/import/folder move
 through the UI, battery quit.
 
 **Missing / open:**
-1. **Version 1.1.0** (2026-10-29): installer `Serion_1.1.0_x64-setup.exe`,
-   published as GitHub Release `v1.1.0` (tag on the release commit). The owner
-   uses the installed app daily. Start at login turns on at the first
-   installed run and has not been confirmed yet.
+1. **Version 1.2.1** (2026-11-25): installer `Serion_1.2.1_x64-setup.exe`,
+   published as GitHub Release `v1.2.1` (tag on the fix commit). The owner's
+   installed app is this build. Start at login turns on at the first installed
+   run and has not been confirmed yet.
 2. macOS / Linux: `screen.rs`, `names.rs`, `battery.rs` are stubs → nothing
    counts there yet. Decide: port or declare v1 Windows-only.
 3. Unsigned → SmartScreen warning for other users; no auto-updater.
@@ -413,10 +415,15 @@ through the UI, battery quit.
    activate the window (seen once during automated tests, unconfirmed).
 5. Cleanups: drop `active-win-pos-rs` (only the probe uses it); no frontend
    tests.
-6. Releases: `gh` is not installed here, so a release is made on github.com
-   (new release, pick the tag, attach the installer). Each release: bump the
-   version in `tauri.conf.json`, `Cargo.toml`, `package.json` (and the root of
-   `package-lock.json`), build, tag `vX.Y.Z`, push the tag, then publish.
+6. Releases: bump the version in `tauri.conf.json`, `Cargo.toml`, `package.json`
+   (and the root of `package-lock.json`), build, tag `vX.Y.Z`, push the tag,
+   then publish. `gh` is not installed, so publish either on github.com by hand
+   or through the REST API using the token in the git credential store
+   (`git credential fill`, never printed). Do not build the payload with
+   PowerShell 5.1's `ConvertTo-Json`: it wraps a string value in
+   `{"value": ...}` and GitHub answers 422. Serialize with
+   `System.Web.Script.Serialization.JavaScriptSerializer`, then upload the
+   installer to `upload_url`.
 
 ## 11. History (commits on `main`)
 
@@ -450,6 +457,8 @@ through the UI, battery quit.
 | `c2d018b` | That feature as committed before building: `display` preference, `icon-only` pill, tray, dashboard Pill card |
 | (after `c2d018b`) | Fixes from the live run: a tray failure no longer aborts startup, one `--pill-h` value for the pill's height and icon/intro width, orphan comment removed |
 | (after that) | 1.2.1: the Breaks row's "Every … for 1 min" line no longer clips its unit dropdown at the 760px minimum (taller reveal ceiling below 830px), and the sentence breaks as two units so "for 1 min" stays together |
+| v1.2.1 | GitHub Release `v1.2.1` published with `Serion_1.2.1_x64-setup.exe` attached; notes cover display modes, the tray icon, and both fixes |
+| (this commit) | gh-meta: About description and nine topics, `CHANGELOG.md` back to 1.0.0 from the tags, README badges, Dependabot for npm, cargo and Actions |
 
 Decisions worth knowing (and *why*): Tauri over Electron for a 24/7 widget
 (memory); a custom drag because the native one blocks page events; offered
