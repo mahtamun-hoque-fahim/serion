@@ -5,12 +5,14 @@ The single source of truth for anyone (person or agent) picking this project up.
 change that alters behavior, rules, files, workflow or status** (see
 "Keeping this file current" at the end).
 
-Last updated: 2026-11-25, version 1.2.1: the dashboard's Breaks row no longer
-cuts off its unit dropdown at the window's 760px minimum. 1.2.0 (pill display
-modes Hidden / Icon / Full and the tray icon) is installed over 1.1.0 and
-verified live on the owner's machine, including the mode surviving a restart.
-The repo itself now has an About description and topics, a `CHANGELOG.md`,
-README badges and Dependabot.
+Last updated: 2026-11-25, version 1.2.1, plus the landing site. The dashboard's
+Breaks row no longer cuts off its unit dropdown at the window's 760px minimum.
+1.2.0 (pill display modes Hidden / Icon / Full and the tray icon) is installed
+over 1.1.0 and verified live on the owner's machine, including the mode
+surviving a restart. The repo itself now has an About description and topics, a
+`CHANGELOG.md`, README badges and Dependabot. `site/` holds the one-page landing
+site (Next.js 16 static export), built and checked in the browser at 375, 768,
+1280, 1440 and 1920; the domain and host are still open.
 
 ---
 
@@ -136,6 +138,28 @@ each window loads only its own CSS):
 
 Windows communicate through **Tauri events** (`tick` every second, `alert`) and
 **`localStorage`** (theme, size, appearance; `storage` events sync windows).
+
+### Site (`site/`)
+The one-page landing site, a separate Next.js app in the same repo (own
+`package.json` and lockfile). It never imports app code: release facts live in
+`site/lib/site.ts` and the palette is copied by hand.
+
+| Path | Role |
+|---|---|
+| `site/app/page.tsx` | section order and the `SoftwareApplication` JSON-LD |
+| `site/app/layout.tsx` | metadata, `metadataBase` (override with `NEXT_PUBLIC_SITE_URL`), fonts |
+| `site/app/globals.css` | the whole design: tokens, sections, the CSS-3D laptop |
+| `site/app/not-found.tsx` | branded 404 |
+| `site/app/opengraph-image.tsx` | 1200×630 social card, composed in code (`next/og`) |
+| `site/components/DisplayModes.tsx` | Hidden / Icon / Full state machine: scroll progress on desktop, IntersectionObserver below 901px |
+| `site/components/Laptop.tsx` | the laptop and the live mini pill (DOM, never an image) |
+| `site/lib/site.ts` | version, installer name/size/bytes, every GitHub URL |
+| `site/public/pill.png`, `dashboard.png` | 2× captures of the real app (`scripts/capture-app.mjs`) |
+| `site/scripts/` | `shot.mjs` (screenshots over CDP), `probe.mjs` (measure a live page), `capture-app.mjs` (re-shoot the app at 2× with the brand theme) |
+| `site/BRAIN.md`, `site/SITETREE.md` | the site's own identity, rules and route manifest |
+
+`next build` writes `site/out/` as plain files (static export, `trailingSlash`).
+Host not chosen yet; any static host serves the folder.
 
 ## 5. Counting rules (approved spec)
 
@@ -424,6 +448,10 @@ through the UI, battery quit.
    `{"value": ...}` and GitHub answers 422. Serialize with
    `System.Web.Script.Serialization.JavaScriptSerializer`, then upload the
    installer to `upload_url`.
+7. **Landing site** (`site/`, 2026-11-25): built, static-exported and checked in
+   Chrome at 375, 768, 1280, 1440 and 1920 (laptop states, hero, FAQ, 404, no
+   sideways scroll). Open: the domain and the host, and a look at the generated
+   social card. `NEXT_PUBLIC_SITE_URL` is the only thing a real domain needs.
 
 ## 11. History (commits on `main`)
 
@@ -459,6 +487,7 @@ through the UI, battery quit.
 | (after that) | 1.2.1: the Breaks row's "Every … for 1 min" line no longer clips its unit dropdown at the 760px minimum (taller reveal ceiling below 830px), and the sentence breaks as two units so "for 1 min" stays together |
 | v1.2.1 | GitHub Release `v1.2.1` published with `Serion_1.2.1_x64-setup.exe` attached; notes cover display modes, the tray icon, and both fixes |
 | (this commit) | gh-meta: About description and nine topics, `CHANGELOG.md` back to 1.0.0 from the tags, README badges, Dependabot for npm, cargo and Actions |
+| (this commit) | Landing site in `site/`: one page, real screenshots at 2×, scroll-driven laptop for Hidden / Icon / Full, OG card, branded 404, static export; `CREDITS.md` for the co-authors found in the git history |
 
 Decisions worth knowing (and *why*): Tauri over Electron for a 24/7 widget
 (memory); a custom drag because the native one blocks page events; offered

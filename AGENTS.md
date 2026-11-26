@@ -123,3 +123,28 @@ Newest last. Date, decision, reason.
   version, license and stars badges in brand blue `0047ff`. Dependabot covers
   npm, cargo under `src-tauri`, and GitHub Actions. No homepage is set: this is
   a desktop app with no site.
+- **2026-11-25 — the landing site is a second app in `site/`.** One page, Next.js
+  16 App Router with `output: "export"`, so it is plain files any static host can
+  serve. It imports nothing from the app: release facts live in
+  `site/lib/site.ts` and the palette is copied by hand, because a shared package
+  for one page would cost more than it saves. Hand-written CSS, no Tailwind, no
+  shadcn/ui, no animation library.
+- **2026-11-25 — Singularity was satisfied at site scope.** `site/BRAIN.md` and
+  `site/SITETREE.md` describe the page, not a second product identity, and reuse
+  the answers already in `PROJECT.md`. The owner asked for the site to be built
+  without a second interview.
+- **2026-11-25 — the display-modes demo is CSS 3D plus DOM, not three.js.** The
+  owner suggested a 3D laptop and was unsure of the tool. DOM keeps the pill's
+  text crisp at any zoom, ships no WebGL payload, and still gives a real 3D lean
+  (one shared `rotateY` on the machine, a `rotateX` deck pinned to the hinge).
+  Scroll progress drives the mode on desktop; an IntersectionObserver does it
+  below 901px, where the laptop is sticky.
+- **2026-11-25 — the site shows the real app at 2×.** `site/scripts/capture-app.mjs`
+  drives the running app over CDP, sets the brand theme, captures the pill with
+  its panel open and the dashboard at 920px, then puts the owner's own theme,
+  size and display mode back. Generated images are atmosphere only and never
+  carry UI.
+- **2026-11-25 — `CREDITS.md` instead of rewriting history.** The owner asked for
+  every co-author in the git history to be credited. Rewriting 24 commits would
+  change every SHA and the `v1.2.1` tag, so the co-authors are listed in one file
+  that the README and the footer link to.

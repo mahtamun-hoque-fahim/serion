@@ -105,3 +105,6 @@ npm run tauri dev
 ## License
 
 [MIT](LICENSE) © 2026 Mahtamun Hoque Fahim
+
+The commits that built this app were written together with AI assistants; every
+co-author is listed in [CREDITS.md](CREDITS.md).
