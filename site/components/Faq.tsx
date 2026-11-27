@@ -31,14 +31,14 @@ export function Faq() {
   return (
     <section className="faq" id="faq">
       <div className="container faq-grid">
-        <div className="faq-head" id="privacy">
+        <div className="faq-head" id="privacy" data-reveal>
           <h2>Before you install</h2>
           <p>Short answers to the things people ask first.</p>
         </div>
 
         <div className="faq-list">
           {questions.map((item) => (
-            <details key={item.q}>
+            <details key={item.q} data-reveal>
               <summary>
                 <span>{item.q}</span>
                 <ChevronDown size={18} strokeWidth={2} aria-hidden="true" />

@@ -40,8 +40,15 @@ only, unsigned installer, no cloud). Success is a download, not applause.
   an SVG hourglass over "Times up!" on the blank laptop's screen: the sand
   runs down, then the glass turns over, on a 5 s CSS loop. No video, no script.
 - [LOCKED] The display-modes section uses the owner's laptop-on-desk art; the
-  live pill and tray icon are DOM laid on its white screen (8 degree tilt). The
-  three rows are buttons that switch the pill between Hidden / Icon / Full.
+  live pill is DOM laid on its white screen (8 degree tilt), no tray icon. On
+  wide screens the band pins and scrolling walks the pill Full, Icon, Hidden,
+  focusing the matching row; a row click scrolls to its step.
+- [LOCKED] Scroll motion (`components/ScrollFx.tsx`, no library): every block
+  blur-fades in once (`data-reveal`). On wide screens "Screen is on" opens as a
+  full white screen with title over description, centred, then shrinks into
+  the gray band and its two columns while the blue band slides up; the blue
+  band holds while the dark band slides over it. Reduced motion and widths
+  under 1101px get the static layout.
 - [LOCKED] Google Sans is the only typeface (owner, 2026-11-27).
 - [LOCKED] No emojis. Icons come from `lucide-react` only.
 - [LOCKED] Section copy follows the 2026-11-27 comp, built on
@@ -87,8 +94,9 @@ No database, no auth, no payments, no analytics, no server runtime.
 - Version, file size and installer name come from `site/lib/site.ts` in one
   place. A release bump touches that file and nothing else.
 - WCAG 2.2 AA: visible focus, landmarks, labelled sections, reduced motion.
-- The page must read and work with JavaScript off, except the laptop's
-  scroll choreography (the three modes are still described in text).
+- The page must read and work with JavaScript off: the `fx` class that hides
+  reveal targets is set by a head script and removed after 3 s if the app
+  never boots.
 - Screenshots are 1× and must not be upscaled past their natural size.
 
 ## Context hooks
@@ -121,8 +129,7 @@ THEME: Quiet Product — light, editorial, one blue accent.
 - Container 1190px; all section heights and offsets are the comp's at 1440px;
   cards 18px; buttons 999px.
 - Motion: spring `cubic-bezier(.34,1.56,.64,1)` for the pill, out
-  `cubic-bezier(.22,1,.36,1)` for reveals; nothing loops except the tray pulse
-  while Hidden.
+  `cubic-bezier(.22,1,.36,1)` for reveals; nothing loops except the hourglass.
 
 ## Features
 

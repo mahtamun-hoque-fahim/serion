@@ -465,16 +465,25 @@ ul {
 .problem {
   position: relative;
   z-index: 1;
+}
+
+.problem-band {
   height: 345px;
   padding-top: 112px;
   background: var(--band);
 }
 
 .problem-grid {
+  position: relative;
   display: grid;
   grid-template-columns: 585px minmax(0, 497px);
   column-gap: 78px;
   align-items: start;
+}
+
+.problem-h,
+.problem-p {
+  position: relative;
 }
 
 .problem h2 {
@@ -482,8 +491,10 @@ ul {
   text-align: right;
 }
 
-.problem h2 span {
+.t-line {
   display: block;
+  width: fit-content;
+  margin-left: auto;
 }
 
 .problem h2 em {
@@ -491,11 +502,17 @@ ul {
   color: var(--brand);
 }
 
-.problem p {
+.problem p,
+.problem-body {
   padding-top: 32px;
   font-size: 15px;
   line-height: 31px;
   color: var(--muted);
+}
+
+/* The centred copies only exist for the pinned scene. */
+.problem-start {
+  display: none;
 }
 
 /* --------------------------------------------------------------------------
@@ -575,10 +592,14 @@ ul {
   --k: 1;
   position: relative;
   z-index: 2;
-  min-height: calc(790px * var(--k));
-  padding: 96px 0 60px;
   background: var(--dark);
   color: #fff;
+}
+
+.display-stage {
+  position: relative;
+  min-height: calc(790px * var(--k));
+  padding: 96px 0 60px;
 }
 
 .desk {
@@ -608,8 +629,8 @@ ul {
 /* Sits on the screen's top edge, which falls 8 degrees to the right. */
 .desk-pill {
   position: absolute;
-  top: 96px;
-  left: 1225px;
+  top: 122px;
+  left: 1400px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -661,44 +682,6 @@ ul {
   opacity: 0;
 }
 
-.desk-tray {
-  position: absolute;
-  top: 664px;
-  left: 1556px;
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--brand);
-  color: #fff;
-}
-
-.desk-tray::after {
-  content: "";
-  position: absolute;
-  inset: -6px;
-  border: 1.5px solid rgba(0, 71, 255, 0);
-  border-radius: 50%;
-}
-
-.desk-stage[data-mode="0"] .desk-tray::after {
-  border-color: rgba(0, 71, 255, 0.7);
-  animation: tray-pulse 2.6s var(--out) infinite;
-}
-
-@keyframes tray-pulse {
-  0% {
-    transform: scale(1);
-    opacity: 0.85;
-  }
-  70%,
-  100% {
-    transform: scale(1.6);
-    opacity: 0;
-  }
-}
-
 .display-copy {
   position: relative;
   z-index: 1;
@@ -739,18 +722,22 @@ ul {
   color: #9a9a9a;
   text-align: left;
   cursor: pointer;
+  opacity: 0.45;
   transition:
-    color 0.35s ease,
-    background 0.35s ease;
+    color 0.45s ease,
+    background 0.45s ease,
+    opacity 0.45s ease;
 }
 
 .mode-row:hover {
   background: rgba(255, 255, 255, 0.03);
+  opacity: 0.75;
 }
 
 .mode-row.is-active {
   background: #1b1b1e;
   color: #fff;
+  opacity: 1;
 }
 
 .mode-num {
@@ -1328,7 +1315,7 @@ ul {
     margin-left: 12vw;
   }
 
-  .problem {
+  .problem-band {
     height: auto;
     padding: 72px 0 120px;
   }
@@ -1368,6 +1355,9 @@ ul {
 
   .display {
     --k: 0.62;
+  }
+
+  .display-stage {
     display: flex;
     flex-direction: column;
     min-height: 0;
@@ -1511,6 +1501,133 @@ ul {
 }
 
 /* --------------------------------------------------------------------------
+   Scroll effects. The fx class is set on <html> before paint when motion is
+   allowed; ScrollFx.tsx adds is-in and the --p and --e scroll progress.
+   -------------------------------------------------------------------------- */
+
+.fx [data-reveal] {
+  opacity: 0;
+  filter: blur(14px);
+  translate: 0 28px;
+  transition:
+    opacity 0.9s var(--out),
+    filter 0.9s var(--out),
+    translate 0.9s var(--out);
+  transition-delay: calc(var(--d, 0) * 110ms);
+}
+
+.fx [data-reveal="1"] {
+  --d: 1;
+}
+
+.fx [data-reveal="2"] {
+  --d: 2;
+}
+
+.fx [data-reveal="3"] {
+  --d: 3;
+}
+
+.fx [data-reveal].is-in {
+  opacity: 1;
+  filter: blur(0);
+  translate: 0 0;
+}
+
+/* Pinned scenes, wide screens only (the same query is in DisplayModes.tsx). */
+@media (min-width: 1101px) and (prefers-reduced-motion: no-preference) {
+  /* 1. A full white screen with the lines centred shrinks into the gray band. */
+  .problem {
+    height: 200svh;
+  }
+
+  .problem-stage {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+  }
+
+  .problem-stage {
+    background: color-mix(in srgb, var(--band) calc(var(--e, 0) * 100%), #fff);
+  }
+
+  .problem-band {
+    display: flex;
+    align-items: center;
+    height: calc(100svh - (100svh - 345px) * var(--e, 0));
+    padding-top: 0;
+    background: color-mix(in srgb, var(--band) calc(var(--e, 0) * 100%), #fff);
+  }
+
+  .problem-grid {
+    scale: calc(1.12 - 0.12 * var(--e, 0));
+  }
+
+  /* Start: title over description, centred. End: the two columns. */
+  .problem-h {
+    transform: translateY(calc(var(--hy, 0px) * (1 - var(--e, 0))));
+  }
+
+  .t-line {
+    transform: translateX(calc(var(--lx, 0px) * (1 - var(--e, 0))));
+  }
+
+  .problem-p {
+    transform: translate(
+      calc(var(--px, 0px) * (1 - var(--e, 0))),
+      calc(var(--py, 0px) * (1 - var(--e, 0)))
+    );
+  }
+
+  /* The centred description blurs out over the first 40%; the aligned one
+     blurs in over the last 25%, once the title has cleared its column. */
+  .problem-p .problem-end {
+    opacity: clamp(0, (var(--e, 0) - 0.75) * 4, 1);
+    filter: blur(calc((1 - clamp(0, (var(--e, 0) - 0.75) * 4, 1)) * 10px));
+  }
+
+  .problem-start {
+    display: block;
+    position: absolute;
+    inset: 0;
+    text-align: center;
+    opacity: clamp(0, 1 - var(--e, 0) * 2.5, 1);
+    filter: blur(calc(clamp(0, var(--e, 0) * 2.5, 1) * 10px));
+  }
+
+  /* 2. The blue band rises under the shrinking one, then holds while the
+     dark band slides over it. */
+  .showcase {
+    position: sticky;
+    top: min(0px, calc(100svh - 785px));
+    margin-top: calc(345px - 100svh);
+  }
+
+  /* 3. The dark band pins while scrolling walks the pill through its modes. */
+  .display {
+    --stage: max(100svh, calc(790px * var(--k)));
+    height: calc(var(--stage) + 200svh);
+  }
+
+  .display-stage {
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: var(--stage);
+    min-height: 0;
+    padding: 0 0 calc(180px * var(--k));
+  }
+
+  /* The desk sits on the stage floor; its edge may clip the last row's box
+     corner but stays clear of the text above it. */
+  .desk {
+    top: calc(var(--stage) - 895px * var(--k));
+  }
+}
+
+/* --------------------------------------------------------------------------
    Motion and print
    -------------------------------------------------------------------------- */
 
@@ -1530,6 +1647,12 @@ ul {
 }
 
 @media print {
+  [data-reveal] {
+    opacity: 1 !important;
+    filter: none !important;
+    translate: none !important;
+  }
+
   .site-header,
   .hero-art,
   .cta-art,

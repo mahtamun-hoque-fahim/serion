@@ -179,3 +179,15 @@ Newest last. Date, decision, reason.
   start and the 5 s loop has no jump. No third-party animation was used: a
   hand-drawn SVG matches the sample's look and needs no license or script.
   `laptop-video.png`, with its Spider-Man stand-in, is deleted.
+- **2026-11-27 — scroll motion, hand-written.** The owner asked for a blurred
+  fade reveal on everything and pinned scroll scenes. `ScrollFx.tsx` uses one
+  IntersectionObserver and one rAF scroll handler; no animation library, per
+  BRAIN.md. "Screen is on" starts as a full white screen with the title over
+  the description, centred (owner's correction), and settles into the two
+  columns; title lines slide one by one and the description blurs out and in,
+  because wrapped text cannot morph. Pinning is wide screens only; phones and
+  reduced motion keep the static layout until the owner's responsive pass.
+- **2026-11-27 — pill order Full, Icon, Hidden; tray icon dropped.** The
+  owner asked for the scroll to go "full, then icon, then pill, then hidden";
+  read as Full, Icon, Hidden since the pill only has three modes. The tray
+  icon on the desk art is removed and the pill moved right on the screen.

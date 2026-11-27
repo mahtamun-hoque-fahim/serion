@@ -7,12 +7,12 @@ export function FinalCta() {
   return (
     <section className="cta">
       <div className="cta-art" aria-hidden="true">
-        <img className="cta-glow-a" src="/glow-bottom-right.png" alt="" width={871} height={871} />
-        <img className="cta-orb" src="/orb-large.png" alt="" width={309} height={309} />
-        <img className="cta-glow-b" src="/glow-top-left.png" alt="" width={651} height={651} />
+        <img data-reveal className="cta-glow-a" src="/glow-bottom-right.png" alt="" width={871} height={871} />
+        <img data-reveal="2" className="cta-orb" src="/orb-large.png" alt="" width={309} height={309} />
+        <img data-reveal="1" className="cta-glow-b" src="/glow-top-left.png" alt="" width={651} height={651} />
       </div>
 
-      <div className="cta-device" aria-hidden="true">
+      <div className="cta-device" aria-hidden="true" data-reveal>
         <ScreenLaptop id="cta" />
         <span className="cta-break">
           <Eye size={22} strokeWidth={1.8} />
@@ -21,7 +21,7 @@ export function FinalCta() {
       </div>
 
       <div className="container cta-grid">
-        <div className="cta-copy">
+        <div className="cta-copy" data-reveal="1">
           <h2>Start today.</h2>
           <p>
             Install Serion and look at the times wasted.{" "}
@@ -49,7 +49,7 @@ export function Footer() {
 
   return (
     <footer className="site-footer">
-      <div className="container footer-bar">
+      <div className="container footer-bar" data-reveal>
         <a className="wordmark" href="#top" aria-label="Serion, back to top">
           <SerionMark size={24} />
           <span>Serion</span>

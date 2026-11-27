@@ -5,14 +5,14 @@ export function Install() {
   return (
     <section className="install" id="install">
       <div className="container">
-        <div className="install-head">
+        <div className="install-head" data-reveal>
           <h2>
             <span className="accent">30 Seconds</span>, That&rsquo;s it.
           </h2>
         </div>
 
         <div className="steps">
-          <article className="step-card">
+          <article className="step-card" data-reveal>
             <span className="step-num">01</span>
             <h3>Download the installer</h3>
             <p>
@@ -28,7 +28,7 @@ export function Install() {
             </div>
           </article>
 
-          <article className="step-card step-card--featured">
+          <article className="step-card step-card--featured" data-reveal="1">
             <span className="step-num">02</span>
             <h3>Run it</h3>
             <p>
@@ -60,7 +60,7 @@ export function Install() {
             </div>
           </article>
 
-          <article className="step-card">
+          <article className="step-card" data-reveal="2">
             <span className="step-num">03</span>
             <h3>Choose how visible you want it</h3>
             <p>
@@ -70,7 +70,7 @@ export function Install() {
           </article>
         </div>
 
-        <div className="install-actions">
+        <div className="install-actions" data-reveal>
           <a className="btn" href={URLS.download} target="_blank" rel="noreferrer">
             <Download size={18} strokeWidth={2} aria-hidden="true" />
             Download for Windows

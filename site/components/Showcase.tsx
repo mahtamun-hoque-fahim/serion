@@ -10,7 +10,7 @@ export function Showcase() {
   return (
     <section className="showcase" id="features">
       <div className="container showcase-grid">
-        <figure className="dashboard-card">
+        <figure className="dashboard-card" data-reveal>
           <img
             src="/dashboard.png"
             alt="The Serion dashboard in dark mode: today's total, the daily average, a week of bars and the top apps"
@@ -22,12 +22,12 @@ export function Showcase() {
         </figure>
 
         <div className="showcase-copy">
-          <h2>Where the hours actually went.</h2>
-          <p>
+          <h2 data-reveal="1">Where the hours actually went.</h2>
+          <p data-reveal="2">
             Seven days at a glance, thirty when you need the bigger picture. A bar for each
             day, your top apps in order, and your average for the week.
           </p>
-          <ul className="bullets">
+          <ul className="bullets" data-reveal="3">
             {bullets.map((line) => (
               <li key={line}>
                 <Check size={17} strokeWidth={2.4} aria-hidden="true" />

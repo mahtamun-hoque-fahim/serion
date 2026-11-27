@@ -493,7 +493,8 @@ through the UI, battery quit.
 | `2c3044f` | Landing site in `site/`: one page, real screenshots at 2×, scroll-driven laptop for Hidden / Icon / Full, OG card, branded 404, static export; `CREDITS.md` for the co-authors found in the git history |
 | `f6518ff` | Landing page rebuilt to the new comp: floating pill header, hero laptop, gray problem band, blue dashboard block, dark display modes, three install cards, dark FAQ, closing CTA, floating footer; laptop screens and background art are placeholders; unused `HowItCounts`, `Features` and `Privacy` components removed |
 | `05fa406` | Landing page matched to the comp at 1440px with the owner's art: video laptop in hero and CTA, laptop-on-desk in the display band with the live pill on its screen, orbs and glows; Google Sans only (Inter removed); copy synced to the comp; `Laptop.tsx` removed |
-| (this commit) | Hero and closing laptops: the owner's blank laptop with an SVG hourglass that drains and turns over on a CSS loop over "Times up!" (`ScreenLaptop.tsx`); `laptop-video.png` and its Spider-Man stand-in removed |
+| `de8fbf3` | Hero and closing laptops: the owner's blank laptop with an SVG hourglass that drains and turns over on a CSS loop over "Times up!" (`ScreenLaptop.tsx`); `laptop-video.png` and its Spider-Man stand-in removed |
+| (this commit) | Scroll motion: blur-fade reveal on every block (`ScrollFx.tsx`); pinned "Screen is on" scene (centred full white screen shrinking into the gray band), blue band slides up then holds while the dark band slides over; the pill walks Full, Icon, Hidden on scroll with row focus; tray icon removed, pill moved right |
 
 Decisions worth knowing (and *why*): Tauri over Electron for a 24/7 widget
 (memory); a custom drag because the native one blocks page events; offered

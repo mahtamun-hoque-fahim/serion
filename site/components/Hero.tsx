@@ -6,23 +6,23 @@ export function Hero() {
   return (
     <section className="hero" id="top">
       <div className="hero-art" aria-hidden="true">
-        <img className="hero-glow" src="/glow-bottom-right.png" alt="" width={871} height={871} />
-        <img className="hero-orb-a" src="/orb-small.png" alt="" width={166} height={166} />
-        <img className="hero-orb-b" src="/orb-large.png" alt="" width={309} height={309} />
-        <ScreenLaptop id="hero" className="hero-laptop" />
+        <img data-reveal className="hero-glow" src="/glow-bottom-right.png" alt="" width={871} height={871} />
+        <img data-reveal="2" className="hero-orb-a" src="/orb-small.png" alt="" width={166} height={166} />
+        <img data-reveal="3" className="hero-orb-b" src="/orb-large.png" alt="" width={309} height={309} />
+        <ScreenLaptop id="hero" className="hero-laptop" reveal="2" />
       </div>
 
       <div className="container hero-copy">
-        <h1>
+        <h1 data-reveal>
           Track Screen time
           <span>Gain Productivity</span>
         </h1>
-        <p className="hero-sub">
+        <p className="hero-sub" data-reveal="1">
           Serion counts the minutes you are really using your computer.{" "}
           <br />
           And it stops counting the moment you walk away.
         </p>
-        <div className="hero-actions">
+        <div className="hero-actions" data-reveal="2">
           <a className="btn" href={URLS.download} target="_blank" rel="noreferrer">
             <Download size={16} strokeWidth={2} aria-hidden="true" />
             Download for Windows

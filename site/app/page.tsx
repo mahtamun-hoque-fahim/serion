@@ -6,6 +6,7 @@ import { DisplayModes } from "@/components/DisplayModes";
 import { Install } from "@/components/Install";
 import { Faq } from "@/components/Faq";
 import { FinalCta, Footer } from "@/components/FinalCta";
+import { ScrollFx } from "@/components/ScrollFx";
 import { INSTALLER_BYTES, URLS, VERSION } from "@/lib/site";
 
 const software = {
@@ -42,6 +43,7 @@ export default function Home() {
         <FinalCta />
       </main>
       <Footer />
+      <ScrollFx />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(software) }}

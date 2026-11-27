@@ -3,6 +3,7 @@ import "@fontsource/google-sans/400.css";
 import "@fontsource/google-sans/500.css";
 import "@fontsource/google-sans/600.css";
 import "@fontsource/google-sans/700.css";
+import Script from "next/script";
 import "./globals.css";
 import { VERSION } from "@/lib/site";
 
@@ -46,7 +47,18 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Hide reveal targets before first paint; un-hide if the scripts never run. */}
+        <Script
+          id="fx"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html:
+              "if(!matchMedia('(prefers-reduced-motion: reduce)').matches){var d=document.documentElement;d.classList.add('fx');setTimeout(function(){if(!window.__fx)d.classList.remove('fx')},3000)}",
+          }}
+        />
+      </head>
       <body>{children}</body>
     </html>
   );
