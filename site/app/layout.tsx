@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   // Set NEXT_PUBLIC_SITE_URL when the site gets a domain; the fallback keeps
   // social previews absolute until then.
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://serion.pages.dev"),
-  title: "Serion: see how long you actually used your computer today",
+  title: "Serion: track screen time, gain productivity",
   description:
     "Serion is a small pill at the top of your screen that counts the minutes you are really using your computer, and stops counting the moment you walk away. Free, open source, Windows 10 and 11.",
   applicationName: "Serion",
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Mahtamun Hoque Fahim", url: "https://github.com/mahtamun-hoque-fahim" }],
   openGraph: {
-    title: "Serion: screen time, counted honestly",
+    title: "Serion: track screen time, gain productivity",
     description:
       `See how long you actually used your computer today. A small pill for Windows 10 and 11. v${VERSION}, 1.6 MB, free and open source.`,
     type: "website",
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Serion: screen time, counted honestly",
+    title: "Serion: track screen time, gain productivity",
     description:
       "A small pill at the top of your screen that counts the time you are actually there.",
   },

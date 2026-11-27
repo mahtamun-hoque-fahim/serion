@@ -4,12 +4,12 @@ One public route. No auth, no data, no API.
 
 ```
 /
-├── #top        hero, real pill screenshot
-├── #counts     how the counting works
-├── #features   six things you get
-├── #display    display modes on a drawn laptop (scroll-driven)
-├── #privacy    where the data lives
+├── #top        hero, laptop slot, download
+├── #counts     screen-on is not time used
+├── #features   the dashboard on blue
+├── #display    Hidden / Icon / Full on a drawn laptop
 ├── #install    three steps, SmartScreen explained
+├── #privacy    the privacy line inside the FAQ head
 ├── #faq        six questions
 └── final CTA → GitHub release asset
 ```
@@ -29,3 +29,10 @@ External destinations (all open in a new tab):
 
 Build output: `site/out/` (`index.html`, `404.html`, `opengraph-image`,
 `icon.svg`, `_next/`, `pill.png`, `dashboard.png`).
+
+Open art slots, both marked in the components:
+
+- Hero and closing laptops: `VideoScreen` in `components/Laptop.tsx`.
+- Display laptop: `DisplayScreen` in `components/Laptop.tsx`.
+- Hero and closing background atmosphere: the `.orb` spans in `Hero.tsx` and
+  `FinalCta.tsx`.

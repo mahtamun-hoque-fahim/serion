@@ -1,4 +1,4 @@
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Lock } from "lucide-react";
 
 const questions = [
   {
@@ -31,9 +31,13 @@ export function Faq() {
   return (
     <section className="faq" id="faq">
       <div className="container faq-grid">
-        <div className="faq-head">
+        <div className="faq-head" id="privacy">
           <h2>Before you install</h2>
           <p>Short answers to the things people ask first.</p>
+          <p className="faq-privacy">
+            <Lock size={14} strokeWidth={1.9} aria-hidden="true" />
+            No account, no cloud, no analytics. Your history stays on your PC.
+          </p>
         </div>
 
         <div className="faq-list">

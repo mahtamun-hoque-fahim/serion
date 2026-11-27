@@ -32,15 +32,17 @@ only, unsigned installer, no cloud). Success is a download, not applause.
   animation library. One page does not need a component system.
 - [LOCKED] One primary action only: **Download for Windows**, pointing at the
   versioned GitHub release asset. No "Get started", no trial, no pricing.
-- [LOCKED] Product imagery is the real app (`docs/pill.png`,
-  `docs/dashboard.png`). Generated images are atmosphere only and never contain
-  UI, text or a device.
+- [LOCKED] The dashboard is the real 2× capture
+  (`site/public/dashboard.png`). The laptops are drawn in CSS; their screens are
+  labelled placeholders until the owner supplies the final mockups, which drop
+  into `.laptop-screen`.
 - [LOCKED] The display-modes section is a laptop drawn in CSS (DOM + 3D
-  transforms), not a photograph and not a WebGL scene. The screen carries the
-  real pill at Hidden / Icon / Full, driven by scroll.
+  transforms), not a photograph and not a WebGL scene. The three rows are
+  buttons that switch the pill between Hidden / Icon / Full.
 - [LOCKED] No emojis. Icons come from `lucide-react` only.
-- [LOCKED] Copy comes from `docs/landing-page-prompt.md` § 2. It may be trimmed,
-  never re-voiced, and no claim may be invented.
+- [LOCKED] Section copy follows the 2026-11-27 comp, built on
+  `docs/landing-page-prompt.md` § 2. It may be trimmed, never re-voiced, and no
+  claim may be invented.
 
 ## What it must never become
 
@@ -49,21 +51,26 @@ only, unsigned installer, no cloud). Success is a download, not applause.
 - A "productivity system" pitch. Serion reports a number; it does not coach.
 - A platform page. No Mac or Linux download, no "coming soon", no app-store
   badges.
-- A template. No gradient hero, glassmorphism, purple, floating blobs, stock
-  photography, fake dashboards or a newsletter form.
+- A template. No glassmorphism, purple, stock photography, fake dashboards or a
+  newsletter form. Background atmosphere is the owner's supplied art; the CSS
+  orbs are placeholders, not the final look.
 - A second design system. The palette is the app's palette.
 
 ## Current state
 
-Status: built, verified in the browser at 375 / 768 / 1280 / 1440 / 1920.
-Last updated: 2026-11-25.
-What works: all twelve sections, the scroll-driven laptop (Hidden / Icon / Full,
-including the mode buttons), real 2× screenshots, the SmartScreen mock, the FAQ,
-the branded 404, the static export, the OG card, metadata and JSON-LD.
-What is open: the domain and host; a look at the 1200×630 social card; generated
-atmosphere images (optional).
-What is next in spirit: publish it, then keep the version line and screenshots
-in step with each release (`site/scripts/capture-app.mjs` re-shoots them).
+Status: rebuilt to the 2026-11-27 comp, verified in headless Chrome at 390 / 768
+/ 1024 / 1440 / 1920.
+Last updated: 2026-11-27.
+What works: the floating pill header; hero with a drawn laptop; the gray
+"screen is on" band; the blue dashboard block; the dark display-modes band with
+Hidden / Icon / Full buttons; the three install cards with the SmartScreen mock;
+the dark FAQ; the closing laptop CTA and floating footer. Real dashboard
+capture, branded 404, static export, OG card, metadata and JSON-LD.
+What is open: the laptop screen art and the background graphics (placeholders
+are in place); the domain and host; a look at the 1200×630 social card.
+What is next in spirit: drop in the owner's mockups, publish, then keep the
+version line and screenshots in step with each release
+(`site/scripts/capture-app.mjs` re-shoots them).
 
 ## The stack (frozen)
 
@@ -84,14 +91,15 @@ No database, no auth, no payments, no analytics, no server runtime.
 
 ## Context hooks
 
-- The app's pill is 168×50 at Large; the laptop renders it at 88×27. Keep the
-  proportions (circle inset, gap) or it stops looking like the product.
+- The app's pill is 168×50 at Large; the display mock draws it at 150×44 in a
+  16:10 screen. Keep the proportions (circle inset, gap) or it stops looking
+  like the product.
 - `serion.display` defaults to **Hidden**, and the tray is the default home.
   Copy that says "the pill at the top of your screen" is about the Full mode.
-- `docs/pill.png` is 290×320 and already contains the pill plus its open panel.
-  Do not crop the panel away; it is the proof of per-app time.
-- The dashboard screenshot is 904×622 (dark). It sits in a dark card with 14px
-  padding, never in browser chrome.
+- `site/public/pill.png` is 548×840 at 2× and contains the pill plus its open
+  panel. It is kept for future screen art; the current page does not use it.
+- The dashboard screenshot is 1840×2120 at 2× (dark). It sits in a dark card
+  with 12px padding, never in browser chrome.
 - `next build` writes `out/`. `trailingSlash: true` is deliberate for static
   hosts.
 - `metadataBase` falls back to `https://serion.pages.dev`; set
@@ -106,8 +114,8 @@ THEME: Quiet Product — light, editorial, one blue accent.
 - Brand `#0047FF`, tint `#E8EEFF`, emerald `#047857` (counting only), red
   `#E11D48` (warnings only).
 - Headings Google Sans 700, tracking `-0.025em`; body Inter 400/500/600.
-- Container 1120px; section padding 112px / 88px / 72px; cards 20px; buttons
-  999px; one shadow `0 12px 32px rgba(11,12,14,.08)`.
+- Container 1180px; section padding 92–100px; cards 20px; buttons 999px; one
+  shadow `0 12px 32px rgba(11,12,14,.08)`.
 - Motion: spring `cubic-bezier(.34,1.56,.64,1)` for the pill, out
   `cubic-bezier(.22,1,.36,1)` for reveals; nothing loops except the tray pulse
   while Hidden.
@@ -121,8 +129,9 @@ THEME: Quiet Product — light, editorial, one blue accent.
 
 ## Tools in `scripts/`
 
-- `shot.mjs <url> <w> <h> <out.png> [full|<scrollY>|offsets]` — screenshots a
-  page in headless Chrome over CDP, no dependencies.
+- `shot.mjs <url> <w> <h> <out.png> [full|<scrollY>|offsets|eval:<js>]` —
+  screenshots a page in headless Chrome over CDP, no dependencies. `full` walks
+  the page first so lazy images load.
 - `probe.mjs <url> <w> <h> <scrollY> <exprFile>` — runs an expression in the
   page and prints the value; how layout, overflow and state are measured.
 - `capture-app.mjs` — re-shoots `docs/pill-blue@2x.png` and

@@ -1,11 +1,8 @@
 import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
 import { Problem } from "@/components/Problem";
-import { HowItCounts } from "@/components/HowItCounts";
-import { Features } from "@/components/Features";
-import { DisplayModes } from "@/components/DisplayModes";
 import { Showcase } from "@/components/Showcase";
-import { Privacy } from "@/components/Privacy";
+import { DisplayModes } from "@/components/DisplayModes";
 import { Install } from "@/components/Install";
 import { Faq } from "@/components/Faq";
 import { FinalCta, Footer } from "@/components/FinalCta";
@@ -38,11 +35,8 @@ export default function Home() {
       <main id="main">
         <Hero />
         <Problem />
-        <HowItCounts />
-        <Features />
-        <DisplayModes />
         <Showcase />
-        <Privacy />
+        <DisplayModes />
         <Install />
         <Faq />
         <FinalCta />

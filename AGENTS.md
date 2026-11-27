@@ -148,3 +148,13 @@ Newest last. Date, decision, reason.
   every co-author in the git history to be credited. Rewriting 24 commits would
   change every SHA and the `v1.2.1` tag, so the co-authors are listed in one file
   that the README and the footer link to.
+- **2026-11-27 — the landing page follows the new comp, not the old page.** The
+  owner supplied a comp with a new section order and art direction: floating
+  pill header, hero laptop, gray problem band, blue dashboard block, dark display
+  modes, three install cards, dark FAQ, closing CTA and floating footer. The old
+  `HowItCounts`, `Features` and `Privacy` sections are removed. Laptop screens
+  and background graphics stay as marked placeholders until the owner supplies
+  the art.
+- **2026-11-27 — display modes are a static band with three buttons.** The comp
+  reads as a two-column dark band, so the previous 300vh scroll choreography is
+  gone; the three rows switch the drawn laptop's pill on click.

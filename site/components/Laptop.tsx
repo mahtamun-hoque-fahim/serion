@@ -1,68 +1,74 @@
-import { Eye } from "lucide-react";
+import { Eye, Play } from "lucide-react";
+import type { ReactNode } from "react";
 import { SerionMark } from "./SerionMark";
 
+type LaptopVariant = "hero" | "display" | "cta";
+
 /**
- * A laptop drawn in the page, not photographed: the screen carries the real
- * pill at three widths. `mode` is 0 Hidden, 1 Icon, 2 Full.
+ * The laptop frame is drawn in the page so a provided screen image can be
+ * dropped into `.laptop-screen` without changing the composition. The frame is
+ * decorative; the section copy carries the meaning.
  */
-export function Laptop({ mode }: { mode: 0 | 1 | 2 }) {
+export function LaptopMockup({
+  variant,
+  screen,
+}: {
+  variant: LaptopVariant;
+  screen: ReactNode;
+}) {
   return (
-    <div className="laptop" data-mode={mode} aria-hidden="true">
+    <div className={`laptop laptop--${variant}`} aria-hidden="true">
       <div className="laptop-lid">
         <span className="laptop-camera" />
-        <div className="laptop-screen">
-          <div className="mini">
-            <div className="mini-wall" />
-
-            <div className="mini-window">
-              <div className="mini-titlebar">
-                <span />
-                <span />
-                <span />
-              </div>
-              <div className="mini-lines">
-                <i style={{ width: "84%" }} />
-                <i style={{ width: "62%" }} />
-                <i style={{ width: "72%" }} />
-                <i style={{ width: "38%" }} />
-              </div>
-            </div>
-
-            <div className="mini-pill">
-              <span className="mini-pill-icon">
-                <Eye size={12} strokeWidth={1.9} />
-              </span>
-              <span className="mini-pill-time">2.9h</span>
-            </div>
-
-            <div className="mini-tip">
-              <SerionMark size={9} />
-              <span>
-                Serion · <b>2.9h today</b>
-              </span>
-            </div>
-
-            <div className="mini-taskbar">
-              <span className="mini-start">
-                <span />
-                <span />
-                <span />
-                <span />
-              </span>
-              <span className="mini-tray">
-                <span className="mini-trayicon">
-                  <SerionMark size={9} />
-                </span>
-                <span className="mini-clock">18:42</span>
-              </span>
-            </div>
-          </div>
-        </div>
+        <div className="laptop-screen">{screen}</div>
       </div>
-
       <div className="laptop-base">
         <div className="laptop-keyboard" />
         <div className="laptop-trackpad" />
+      </div>
+    </div>
+  );
+}
+
+/** Placeholder for the hero and closing laptop screens. */
+export function VideoScreen() {
+  return (
+    <div className="screen-video">
+      <span className="screen-video-orb screen-video-orb--a" />
+      <span className="screen-video-orb screen-video-orb--b" />
+      <span className="screen-play">
+        <Play size={30} fill="currentColor" strokeWidth={0} />
+      </span>
+    </div>
+  );
+}
+
+/** A light desktop carrying the live pill, used while the display mockups are pending. */
+export function DisplayScreen({ mode }: { mode: 0 | 1 | 2 }) {
+  return (
+    <div className="screen-desktop" data-mode={mode}>
+      <div className="desktop-wall" />
+
+      <div className="desktop-pill">
+        <span className="desktop-pill-icon">
+          <Eye size={17} strokeWidth={1.9} />
+        </span>
+        <span className="desktop-pill-time">2.9h</span>
+      </div>
+
+      <div className="desktop-taskbar">
+        <span className="desktop-start">
+          <span />
+          <span />
+          <span />
+          <span />
+        </span>
+        <span className="desktop-tray">
+          <span className="desktop-trayicon">
+            <SerionMark size={11} />
+          </span>
+          <span className="desktop-clock">18:42</span>
+        </span>
       </div>
     </div>
   );

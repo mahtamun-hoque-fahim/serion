@@ -79,6 +79,17 @@ await send("Emulation.setDeviceMetricsOverride", {
 await send("Page.navigate", { url });
 await sleep(2500);
 
+if (mode.startsWith("eval:")) {
+  const result = await send("Runtime.evaluate", {
+    expression: mode.slice(5),
+    returnByValue: true,
+  });
+  console.log(JSON.stringify(result.result.value, null, 2));
+  ws.close();
+  chrome.kill();
+  process.exit(0);
+}
+
 if (mode === "offsets") {
   const result = await send("Runtime.evaluate", {
     expression: `JSON.stringify([...document.querySelectorAll("section")].map((s) => ({ id: s.id, top: Math.round(s.getBoundingClientRect().top + scrollY), h: Math.round(s.offsetHeight) })))`,
@@ -96,7 +107,14 @@ if (mode !== "full") {
   const shot = await send("Page.captureScreenshot", { format: "png" });
   writeFileSync(out, Buffer.from(shot.data, "base64"));
 } else {
+  // Walk the page first so lazy images and reveal-on-scroll effects settle.
   const { contentSize } = await send("Page.getLayoutMetrics");
+  for (let y = 0; y < contentSize.height; y += Math.round(height * 0.8)) {
+    await send("Runtime.evaluate", { expression: `window.scrollTo(0, ${y})` });
+    await sleep(120);
+  }
+  await send("Runtime.evaluate", { expression: "window.scrollTo(0, 0)" });
+  await sleep(900);
   const shot = await send("Page.captureScreenshot", {
     format: "png",
     captureBeyondViewport: true,

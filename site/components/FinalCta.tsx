@@ -1,20 +1,38 @@
-import { Download } from "lucide-react";
+import { Download, Eye } from "lucide-react";
+import { LaptopMockup, VideoScreen } from "./Laptop";
+import { SerionMark } from "./SerionMark";
 import { URLS } from "@/lib/site";
 
 export function FinalCta() {
   return (
     <section className="cta">
-      <div className="container cta-inner">
-        <h2>Start with today.</h2>
-        <p>
-          Install Serion and look at the real number tonight. Two minutes to set up, and it will
-          not interrupt your work.
-        </p>
-        <a className="btn" href={URLS.download} target="_blank" rel="noreferrer">
-          <Download size={18} strokeWidth={2} aria-hidden="true" />
-          Download for Windows
-        </a>
-        <p className="cta-meta">Free · Open source · Windows 10 and 11</p>
+      {/* CSS placeholders for the background artwork the owner is providing. */}
+      <div className="cta-orbs" aria-hidden="true">
+        <span className="orb orb--cta-a" />
+        <span className="orb orb--cta-b" />
+      </div>
+
+      <div className="container cta-grid">
+        <div className="cta-device">
+          {/* Screen slot: replace VideoScreen with the provided laptop mockup. */}
+          <LaptopMockup variant="cta" screen={<VideoScreen />} />
+          <span className="cta-break" aria-hidden="true">
+            <Eye size={16} strokeWidth={2} />
+            Take a Break
+          </span>
+        </div>
+
+        <div className="cta-copy">
+          <h2>Start today.</h2>
+          <p>
+            Install Serion and see the time you actually used. 30 seconds to set up, and find
+            your true potential.
+          </p>
+          <a className="btn" href={URLS.download} target="_blank" rel="noreferrer">
+            <Download size={18} strokeWidth={2} aria-hidden="true" />
+            Download for Windows
+          </a>
+        </div>
       </div>
     </section>
   );
@@ -31,11 +49,11 @@ export function Footer() {
 
   return (
     <footer className="site-footer">
-      <div className="container footer-grid">
-        <div className="footer-brand">
-          <p className="footer-title">Serion</p>
-          <p>Screen time, counted honestly.</p>
-        </div>
+      <div className="container footer-bar">
+        <a className="wordmark" href="#top" aria-label="Serion, back to top">
+          <SerionMark size={22} />
+          <span>Serion</span>
+        </a>
 
         <nav className="footer-links" aria-label="Project links">
           {links.map((link) => (
@@ -44,12 +62,6 @@ export function Footer() {
             </a>
           ))}
         </nav>
-
-        <p className="footer-note">
-          Built for Windows 10 and 11.
-          <br />
-          Never sends your data anywhere.
-        </p>
       </div>
     </footer>
   );

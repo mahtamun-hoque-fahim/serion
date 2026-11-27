@@ -5,14 +5,17 @@ The single source of truth for anyone (person or agent) picking this project up.
 change that alters behavior, rules, files, workflow or status** (see
 "Keeping this file current" at the end).
 
-Last updated: 2026-11-25, version 1.2.1, plus the landing site. The dashboard's
-Breaks row no longer cuts off its unit dropdown at the window's 760px minimum.
-1.2.0 (pill display modes Hidden / Icon / Full and the tray icon) is installed
-over 1.1.0 and verified live on the owner's machine, including the mode
-surviving a restart. The repo itself now has an About description and topics, a
-`CHANGELOG.md`, README badges and Dependabot. `site/` holds the one-page landing
-site (Next.js 16 static export), built and checked in the browser at 375, 768,
-1280, 1440 and 1920; the domain and host are still open.
+Last updated: 2026-11-27, version 1.2.1, plus the landing site. The landing page
+was rebuilt to the owner's new comp: floating pill header, hero with a drawn
+laptop, the gray problem band, the blue dashboard block, the dark display-modes
+band, three install cards, dark FAQ, closing CTA and floating footer. The laptop
+screens and background graphics are marked placeholders until the owner supplies
+them. The dashboard's Breaks row no longer cuts off its unit dropdown at the
+window's 760px minimum. 1.2.0 (pill display modes Hidden / Icon / Full and the
+tray icon) is installed over 1.1.0 and verified live on the owner's machine,
+including the mode surviving a restart. The repo itself now has an About
+description and topics, a `CHANGELOG.md`, README badges and Dependabot. The
+domain and host are still open.
 
 ---
 
@@ -151,8 +154,8 @@ The one-page landing site, a separate Next.js app in the same repo (own
 | `site/app/globals.css` | the whole design: tokens, sections, the CSS-3D laptop |
 | `site/app/not-found.tsx` | branded 404 |
 | `site/app/opengraph-image.tsx` | 1200×630 social card, composed in code (`next/og`) |
-| `site/components/DisplayModes.tsx` | Hidden / Icon / Full state machine: scroll progress on desktop, IntersectionObserver below 901px |
-| `site/components/Laptop.tsx` | the laptop and the live mini pill (DOM, never an image) |
+| `site/components/DisplayModes.tsx` | the dark mode band: three buttons switch the drawn laptop's pill between Hidden / Icon / Full |
+| `site/components/Laptop.tsx` | the laptop frame and its screen placeholders (DOM, never an image) |
 | `site/lib/site.ts` | version, installer name/size/bytes, every GitHub URL |
 | `site/public/pill.png`, `dashboard.png` | 2× captures of the real app (`scripts/capture-app.mjs`) |
 | `site/scripts/` | `shot.mjs` (screenshots over CDP), `probe.mjs` (measure a live page), `capture-app.mjs` (re-shoot the app at 2× with the brand theme) |
@@ -448,9 +451,12 @@ through the UI, battery quit.
    `{"value": ...}` and GitHub answers 422. Serialize with
    `System.Web.Script.Serialization.JavaScriptSerializer`, then upload the
    installer to `upload_url`.
-7. **Landing site** (`site/`, 2026-11-25): built, static-exported and checked in
-   Chrome at 375, 768, 1280, 1440 and 1920 (laptop states, hero, FAQ, 404, no
-   sideways scroll). Open: the domain and the host, and a look at the generated
+7. **Landing site** (`site/`, 2026-11-25; rebuilt to the new comp 2026-11-27):
+   one page, static-exported and checked in headless Chrome at 390, 768, 1024,
+   1440 and 1920 (all sections, no sideways scroll, laptop bases not clipped).
+   The laptop screens and background graphics are placeholders, marked in
+   `components/Laptop.tsx`, `Hero.tsx` and `FinalCta.tsx`, until the owner
+   supplies the art. Open: the domain and the host, and a look at the generated
    social card. `NEXT_PUBLIC_SITE_URL` is the only thing a real domain needs.
 
 ## 11. History (commits on `main`)
@@ -487,7 +493,8 @@ through the UI, battery quit.
 | (after that) | 1.2.1: the Breaks row's "Every … for 1 min" line no longer clips its unit dropdown at the 760px minimum (taller reveal ceiling below 830px), and the sentence breaks as two units so "for 1 min" stays together |
 | v1.2.1 | GitHub Release `v1.2.1` published with `Serion_1.2.1_x64-setup.exe` attached; notes cover display modes, the tray icon, and both fixes |
 | (this commit) | gh-meta: About description and nine topics, `CHANGELOG.md` back to 1.0.0 from the tags, README badges, Dependabot for npm, cargo and Actions |
-| (this commit) | Landing site in `site/`: one page, real screenshots at 2×, scroll-driven laptop for Hidden / Icon / Full, OG card, branded 404, static export; `CREDITS.md` for the co-authors found in the git history |
+| `2c3044f` | Landing site in `site/`: one page, real screenshots at 2×, scroll-driven laptop for Hidden / Icon / Full, OG card, branded 404, static export; `CREDITS.md` for the co-authors found in the git history |
+| (this commit) | Landing page rebuilt to the new comp: floating pill header, hero laptop, gray problem band, blue dashboard block, dark display modes, three install cards, dark FAQ, closing CTA, floating footer; laptop screens and background art are placeholders; unused `HowItCounts`, `Features` and `Privacy` components removed |
 
 Decisions worth knowing (and *why*): Tauri over Electron for a 24/7 widget
 (memory); a custom drag because the native one blocks page events; offered

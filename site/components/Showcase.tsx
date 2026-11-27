@@ -8,28 +8,29 @@ const bullets = [
 
 export function Showcase() {
   return (
-    <section className="showcase">
+    <section className="showcase" id="features">
       <div className="container showcase-grid">
-        <figure className="shot-card">
+        <figure className="dashboard-card">
           <img
             src="/dashboard.png"
             alt="The Serion dashboard in dark mode: today's total, the daily average, a week of bars and the top apps"
             width={1840}
             height={2120}
             loading="lazy"
+            decoding="async"
           />
         </figure>
 
         <div className="showcase-copy">
           <h2>Where the hours actually went.</h2>
-          <p className="lede">
+          <p>
             Seven days at a glance, thirty when you need the bigger picture. A bar for each
             day, your top apps in order, and your average for the week.
           </p>
           <ul className="bullets">
             {bullets.map((line) => (
               <li key={line}>
-                <Check size={17} strokeWidth={2.2} aria-hidden="true" />
+                <Check size={17} strokeWidth={2.4} aria-hidden="true" />
                 <span>{line}</span>
               </li>
             ))}

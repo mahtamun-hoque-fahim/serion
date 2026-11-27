@@ -12,7 +12,7 @@ const links = [
 export function Header() {
   return (
     <header className="site-header">
-      <div className="container header-inner">
+      <div className="container header-bar">
         <a className="wordmark" href="#top" aria-label="Serion, back to top">
           <SerionMark size={22} />
           <span>Serion</span>
