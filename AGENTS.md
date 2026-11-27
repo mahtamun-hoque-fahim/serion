@@ -191,3 +191,15 @@ Newest last. Date, decision, reason.
   owner asked for the scroll to go "full, then icon, then pill, then hidden";
   read as Full, Icon, Hidden since the pill only has three modes. The tray
   icon on the desk art is removed and the pill moved right on the screen.
+- **2026-11-27 — desk art replaced; install played on the laptop.** The owner
+  found the desk mockup section weak and asked for the blank laptop with the
+  pill animated on it, and for the install steps simulated card by card on the
+  same laptop. `Laptop.tsx` is now the one laptop component; the step logic is
+  shared in `lib/useScrollStep.ts`. `laptop-desk.png` is deleted.
+- **2026-11-27 — sticky bleed fixed at the root.** The blue band is sticky, and
+  its sticky box was `main`, so it kept painting over the FAQ and closing
+  section. Problem, Showcase and DisplayModes now sit in one `.scenes` box, so
+  the blue band releases when the scenes end.
+- **2026-11-27 — laptops fit the screen.** Hero and closing laptops are sized
+  from the viewport height so their bases stay visible (closing laptop sits on
+  the footer line), and the header moved from 68px to 24px from the top.

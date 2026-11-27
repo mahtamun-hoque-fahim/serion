@@ -220,7 +220,7 @@ ul {
 
 .site-header {
   position: absolute;
-  inset: 68px 0 auto;
+  inset: 24px 0 auto;
   z-index: 50;
 }
 
@@ -258,9 +258,11 @@ ul {
    -------------------------------------------------------------------------- */
 
 .hero {
+  --hh: clamp(640px, 100svh, 825px);
+  --lh: min(609px, calc(var(--hh) - 116px));
   position: relative;
   z-index: 2;
-  height: 825px;
+  height: var(--hh);
   background: var(--ground);
 }
 
@@ -284,24 +286,25 @@ ul {
 
 .hero-orb-a {
   left: calc(50% + 495px);
-  top: 150px;
+  top: calc(var(--hh) - var(--lh) - 85px);
   width: 166px;
 }
 
 .hero-orb-b {
   left: calc(50% - 690px);
-  top: 665px;
+  top: calc(var(--hh) - 160px);
   width: 309px;
   height: 160px;
   object-fit: cover;
   object-position: top;
 }
 
-.hero-laptop {
+/* Doubled class: beats .laptop-shot's position: relative. */
+.hero-laptop.hero-laptop {
   position: absolute;
   left: calc(50% + 95px);
-  top: 235px;
-  width: 1049px;
+  bottom: 0;
+  width: calc(var(--lh) * 1.7225);
 }
 
 /* --------------------------------------------------------------------------
@@ -326,10 +329,15 @@ ul {
   top: 2.13%;
   width: 77.79%;
   height: 86.21%;
+  overflow: hidden;
+}
+
+.hg-screen {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 23%;
+  height: 100%;
+  padding-top: 23cqw;
   color: #222;
 }
 
@@ -427,7 +435,7 @@ ul {
 .hero-copy {
   position: relative;
   z-index: 1;
-  padding-top: 326px;
+  padding-top: calc(var(--hh) / 2 - 110px);
 }
 
 .hero h1 {
@@ -585,11 +593,10 @@ ul {
 }
 
 /* --------------------------------------------------------------------------
-   Display modes: the dark band and the desk art
+   Display modes: the dark band and the live pill
    -------------------------------------------------------------------------- */
 
 .display {
-  --k: 1;
   position: relative;
   z-index: 2;
   background: var(--dark);
@@ -597,89 +604,112 @@ ul {
 }
 
 .display-stage {
-  position: relative;
-  min-height: calc(790px * var(--k));
-  padding: 96px 0 60px;
+  padding: 96px 0;
 }
 
-.desk {
+.display-grid,
+.install-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 505px) minmax(0, 1fr);
+  gap: 56px;
+  align-items: center;
+}
+
+.display-laptop,
+.install-laptop {
+  width: 100%;
+  max-width: 680px;
+  justify-self: end;
+}
+
+/* The pill on the laptop's desktop: Full, Icon, or gone (Hidden). */
+.pill-screen {
   position: absolute;
-  top: calc(-105px * var(--k));
-  left: calc(50% - 898px * var(--k));
-  width: calc(1816px * var(--k));
-  height: calc(895px * var(--k));
-  pointer-events: none;
+  inset: 0;
+  background:
+    radial-gradient(60% 70% at 80% 10%, rgba(0, 71, 255, 0.1), transparent 70%),
+    linear-gradient(160deg, #fbfcff, #eef2f9);
 }
 
-.desk-stage {
+.scr-pill {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 1816px;
-  height: 895px;
-  transform: scale(var(--k));
-  transform-origin: 0 0;
-}
-
-.desk-stage img {
-  width: 1816px;
-  max-width: none;
-}
-
-/* Sits on the screen's top edge, which falls 8 degrees to the right. */
-.desk-pill {
-  position: absolute;
-  top: 122px;
-  left: 1400px;
+  top: 3.2cqw;
+  left: 50%;
   display: flex;
   align-items: center;
-  gap: 10px;
-  width: 150px;
-  height: 44px;
-  padding: 0 7px;
+  gap: 1.4cqw;
+  width: 20cqw;
+  height: 5.8cqw;
+  padding: 0 0.9cqw;
   overflow: hidden;
   border-radius: 999px;
   background: var(--brand);
   color: #fff;
-  box-shadow: 0 14px 30px rgba(0, 71, 255, 0.28);
-  transform: rotate(8deg);
-  transform-origin: 0 50%;
+  box-shadow: 0 1.6cqw 3.6cqw rgba(0, 71, 255, 0.3);
+  translate: -50% 0;
   transition:
-    width 0.5s var(--spring),
-    opacity 0.3s var(--out),
-    transform 0.5s var(--spring);
+    width 0.6s var(--spring),
+    opacity 0.35s var(--out),
+    filter 0.35s var(--out),
+    transform 0.6s var(--spring);
 }
 
-.desk-pill-icon {
+.scr-pill-icon {
   flex: none;
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 30px;
+  width: 4cqw;
+  height: 4cqw;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.16);
 }
 
-.desk-pill-time {
-  font-size: 18px;
+.scr-pill-icon svg {
+  width: 2.3cqw;
+  height: 2.3cqw;
+}
+
+.scr-pill-time {
+  font-size: 2.5cqw;
   font-weight: 500;
   line-height: 1;
   white-space: nowrap;
-  transition: opacity 0.25s ease;
+  transition: opacity 0.3s ease;
 }
 
-.desk-stage[data-mode="0"] .desk-pill {
-  width: 44px;
+.pill-screen[data-mode="1"] .scr-pill,
+.pill-screen[data-mode="0"] .scr-pill {
+  width: 5.8cqw;
+}
+
+.pill-screen[data-mode="1"] .scr-pill-time,
+.pill-screen[data-mode="0"] .scr-pill-time {
   opacity: 0;
-  transform: rotate(8deg) translateY(-12px) scale(0.82);
 }
 
-.desk-stage[data-mode="1"] .desk-pill {
-  width: 44px;
-}
-
-.desk-stage[data-mode="1"] .desk-pill-time {
+.pill-screen[data-mode="0"] .scr-pill {
   opacity: 0;
+  filter: blur(6px);
+  transform: translateY(-2cqw) scale(0.8);
+}
+
+/* Where the pill was, while Hidden. */
+.scr-pill-ghost {
+  position: absolute;
+  top: 3.2cqw;
+  left: 50%;
+  width: 5.8cqw;
+  height: 5.8cqw;
+  border: 1.5px dashed rgba(0, 71, 255, 0.35);
+  border-radius: 999px;
+  opacity: 0;
+  translate: -50% 0;
+  transition: opacity 0.4s ease;
+}
+
+.pill-screen[data-mode="0"] .scr-pill-ghost {
+  opacity: 1;
+  transition-delay: 0.25s;
 }
 
 .display-copy {
@@ -778,12 +808,15 @@ ul {
 .install {
   position: relative;
   z-index: 3;
-  padding: 105px 0 44px;
   background: #fff;
 }
 
+.install-stage {
+  padding: 96px 0 56px;
+}
+
 .install-head {
-  margin-bottom: 48px;
+  margin-bottom: 40px;
   text-align: center;
 }
 
@@ -793,159 +826,61 @@ ul {
 
 .steps {
   display: grid;
-  grid-template-columns: 360px 358px 360px;
-  gap: 30px;
-  align-items: start;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .step-card {
-  display: flex;
-  flex-direction: column;
-  margin-top: 42px;
-  padding: 26px 26px 30px;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  width: 100%;
+  padding: 18px 20px;
   border: 1px solid var(--line);
-  border-radius: 18px;
+  border-radius: 16px;
   background: #fff;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  opacity: 0.5;
+  transition:
+    opacity 0.45s ease,
+    background 0.45s ease,
+    border-color 0.45s ease,
+    box-shadow 0.45s ease;
 }
 
-.step-card--featured {
-  margin-top: 0;
+.step-card:hover {
+  opacity: 0.8;
+}
+
+.step-card.is-active {
   border-color: transparent;
-  background: #dcdcdc;
+  background: #f1f2f4;
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.08);
+  opacity: 1;
 }
 
 .step-num {
+  grid-row: span 2;
+  padding-top: 4px;
   font-size: 10px;
   color: #888;
 }
 
-.step-card h3 {
-  margin-top: 14px;
-  font-size: 17px;
-  letter-spacing: 0;
-}
-
-.step-card > p {
-  margin-top: 8px;
-  font-size: 14px;
-  line-height: 23px;
-  color: #8a8a8a;
-}
-
-.step-card--featured > p {
-  color: #222;
-}
-
-.step-visual {
-  padding-top: 24px;
-}
-
-.file-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  height: 48px;
-  padding: 0 16px;
-  border-radius: 10px;
-  background: #f2f4f9;
-  font-size: 10px;
-  transition: background 0.2s ease;
-}
-
-.file-row:hover {
-  background: var(--brand-tint);
-}
-
-.file-row > svg:first-child {
-  flex: none;
-  color: var(--brand);
-}
-
-.file-row > svg:last-child {
-  flex: none;
-  color: #888;
-}
-
-.file-name {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-weight: 500;
-}
-
-.file-size {
-  flex: none;
-  color: #888;
-}
-
-.smartscreen {
-  padding: 16px;
-  border-radius: 12px;
-  background: #fff;
-}
-
-.ss-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 11px;
+.step-title {
+  font-size: 16px;
   font-weight: 600;
 }
 
-.ss-title svg {
-  flex: none;
-  color: var(--brand);
-}
-
-.ss-body {
-  margin-top: 8px;
-  font-size: 10px;
-  line-height: 1.6;
-  color: #888;
-}
-
-.ss-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 12px;
-}
-
-.ss-btn {
-  padding: 5px 10px;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  font-size: 10px;
-  color: #555;
-}
-
-.ss-more {
-  border-color: rgba(0, 71, 255, 0.5);
-  background: var(--brand-tint);
-  color: var(--brand);
-}
-
-.ss-note {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 14px;
-  padding-left: 6px;
-  font-size: 10px;
-  color: #555;
-}
-
-.ss-note svg {
-  color: var(--brand);
-}
-
-.ss-note b {
-  font-weight: 600;
-  color: #222;
+.step-body {
+  grid-column: 2;
+  margin-top: 4px;
+  font-size: 13.5px;
+  line-height: 21px;
+  color: #6d6d6d;
 }
 
 .install-actions {
@@ -954,11 +889,435 @@ ul {
   justify-content: center;
   flex-wrap: wrap;
   gap: 28px;
-  margin-top: 63px;
+  padding-bottom: 72px;
 }
 
 .install-actions .btn {
   min-width: 242px;
+}
+
+/* The simulation. Each panel blurs in when its step is on; inside, delays
+   play the step out (the delays only apply on the way in). */
+.inst-screen {
+  position: absolute;
+  inset: 0;
+  background: #f4f6fa;
+  color: #222;
+}
+
+.inst-panel {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  filter: blur(8px);
+  transition:
+    opacity 0.5s var(--out),
+    filter 0.5s var(--out);
+}
+
+.inst-screen[data-step="0"] .inst-download,
+.inst-screen[data-step="1"] .inst-warn,
+.inst-screen[data-step="2"] .inst-tray {
+  opacity: 1;
+  filter: none;
+}
+
+.inst-cursor {
+  position: absolute;
+  width: 2.6cqw;
+  height: 2.6cqw;
+  color: #111;
+  filter: drop-shadow(0 0.3cqw 0.5cqw rgba(0, 0, 0, 0.25));
+  opacity: 0;
+  translate: 8cqw 6cqw;
+  transition:
+    opacity 0.3s ease,
+    translate 0.7s var(--out);
+}
+
+/* 1. Download */
+.inst-download {
+  background: #fff;
+}
+
+.mb-bar {
+  display: flex;
+  align-items: center;
+  gap: 2cqw;
+  height: 4.6cqw;
+  padding: 0 1.6cqw;
+  border-bottom: 1px solid #e1e4ea;
+  background: #eef0f4;
+}
+
+.mb-dots {
+  display: flex;
+  gap: 0.6cqw;
+}
+
+.mb-dots i {
+  width: 1cqw;
+  height: 1cqw;
+  border-radius: 50%;
+  background: #cfd3da;
+}
+
+.mb-url {
+  flex: 1;
+  padding: 0.6cqw 1.4cqw;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 1.3cqw;
+  color: #666;
+}
+
+.mb-page {
+  position: relative;
+  padding: 3.2cqw 4cqw;
+}
+
+.mb-title {
+  font-size: 2.8cqw;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.mb-sub {
+  margin-top: 2.2cqw;
+  font-size: 1.4cqw;
+  color: #888;
+}
+
+.mb-asset {
+  display: flex;
+  align-items: center;
+  gap: 1.2cqw;
+  margin-top: 1cqw;
+  padding: 1.4cqw 1.6cqw;
+  border: 1px solid #e6e8ec;
+  border-radius: 1cqw;
+  font-size: 1.5cqw;
+  color: var(--brand);
+}
+
+.mb-asset svg {
+  width: 2cqw;
+  height: 2cqw;
+}
+
+.mb-asset em {
+  margin-left: auto;
+  font-style: normal;
+  color: #888;
+}
+
+.inst-cursor--asset {
+  left: 24cqw;
+  top: 13.4cqw;
+}
+
+.mb-download {
+  position: absolute;
+  top: 5.6cqw;
+  right: 1.6cqw;
+  display: flex;
+  align-items: center;
+  gap: 1.2cqw;
+  width: 30cqw;
+  padding: 1.4cqw 1.6cqw;
+  border-radius: 1.2cqw;
+  background: #fff;
+  box-shadow: 0 1.2cqw 3.4cqw rgba(0, 0, 0, 0.14);
+  opacity: 0;
+  translate: 0 -1.5cqw;
+  transition:
+    opacity 0.4s var(--out),
+    translate 0.4s var(--out);
+}
+
+.mb-download > svg {
+  flex: none;
+  width: 2.2cqw;
+  height: 2.2cqw;
+  color: var(--brand);
+}
+
+.mb-dl-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 1.3cqw;
+}
+
+.mb-dl-text span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mb-progress {
+  display: block;
+  height: 0.5cqw;
+  margin-top: 0.8cqw;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e6e9ef;
+}
+
+.mb-progress b {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--brand);
+  transition: width 0.3s ease;
+}
+
+.mb-done {
+  flex: none;
+  width: 2cqw;
+  height: 2cqw;
+  color: #047857;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.inst-screen[data-step="0"] .inst-cursor--asset {
+  opacity: 1;
+  translate: 0 0;
+  transition-delay: 0.2s;
+}
+
+.inst-screen[data-step="0"] .mb-download {
+  opacity: 1;
+  translate: 0 0;
+  transition-delay: 0.9s;
+}
+
+.inst-screen[data-step="0"] .mb-progress b {
+  width: 100%;
+  transition: width 1.6s ease 1.2s;
+}
+
+.inst-screen[data-step="0"] .mb-done {
+  opacity: 1;
+  transition-delay: 2.8s;
+}
+
+/* 2. SmartScreen */
+.inst-warn {
+  display: grid;
+  place-items: center;
+  background: linear-gradient(160deg, #e9eef6, #dbe3f0);
+}
+
+.ss-window {
+  position: relative;
+  width: 48cqw;
+  padding: 3cqw 3cqw 2.4cqw;
+  background: #1f5fbf;
+  color: #fff;
+  box-shadow: 0 2cqw 5cqw rgba(0, 0, 0, 0.25);
+}
+
+.ss-head {
+  display: flex;
+  align-items: center;
+  gap: 1.2cqw;
+  font-size: 2.6cqw;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.ss-head svg {
+  flex: none;
+  width: 2.8cqw;
+  height: 2.8cqw;
+}
+
+.ss-text {
+  margin-top: 1.6cqw;
+  font-size: 1.4cqw;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.ss-link {
+  margin-top: 1.4cqw;
+  font-size: 1.4cqw;
+  text-decoration: underline;
+}
+
+.ss-details {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  font-size: 1.3cqw;
+  line-height: 1.7;
+  transition:
+    max-height 0.5s var(--out),
+    margin 0.5s var(--out),
+    opacity 0.4s ease;
+}
+
+.ss-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1cqw;
+  margin-top: 2.4cqw;
+}
+
+.ss-buttons span {
+  padding: 0.8cqw 2cqw;
+  background: rgba(255, 255, 255, 0.15);
+  font-size: 1.3cqw;
+}
+
+.ss-buttons .ss-run {
+  opacity: 0;
+  transition:
+    opacity 0.3s ease,
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.inst-cursor--run {
+  right: 14cqw;
+  bottom: 1.2cqw;
+}
+
+.inst-screen[data-step="1"] .ss-details {
+  max-height: 8cqw;
+  margin-top: 1.4cqw;
+  opacity: 1;
+  transition-delay: 0.9s;
+}
+
+.inst-screen[data-step="1"] .ss-run {
+  opacity: 1;
+  background: #fff;
+  color: #1f5fbf;
+  transition-delay: 1.2s, 2.4s, 2.4s;
+}
+
+.inst-screen[data-step="1"] .inst-cursor--run {
+  opacity: 1;
+  translate: 0 0;
+  transition-delay: 1.5s;
+}
+
+/* 3. Tray menu, then the pill */
+.inst-tray {
+  background: linear-gradient(160deg, #f6f8fc, #e7edf7);
+}
+
+.tray-pill {
+  opacity: 0;
+  transform: translateY(-2cqw) scale(0.85);
+}
+
+.tray-menu {
+  position: absolute;
+  right: 3cqw;
+  bottom: 5.6cqw;
+  width: 26cqw;
+  padding: 1.8cqw;
+  border-radius: 1.4cqw;
+  background: #fff;
+  box-shadow: 0 1.6cqw 4cqw rgba(0, 0, 0, 0.16);
+  opacity: 0;
+  translate: 0 1.5cqw;
+  transition:
+    opacity 0.4s var(--out),
+    translate 0.4s var(--out);
+}
+
+.tray-label {
+  font-size: 1.3cqw;
+  color: #888;
+}
+
+.tray-seg {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 1cqw;
+  padding: 0.4cqw;
+  border-radius: 999px;
+  background: #eef0f4;
+  font-size: 1.3cqw;
+  text-align: center;
+}
+
+.tray-seg span {
+  position: relative;
+  z-index: 1;
+  padding: 0.7cqw 0;
+}
+
+.tray-thumb {
+  position: absolute;
+  top: 0.4cqw;
+  bottom: 0.4cqw;
+  left: 0.4cqw;
+  width: calc((100% - 0.8cqw) / 3);
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 0.3cqw 0.8cqw rgba(0, 0, 0, 0.1);
+  transition: translate 0.5s var(--spring);
+}
+
+.tray-row {
+  margin-top: 1.4cqw;
+  font-size: 1.3cqw;
+  color: #444;
+}
+
+.tray-bar {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1.4cqw;
+  height: 4.4cqw;
+  padding: 0 2cqw;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  background: rgba(255, 255, 255, 0.85);
+  font-size: 1.4cqw;
+}
+
+.tray-icon {
+  display: grid;
+  place-items: center;
+  width: 2.6cqw;
+  height: 2.6cqw;
+  border-radius: 50%;
+  background: var(--brand);
+  color: #fff;
+}
+
+.tray-icon svg {
+  width: 1.5cqw;
+  height: 1.5cqw;
+}
+
+.inst-screen[data-step="2"] .tray-menu {
+  opacity: 1;
+  translate: 0 0;
+  transition-delay: 0.4s;
+}
+
+.inst-screen[data-step="2"] .tray-thumb {
+  translate: 200% 0;
+  transition-delay: 1.3s;
+}
+
+.inst-screen[data-step="2"] .tray-pill {
+  opacity: 1;
+  transform: none;
+  transition-delay: 1.9s;
 }
 
 /* --------------------------------------------------------------------------
@@ -1042,8 +1401,9 @@ ul {
    -------------------------------------------------------------------------- */
 
 .cta {
+  --lh: min(609px, calc(100svh - 160px));
   position: relative;
-  height: 605px;
+  height: max(560px, calc(var(--lh) + 70px));
   background: var(--cta-ground);
 }
 
@@ -1067,35 +1427,33 @@ ul {
 
 .cta-orb {
   left: calc(50% + 175px);
-  top: 498px;
+  top: calc(100% - 107px);
   width: 250px;
 }
 
 .cta-glow-b {
   left: calc(50% + 385px);
-  top: 395px;
+  top: calc(100% - 210px);
   width: 651px;
 }
 
-/* Runs 85px into the footer, where the page ends and crops it. */
+/* Bleeds off the left edge as in the comp; its base sits on the footer line. */
 .cta-device {
   position: absolute;
   z-index: 2;
-  top: 118px;
-  left: calc(50% - 1099px);
-  width: 1049px;
-  height: 572px;
-  overflow: hidden;
+  bottom: 0;
+  left: calc(50% - 50px - var(--lh) * 1.7225);
+  width: calc(var(--lh) * 1.7225);
 }
 
 .cta-device .laptop-shot {
-  width: 1049px;
+  width: 100%;
 }
 
 .cta-break {
   position: absolute;
-  top: 26px;
-  left: 423px;
+  top: 4.3%;
+  left: 40.3%;
   display: inline-flex;
   align-items: center;
   gap: 12px;
@@ -1111,7 +1469,7 @@ ul {
 .cta-grid {
   position: relative;
   z-index: 1;
-  padding: 228px 0 0 561px;
+  padding: calc(var(--lh) / 2 - 80px) 0 0 561px;
 }
 
 .cta h2 {
@@ -1206,37 +1564,17 @@ ul {
 }
 
 /* --------------------------------------------------------------------------
-   Responsive: the comp is 1440; wider screens grow the desk, narrower ones
+   Responsive: the comp is 1440; narrower screens
    step the art down and stack below 1100.
    -------------------------------------------------------------------------- */
 
-@media (min-width: 1600px) {
-  .display {
-    --k: 1.2;
-  }
-}
-
-@media (min-width: 2000px) {
-  .display {
-    --k: 1.45;
-  }
-}
-
 @media (max-width: 1360px) {
-  .display {
-    --k: 0.86;
-  }
-
   .hero-laptop {
     left: calc(50% + 60px);
   }
 
   .hero h1 {
     font-size: 56px;
-  }
-
-  .steps {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .faq-grid {
@@ -1277,6 +1615,7 @@ ul {
     position: relative;
     left: auto;
     top: auto;
+    bottom: auto;
   }
 
   .hero-art {
@@ -1353,40 +1692,24 @@ ul {
     padding-top: 0;
   }
 
-  .display {
-    --k: 0.62;
+  .display-stage,
+  .install-stage {
+    padding: 80px 0 56px;
   }
 
-  .display-stage {
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    padding: 80px 0 0;
-  }
-
-  .desk {
-    order: 2;
-  }
-
-  .desk {
-    position: relative;
-    top: auto;
-    left: auto;
-    margin: 32px 0 0 calc(100% - 1816px * var(--k));
-  }
-
-  .install {
-    padding-top: 84px;
-  }
-
-  .steps {
+  .display-grid,
+  .install-grid {
     grid-template-columns: 1fr;
-    max-width: 520px;
-    margin-inline: auto;
+    gap: 40px;
   }
 
-  .step-card {
-    margin-top: 0;
+  .display-laptop,
+  .install-laptop {
+    justify-self: center;
+  }
+
+  .install-laptop {
+    order: -1;
   }
 
   .faq-grid {
@@ -1447,10 +1770,6 @@ ul {
 @media (max-width: 720px) {
   .container {
     width: calc(100% - 40px);
-  }
-
-  .display {
-    --k: 0.4;
   }
 
   .hero h1 {
@@ -1603,27 +1922,33 @@ ul {
     margin-top: calc(345px - 100svh);
   }
 
-  /* 3. The dark band pins while scrolling walks the pill through its modes. */
-  .display {
-    --stage: max(100svh, calc(790px * var(--k)));
-    height: calc(var(--stage) + 200svh);
+  /* 3. The dark band pins while scrolling walks the pill Full, Icon, Hidden. */
+  .display,
+  .install-scene {
+    height: 300svh;
   }
 
-  .display-stage {
+  .display-stage,
+  .install-stage {
     position: sticky;
     top: 0;
     display: flex;
-    flex-direction: column;
-    justify-content: center;
-    height: var(--stage);
-    min-height: 0;
-    padding: 0 0 calc(180px * var(--k));
+    align-items: center;
+    height: 100svh;
+    padding: 0;
   }
 
-  /* The desk sits on the stage floor; its edge may clip the last row's box
-     corner but stays clear of the text above it. */
-  .desk {
-    top: calc(var(--stage) - 895px * var(--k));
+  .display-laptop {
+    max-width: min(680px, calc((100svh - 80px) * 1.7225));
+  }
+
+  /* 4. The install steps play out one by one on the laptop. */
+  .install-head {
+    margin-bottom: 28px;
+  }
+
+  .install-laptop {
+    max-width: min(680px, calc((100svh - 230px) * 1.7225));
   }
 }
 

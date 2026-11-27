@@ -34,14 +34,16 @@ only, unsigned installer, no cloud). Success is a download, not applause.
   versioned GitHub release asset. No "Get started", no trial, no pricing.
 - [LOCKED] The dashboard is the real 2× capture
   (`site/public/dashboard.png`). The laptops, orbs and glows are the owner's
-  art in `site/public/` (`laptop-blank.png`, `laptop-desk.png`, `orb-*.png`,
+  art in `site/public/` (`laptop-blank.png`, `orb-*.png`,
   `glow-*.png`), placed at their natural size at 1440px as in the comp.
 - [LOCKED] The hero and closing laptops (`components/ScreenLaptop.tsx`) show
   an SVG hourglass over "Times up!" on the blank laptop's screen: the sand
   runs down, then the glass turns over, on a 5 s CSS loop. No video, no script.
-- [LOCKED] The display-modes section uses the owner's laptop-on-desk art; the
-  live pill is DOM laid on its white screen (8 degree tilt), no tray icon. On
-  wide screens the band pins and scrolling walks the pill Full, Icon, Hidden,
+- [LOCKED] Every laptop is the blank mockup (`components/Laptop.tsx`) with a
+  live DOM screen sized in cqw. The display band shows the pill on it, no tray
+  icon. The install band plays the three steps on it: the release download,
+  SmartScreen (More info, Run anyway), then the tray menu picking Full and the
+  pill appearing. On wide screens both bands pin; in the display band the band pins and scrolling walks the pill Full, Icon, Hidden,
   focusing the matching row; a row click scrolls to its step.
 - [LOCKED] Scroll motion (`components/ScrollFx.tsx`, no library): every block
   blur-fades in once (`data-reveal`). On wide screens "Screen is on" opens as a

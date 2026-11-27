@@ -1,3 +1,5 @@
+import { Laptop } from "./Laptop";
+
 /**
  * The owner's blank laptop with a live screen: an hourglass whose sand runs
  * down, then flips and starts again, over "Times up!". Pure SVG + CSS, so it
@@ -15,9 +17,8 @@ export function ScreenLaptop({
   const top = `hg-top-${id}`;
   const bottom = `hg-bottom-${id}`;
   return (
-    <div className={`laptop-shot ${className}`} aria-hidden="true" data-reveal={reveal}>
-      <img src="/laptop-blank.png" alt="" width={1049} height={609} />
-      <div className="laptop-ui">
+    <Laptop className={className} reveal={reveal}>
+      <div className="hg-screen">
         <svg className="hourglass" viewBox="0 0 144 166">
           <defs>
             <clipPath id={top}>
@@ -45,6 +46,6 @@ export function ScreenLaptop({
         </svg>
         <p className="laptop-caption">Times up!</p>
       </div>
-    </div>
+    </Laptop>
   );
 }

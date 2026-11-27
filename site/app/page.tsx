@@ -35,9 +35,12 @@ export default function Home() {
       <Header />
       <main id="main">
         <Hero />
-        <Problem />
-        <Showcase />
-        <DisplayModes />
+        {/* One box for the pinned scenes, so the sticky blue band ends with them. */}
+        <div className="scenes">
+          <Problem />
+          <Showcase />
+          <DisplayModes />
+        </div>
         <Install />
         <Faq />
         <FinalCta />

@@ -7,7 +7,7 @@ One public route. No auth, no data, no API.
 ├── #top        hero, laptop art, download
 ├── #counts     screen-on is not time used
 ├── #features   the dashboard on blue
-├── #display    Hidden / Icon / Full on the desk laptop art
+├── #display    Full / Icon / Hidden on the blank laptop (pinned scene)
 ├── #install    three steps, SmartScreen explained
 ├── #privacy    the privacy line inside the FAQ head
 ├── #faq        six questions
@@ -31,6 +31,5 @@ Build output: `site/out/` (`index.html`, `404.html`, `opengraph-image`,
 `icon.svg`, `_next/`, `pill.png`, `dashboard.png`).
 
 Art in `public/`: `laptop-blank.png` (hero and closing, with the hourglass
-screen from `components/ScreenLaptop.tsx`), `laptop-desk.png`
-(display band), `orb-small.png`, `orb-large.png`, `glow-top-left.png`,
+screen from `components/ScreenLaptop.tsx`), `orb-small.png`, `orb-large.png`, `glow-top-left.png`,
 `glow-bottom-right.png`.

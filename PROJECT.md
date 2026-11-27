@@ -153,7 +153,9 @@ The one-page landing site, a separate Next.js app in the same repo (own
 | `site/app/globals.css` | the whole design: tokens, sections, art placement |
 | `site/app/not-found.tsx` | branded 404 |
 | `site/app/opengraph-image.tsx` | 1200×630 social card, composed in code (`next/og`) |
-| `site/components/DisplayModes.tsx` | the dark mode band: three buttons switch the pill on the desk art between Hidden / Icon / Full |
+| `site/components/DisplayModes.tsx` | the dark mode band: scrolling walks the pill on the blank laptop through Full / Icon / Hidden |
+| `site/components/Install.tsx` | the install band: three step cards and the laptop playing each step (download, SmartScreen, tray menu) on scroll |
+| `site/components/Laptop.tsx` | the blank laptop with a live screen, shared by every laptop on the page |
 | `site/lib/site.ts` | version, installer name/size/bytes, every GitHub URL |
 | `site/public/pill.png`, `dashboard.png` | 2× captures of the real app (`scripts/capture-app.mjs`) |
 | `site/scripts/` | `shot.mjs` (screenshots over CDP), `probe.mjs` (measure a live page), `capture-app.mjs` (re-shoot the app at 2× with the brand theme) |
@@ -494,7 +496,8 @@ through the UI, battery quit.
 | `f6518ff` | Landing page rebuilt to the new comp: floating pill header, hero laptop, gray problem band, blue dashboard block, dark display modes, three install cards, dark FAQ, closing CTA, floating footer; laptop screens and background art are placeholders; unused `HowItCounts`, `Features` and `Privacy` components removed |
 | `05fa406` | Landing page matched to the comp at 1440px with the owner's art: video laptop in hero and CTA, laptop-on-desk in the display band with the live pill on its screen, orbs and glows; Google Sans only (Inter removed); copy synced to the comp; `Laptop.tsx` removed |
 | `de8fbf3` | Hero and closing laptops: the owner's blank laptop with an SVG hourglass that drains and turns over on a CSS loop over "Times up!" (`ScreenLaptop.tsx`); `laptop-video.png` and its Spider-Man stand-in removed |
-| (this commit) | Scroll motion: blur-fade reveal on every block (`ScrollFx.tsx`); pinned "Screen is on" scene (centred full white screen shrinking into the gray band), blue band slides up then holds while the dark band slides over; the pill walks Full, Icon, Hidden on scroll with row focus; tray icon removed, pill moved right |
+| `17f8a9b` | Scroll motion: blur-fade reveal on every block (`ScrollFx.tsx`); pinned "Screen is on" scene (centred full white screen shrinking into the gray band), blue band slides up then holds while the dark band slides over; the pill walks Full, Icon, Hidden on scroll with row focus; tray icon removed, pill moved right |
+| (this commit) | Display band and install band on the blank laptop: the pill walks Full / Icon / Hidden on its screen, and the install steps play out (download, SmartScreen, tray menu); the pinned scenes live in one `.scenes` box so the sticky blue band no longer shows through FAQ and CTA; header 24px from the top, hero and closing laptops sized to the screen so their bases stay visible; `laptop-desk.png` removed |
 
 Decisions worth knowing (and *why*): Tauri over Electron for a 24/7 widget
 (memory); a custom drag because the native one blocks page events; offered
