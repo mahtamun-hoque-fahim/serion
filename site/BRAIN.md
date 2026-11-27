@@ -32,8 +32,9 @@ only, unsigned installer, no cloud). Success is a download, not applause.
   animation library. One page does not need a component system.
 - [LOCKED] One primary action only: **Download for Windows**, pointing at the
   versioned GitHub release asset. No "Get started", no trial, no pricing.
-- [LOCKED] The dashboard is the real 2× capture
-  (`site/public/dashboard.png`). The laptops, orbs and glows are the owner's
+- [LOCKED] The dashboard is drawn in the page (`components/DashboardMock.tsx`)
+  with the real capture's figures and the app's dark tokens; its day bars and
+  app bars grow in when the card is revealed. The laptops, orbs and glows are the owner's
   art in `site/public/` (`laptop-blank.png`, `orb-*.png`,
   `glow-*.png`), placed at their natural size at 1440px as in the comp.
 - [LOCKED] The hero and closing laptops (`components/ScreenLaptop.tsx`) show

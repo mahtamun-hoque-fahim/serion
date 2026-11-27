@@ -1,4 +1,5 @@
 import { Check } from "lucide-react";
+import { DashboardMock } from "./DashboardMock";
 
 const bullets = [
   "Today, your average and your most-used app, at the top.",
@@ -11,14 +12,7 @@ export function Showcase() {
     <section className="showcase" id="features">
       <div className="container showcase-grid">
         <figure className="dashboard-card" data-reveal>
-          <img
-            src="/dashboard.png"
-            alt="The Serion dashboard in dark mode: today's total, the daily average, a week of bars and the top apps"
-            width={1840}
-            height={2120}
-            loading="lazy"
-            decoding="async"
-          />
+          <DashboardMock />
         </figure>
 
         <div className="showcase-copy">

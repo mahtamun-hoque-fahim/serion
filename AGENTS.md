@@ -213,3 +213,9 @@ Newest last. Date, decision, reason.
   frame and card (`site/public/hidden-movie.png`): a film poster with a play
   button, centred at ~89% of the screen width on a plain white screen. The
   poster is studio artwork and must be replaced before the site is published.
+- **2026-11-27 — the dashboard is drawn, not a screenshot.** Owner asked for
+  the showcase dashboard as a component with animated bars.
+  `DashboardMock.tsx` redraws it with the capture's figures and the app's
+  dark tokens (from `src/Dashboard.css`), sized in cqw so it scales like the
+  image; bars grow when the card's reveal fires. `site/public/dashboard.png`
+  is deleted (the README's `docs/dashboard.png` is separate and stays).

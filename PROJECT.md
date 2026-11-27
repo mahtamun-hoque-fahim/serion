@@ -157,7 +157,7 @@ The one-page landing site, a separate Next.js app in the same repo (own
 | `site/components/Install.tsx` | the install band: three step cards and the laptop playing each step (download, SmartScreen, tray menu) on scroll |
 | `site/components/Laptop.tsx` | the blank laptop with a live screen, shared by every laptop on the page |
 | `site/lib/site.ts` | version, installer name/size/bytes, every GitHub URL |
-| `site/public/pill.png`, `dashboard.png` | 2× captures of the real app (`scripts/capture-app.mjs`) |
+| `site/public/pill.png` | 2× captures of the real app (`scripts/capture-app.mjs`) |
 | `site/scripts/` | `shot.mjs` (screenshots over CDP), `probe.mjs` (measure a live page), `capture-app.mjs` (re-shoot the app at 2× with the brand theme) |
 | `site/BRAIN.md`, `site/SITETREE.md` | the site's own identity, rules and route manifest |
 
@@ -500,7 +500,8 @@ through the UI, battery quit.
 | `ab0e30c` | Display band and install band on the blank laptop: the pill walks Full / Icon / Hidden on its screen, and the install steps play out (download, SmartScreen, tray menu); the pinned scenes live in one `.scenes` box so the sticky blue band no longer shows through FAQ and CTA; header 24px from the top, hero and closing laptops sized to the screen so their bases stay visible; `laptop-desk.png` removed |
 | `273e059` | README rewritten around the reader's problems (where the day went, losing hours, forgetting breaks, idle while reading, screen clutter, privacy), with the break-offer screenshot `docs/break-offer.webp` under Breaks |
 | `3ba12f1` | Landing site: focused install card in brand blue, focused pill-mode row in white; laptop screens get rounded corners; Hidden mode shows a centred graphic (Serion mark placeholder until the owner's image) |
-| (this commit) | Hidden mode shows the owner's video card (`hidden-movie.png`, a stand-in poster to replace before publishing) on a plain white screen |
+| `b09b007` | Hidden mode shows the owner's video card (`hidden-movie.png`, a stand-in poster to replace before publishing) on a plain white screen |
+| (this commit) | The showcase dashboard is a live component (`DashboardMock.tsx`) instead of a screenshot; day bars and app bars grow in on reveal; `site/public/dashboard.png` removed |
 
 Decisions worth knowing (and *why*): Tauri over Electron for a 24/7 widget
 (memory); a custom drag because the native one blocks page events; offered
