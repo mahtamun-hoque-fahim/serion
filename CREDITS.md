@@ -4,11 +4,12 @@ Serion is designed, built and owned by **Mahtamun Hoque Fahim**.
 
 ## Co-authors
 
-The commit history credits the following co-authors. They are listed here in
-full because the trailer is part of the permanent record: rewriting it would
-change every commit hash and the published `v1.1.0` tag.
+Every AI model that worked on Serion is credited here, whether or not its
+commits carry a `Co-Authored-By` trailer. Rewriting history to add trailers
+would change every commit hash and the published tags, so this file is the
+record instead.
 
-### Claude Opus 5.5 `<noreply@anthropic.com>`
+### Claude Opus 5.5 `<noreply@anthropic.com>` (Claude Code)
 
 Co-authored these 24 commits, from the first scaffold to the 1.1.0 release:
 
@@ -39,8 +40,58 @@ Co-authored these 24 commits, from the first scaffold to the 1.1.0 release:
 | `ac19e07` | Buttons and panel on opposite sides of the pill |
 | `54904de` | Release 1.1.0: user-facing README, MIT license |
 
-Commits after `54904de` — `c2d018b`, `a7628be`, `32bee3b`, `f646283` and later
-— carry no co-author trailer.
+It also rebuilt the landing page to the owner's comp on 2026-11-27 (`f6518ff`
+onward) and pointed the site and the repo at the live URL (`7288efa`). Those
+commits carry no trailer.
+
+### DeepSeek V4.1 Flash (OpenCode)
+
+Worked from 2026-11-23 to 2026-11-26: committed the display modes and tray,
+built, installed and verified 1.2.0 and 1.2.1, repaired the corrupt Local
+Storage profile, seeded the repo's About, changelog and Dependabot, wrote the
+Google Stitch prompt pack, and built the first landing site. No trailer.
+
+| Commit | What it did |
+|---|---|
+| `c2d018b` | Pill display modes (Hidden / Icon / Full) and a tray icon |
+| `a7628be` | Keep startup alive without a tray, and one pill height in CSS |
+| `32bee3b` | Fix the Breaks row clipping at the dashboard's minimum width (1.2.1) |
+| `f646283` | Seed the repo's About, changelog, badges and Dependabot |
+| `2c3044f` | Landing site: one page, real screenshots, scroll-driven display modes |
+
+### Also run on the landing page (OpenCode, 2026-11-27)
+
+These models were run one after another in the same OpenCode session on the
+afternoon of 2026-11-27, while the landing page was being rebuilt:
+
+- beam (OpenCode)
+- Nemotron 3.5 Super VL (NVIDIA)
+- Gemma 4 26B A4B (Google)
+- Nemotron 3 Nano Omni 30B A3B Reasoning (NVIDIA)
+- DeepSeek R1 Distill Qwen 32B
+
+### Tools
+
+- **Google Stitch** — the landing page prompt pack in
+  `docs/landing-page-prompt.md` was written for it.
+
+## Session log: how this list was found (2026-11-27)
+
+The owner asked for every agent to be credited. Only Claude had left a
+signature (the 24 trailers), so the other models were traced from where they
+did leave a record:
+
+- Git history, every branch, tag and unreachable object, and every past
+  version of each `.md` file: only Claude's trailers.
+- GitHub releases, issues, pull requests and comments: nothing.
+- Claude Code's saved sessions for this folder: Claude Opus 5.5 only.
+- OpenCode's local session database: two sessions in `E:\codes\serion`, which
+  name DeepSeek V4.1 Flash and the five models above. DeepSeek's commits were
+  matched by the `git commit` calls in those sessions and their times.
+
+Only Claude appears in GitHub's Contributors sidebar, because only its trailer
+email belongs to a GitHub account. The others have no such account, so this
+file is where they are credited.
 
 ## Tools and dependencies
 

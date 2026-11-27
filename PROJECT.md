@@ -510,7 +510,8 @@ through the UI, battery quit.
 | `40c6754` | Orb drift rebuilt as random per-orb CSS sines (compositor, smooth); finished reveals drop their blur filter; any visible sliver reveals; hero laptop leaves room for the top-right orb; closing copy spacing tightened |
 | `aa4c006` | Closing section: Take a Break pill in brand blue, kept inside the viewport; Download button starts dark, shimmers 1.5 s after reveal and stays blue |
 | `0aecc89` | End of page: for 1 s only the laptop's Take a Break pill is sharp, the rest blurs, then returns to focus |
-| (this commit) | Landing site live at https://serion-here.vercel.app: repo About homepage points there and `metadataBase` falls back to it |
+| `7288efa` | Landing site live at https://serion-here.vercel.app: repo About homepage points there and `metadataBase` falls back to it |
+| (this commit) | `CREDITS.md` credits every model that worked on Serion: Claude Opus 5.5, DeepSeek V4.1 Flash (OpenCode) with its five commits, the five models tried on 2026-11-27, and Google Stitch, plus how they were traced |
 
 Decisions worth knowing (and *why*): Tauri over Electron for a 24/7 widget
 (memory); a custom drag because the native one blocks page events; offered
