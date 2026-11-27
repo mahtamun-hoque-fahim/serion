@@ -5,7 +5,8 @@ The single source of truth for anyone (person or agent) picking this project up.
 change that alters behavior, rules, files, workflow or status** (see
 "Keeping this file current" at the end).
 
-Last updated: 2026-11-27, version 1.2.1, plus the landing site, now live at
+Last updated: 2026-11-27, version 1.3.0 (Serion updates itself from GitHub
+Releases: a one-click banner in the dashboard), plus the landing site, now live at
 https://serion-here.vercel.app. The landing page
 was rebuilt to the owner's new comp, with the owner's laptop, orb and glow art
 in place and Google Sans as the only typeface: pill header, hero, the gray
@@ -106,7 +107,7 @@ when the UI changes).
 | File | Role |
 |---|---|
 | `main.rs` | entry, calls `serion_lib::run()` |
-| `lib.rs` | app setup (single-instance guard first), the **1-second loop** (`run_tracker`), shared state `Core` behind a `Mutex`, all `#[tauri::command]`s, window creation (dashboard, alert flash), save on exit |
+| `lib.rs` | app setup (single-instance guard first), the **1-second loop** (`run_tracker`), shared state `Core` behind a `Mutex`, all `#[tauri::command]`s, window creation (dashboard, alert flash), save on exit, update check and install (`check_update`, `install_update`) |
 | `screen.rs` | **OS scan** each second (Windows API via `windows-sys`): foreground window, all open "Alt+Tab" windows in z-order (visible, not minimized, not cloaked, no owner, not tool windows), fullscreen check, monitor count, "display kept awake" (`CallNtPowerInformation(SystemExecutionState)` & `ES_DISPLAY_REQUIRED`). Stub on other OSes |
 | `tracker.rs` | **pure counting rules** (unit tested): `classify` (App / Shell / Desktop / Locked), `open_apps`, `credit`, `other_screens`, `Tracker` (pending vs committed time, per app), `format_duration` |
 | `breaks.rs` | water / stretch / eye breaks: config + validation, offer → start → run → end, skip, "away counts as break" (pure, tested) |
@@ -292,6 +293,16 @@ Each second the loop decides **who gets the second**:
 **Other**
 - App icon: white Serion mark on a blue circle (`src-tauri/icons/app-icon.svg`).
 - Real app names (manifest / FileDescription), cached per exe path.
+- **Updates (1.3.0+):** the open dashboard asks GitHub for
+  `releases/latest/download/latest.json` on open and every 6 hours. A newer
+  version shows a banner under the title bar ("Serion 1.3.1 is ready", the
+  first line of the release notes, **Update and restart**). The click
+  downloads the installer, checks its signature against the public key in
+  `tauri.conf.json`, saves today, runs the NSIS installer in passive mode
+  (progress bar only) and relaunches Serion. Offline or a failed check stays
+  silent; a failed install shows the error and **Try again**. Data is not
+  touched. Not done: a nudge while the dashboard is closed, silent installs,
+  beta channel, skip-this-version.
 
 ## 7. Data, storage and security
 
@@ -312,6 +323,12 @@ Each second the loop decides **who gets the second**:
   `battery_quit`, `battery_threshold`, `breaks{water_every, stretch_every,
   eye_every, water_seconds, stretch_seconds, eye_seconds}`,
   `show_over_fullscreen`, `other_screens` (null = automatic), `hide_from_capture`.
+- **Updater key:** releases are signed with a minisign key made by
+  `tauri signer generate`. Private key: `%USERPROFILE%\.tauri\serion-updater.key`
+  (password set by the owner, kept in the owner's password manager, never in
+  the repo, back it up). Public key: `plugins.updater.pubkey` in
+  `tauri.conf.json`. **Losing the private key means no installed copy can
+  ever update itself again**; everyone would have to reinstall by hand.
 - Frontend-only prefs in `localStorage`: `serion.theme`, `serion.size`,
   `serion.appearance`, `serion.autostartChosen`, `serion.sounds`, `serion.display`.
 
@@ -414,6 +431,13 @@ Each second the loop decides **who gets the second**:
   wrap needs the same treatment, and the check is
   `scrollHeight > clientHeight` in devtools, not the eye.
 
+- **The updater ends the process itself.** On Windows,
+  `tauri-plugin-updater` starts the installer and calls
+  `std::process::exit(0)`, so `RunEvent::Exit` (where Serion saves today)
+  never runs. Today is saved in the updater's `on_before_exit` hook instead
+  (`install_update` in `lib.rs`). Anything else that must happen on quit has
+  to go there too.
+
 ## 10. Status
 
 **Verified live:** counting with N open windows and minimize (the owner's bug),
@@ -438,7 +462,9 @@ through the UI, battery quit.
    run and has not been confirmed yet.
 2. macOS / Linux: `screen.rs`, `names.rs`, `battery.rs` are stubs → nothing
    counts there yet. Decide: port or declare v1 Windows-only.
-3. Unsigned → SmartScreen warning for other users; no auto-updater.
+3. Unsigned → SmartScreen warning for other users on the first install.
+   Updates after 1.3.0 come through the in-app updater (signed with the
+   updater key, a different thing from Windows code signing).
 4. Open question: the first click on the pill sometimes seemed to only
    activate the window (seen once during automated tests, unconfirmed).
 5. Cleanups: drop `active-win-pos-rs` (only the probe uses it); no frontend
@@ -452,6 +478,15 @@ through the UI, battery quit.
    `{"value": ...}` and GitHub answers 422. Serialize with
    `System.Web.Script.Serialization.JavaScriptSerializer`, then upload the
    installer to `upload_url`.
+   **Since 1.3.0 every release must also carry `latest.json`**, or installed
+   copies never hear of it. Build with `TAURI_SIGNING_PRIVATE_KEY` (path or
+   contents of `serion-updater.key`) and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`
+   set; the build then also writes `Serion_X.Y.Z_x64-setup.exe.sig` next to
+   the installer. `latest.json` is
+   `{"version":"X.Y.Z","notes":"...","pub_date":"<RFC 3339>","platforms":{"windows-x86_64":{"signature":"<contents of the .sig>","url":"https://github.com/mahtamun-hoque-fahim/serion/releases/download/vX.Y.Z/Serion_X.Y.Z_x64-setup.exe"}}}`;
+   upload it as a release asset named exactly `latest.json`. The release must
+   be the repo's "latest" (not a draft or prerelease), because the endpoint is
+   `releases/latest/download/latest.json`.
 7. **Landing site** (`site/`, 2026-11-25; rebuilt to the new comp 2026-11-27):
    one page, static-exported and checked in headless Chrome at 390, 768, 1024,
    1440 and 1920 (all sections, no sideways scroll, laptop bases not clipped).
@@ -511,7 +546,8 @@ through the UI, battery quit.
 | `aa4c006` | Closing section: Take a Break pill in brand blue, kept inside the viewport; Download button starts dark, shimmers 1.5 s after reveal and stays blue |
 | `0aecc89` | End of page: for 1 s only the laptop's Take a Break pill is sharp, the rest blurs, then returns to focus |
 | `7288efa` | Landing site live at https://serion-here.vercel.app: repo About homepage points there and `metadataBase` falls back to it |
-| (this commit) | `CREDITS.md` credits every model that worked on Serion: Claude Opus 5.5, DeepSeek V4.1 Flash (OpenCode) with its five commits, the five models tried on 2026-11-27, and Google Stitch, plus how they were traced |
+| `58e6bde` | `CREDITS.md` credits every model that worked on Serion: Claude Opus 5.5, DeepSeek V4.1 Flash (OpenCode) with its five commits, the five models tried on 2026-11-27, and Google Stitch, plus how they were traced |
+| (this commit) | 1.3.0: in-app updates from GitHub Releases (`tauri-plugin-updater`, signed, passive NSIS install, relaunch); dashboard update banner; today saved in the updater's `on_before_exit` because the updater exits the process itself |
 
 Decisions worth knowing (and *why*): Tauri over Electron for a 24/7 widget
 (memory); a custom drag because the native one blocks page events; offered

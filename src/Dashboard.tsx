@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useState, type CSSProperties } fro
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { Download, FolderOpen, Minus, Monitor, Moon, Power, ShieldCheck, Sun, Trash2, Upload, X } from "lucide-react";
+import { CircleArrowUp, Download, FolderOpen, LoaderCircle, Minus, Monitor, Moon, Power, ShieldCheck, Sun, Trash2, Upload, X } from "lucide-react";
 import { open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialog";
 import { useAppearance, type Appearance } from "./appearance";
 import "@fontsource/google-sans/latin-700.css";
@@ -87,6 +87,60 @@ function topApps(days: Day[], n: number) {
     }
   }
   return [...totals.values()].sort((a, b) => b.ms - a.ms).slice(0, n);
+}
+
+/** How often an open dashboard asks GitHub for a newer release. */
+const UPDATE_EVERY_MS = 6 * 60 * 60 * 1000;
+
+type UpdateInfo = { version: string; notes: string | null };
+
+/** First readable line of Markdown release notes, without heading or list marks. */
+const firstLine = (notes: string | null) =>
+  notes
+    ?.split("\n")
+    .map((l) => l.replace(/^[#>*\-\s]+/, "").trim())
+    .find(Boolean);
+
+/** "Serion 1.3.0 is ready": one click downloads, saves today, installs and relaunches. */
+function UpdateBanner() {
+  const [update, setUpdate] = useState<UpdateInfo | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Offline or GitHub down: stay quiet and try again later.
+    const check = () => invoke<UpdateInfo | null>("check_update").then(setUpdate, () => {});
+    check();
+    const timer = setInterval(check, UPDATE_EVERY_MS);
+    return () => clearInterval(timer);
+  }, []);
+
+  if (!update) return null;
+
+  const install = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await invoke("install_update");
+    } catch (e) {
+      setError(String(e));
+      setBusy(false);
+    }
+  };
+
+  return (
+    <section className="update" role="status">
+      <CircleArrowUp size={18} aria-hidden className="update-icon" />
+      <div className="update-text">
+        <strong>Serion {update.version} is ready</strong>
+        <span>{error ? `The update did not finish: ${error}` : firstLine(update.notes) ?? "A new version is available."}</span>
+      </div>
+      <button type="button" className="btn update-btn" disabled={busy} onClick={install}>
+        {busy && <LoaderCircle size={14} aria-hidden className="spin" />}
+        {busy ? "Updating" : error ? "Try again" : "Update and restart"}
+      </button>
+    </section>
+  );
 }
 
 export default function Dashboard() {
@@ -201,6 +255,8 @@ export default function Dashboard() {
             </button>
           </div>
         </header>
+
+        <UpdateBanner />
 
         <main className="content">
           <section className="tiles">

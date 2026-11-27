@@ -382,10 +382,47 @@ fn quit(app: AppHandle) {
 
 /// Save today, then exit. Used by the pill, the settings panel and the tray.
 fn quit_app(app: &AppHandle) {
-    let state = app.state::<AppState>();
-    let mut core = state.lock();
-    state.save_today(&mut core);
+    save_now(app);
     app.exit(0);
+}
+
+fn save_now(app: &AppHandle) {
+    if let Some(state) = app.try_state::<AppState>() {
+        let mut core = state.lock();
+        state.save_today(&mut core);
+    }
+}
+
+/// A newer release found on GitHub, for the dashboard's update banner.
+#[derive(Serialize)]
+struct UpdateInfo {
+    version: String,
+    notes: Option<String>,
+}
+
+#[tauri::command]
+async fn check_update(app: AppHandle) -> Result<Option<UpdateInfo>, String> {
+    use tauri_plugin_updater::UpdaterExt;
+    let update = app.updater().map_err(|e| e.to_string())?.check().await.map_err(|e| e.to_string())?;
+    Ok(update.map(|u| UpdateInfo { version: u.version, notes: u.body }))
+}
+
+/// Download, verify the signature, save today, run the installer, relaunch.
+#[tauri::command]
+async fn install_update(app: AppHandle) -> Result<(), String> {
+    use tauri_plugin_updater::UpdaterExt;
+    let saver = app.clone();
+    // On Windows the installer starts and the process ends with `process::exit`,
+    // which skips RunEvent::Exit, so today is saved here instead.
+    let updater = app
+        .updater_builder()
+        .on_before_exit(move || save_now(&saver))
+        .build()
+        .map_err(|e| e.to_string())?;
+    let update = updater.check().await.map_err(|e| e.to_string())?.ok_or("Serion is already up to date")?;
+    update.download_and_install(|_, _| {}, || {}).await.map_err(|e| e.to_string())?;
+    // Only reached where the installer does not end the process (not Windows).
+    app.restart();
 }
 
 /// Tray icon by the clock: the way back to Serion while the pill is hidden.
@@ -712,6 +749,8 @@ pub fn run() {
         // Start at login; the UI turns it on for installed builds (Settings.tsx).
         // File pickers for the data folder, export and import.
         .plugin(tauri_plugin_dialog::init())
+        // Updates from GitHub Releases, signed; see `plugins.updater` in tauri.conf.json.
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             None,
@@ -741,7 +780,9 @@ pub fn run() {
             get_data_folder,
             set_data_folder,
             export_data,
-            import_data
+            import_data,
+            check_update,
+            install_update
         ])
         .setup(|app| {
             let window = app
@@ -806,10 +847,7 @@ pub fn run() {
         .run(|app, event| {
             // However Serion closes, today's numbers are saved first.
             if let RunEvent::ExitRequested { .. } | RunEvent::Exit = event {
-                if let Some(state) = app.try_state::<AppState>() {
-                    let mut core = state.lock();
-                    state.save_today(&mut core);
-                }
+                save_now(app);
             }
         });
 }

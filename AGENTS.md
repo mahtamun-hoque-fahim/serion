@@ -263,3 +263,19 @@ Newest last. Date, decision, reason.
   as they were. `metadataBase` fell back to `serion.pages.dev`, a host that
   was never used, so social cards would have pointed nowhere; the fallback is
   now the live URL, and `NEXT_PUBLIC_SITE_URL` still overrides it.
+- **2026-11-27 — Serion updates itself (1.3.0).** The owner found that
+  sending testers back to GitHub for every release is painful, and approved
+  an in-app updater. `tauri-plugin-updater` reads `latest.json` from the
+  latest GitHub Release; no update server to run. The prompt is a one-click
+  banner in the dashboard (checked on open and every 6 hours), not a silent
+  install, so nobody's app restarts under them. Skipped on purpose: a nudge
+  while the dashboard is closed, silent installs, beta channel, skip-version.
+- **2026-11-27 — save in `on_before_exit`, not on exit.** Reading the plugin
+  source showed that on Windows it calls `std::process::exit(0)` right after
+  starting the installer, so Serion's `RunEvent::Exit` save would be skipped
+  and the minutes since the last 10 s save lost. `install_update` builds its
+  own updater with an `on_before_exit` hook that saves today first.
+- **2026-11-27 — the owner makes the signing key.** The updater key's
+  password is the owner's secret, so the owner ran `tauri signer generate`
+  in their own terminal; the agent only reads the public key. It lives in
+  `%USERPROFILE%\.tauri\`, outside the repo.

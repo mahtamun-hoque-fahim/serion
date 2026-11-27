@@ -1097,6 +1097,62 @@ select:focus-visible {
   outline-offset: 2px;
 }
 
+/* Update banner under the title bar. */
+.update {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 18px 0;
+  padding: 10px 10px 10px 14px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  animation: rise 360ms var(--spring) backwards;
+}
+
+.update-icon {
+  flex: none;
+  color: var(--accent);
+}
+
+.update-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+}
+
+.update-text span {
+  color: var(--ink-2);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.update-btn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.update-btn:disabled {
+  opacity: 0.7;
+}
+
+.spin {
+  animation: spin 900ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

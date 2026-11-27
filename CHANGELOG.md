@@ -2,6 +2,15 @@
 
 What changed in each version of Serion. Newest first; dates are release dates.
 
+## v1.3.0 — 2026-11-27
+
+### Added
+- Serion updates itself. When a new version is on GitHub, the dashboard shows
+  it with the first line of its notes and an **Update and restart** button.
+  One click downloads it, checks its signature, saves today's numbers,
+  installs it and opens Serion again. Your history and settings stay.
+- This is the last version you have to download by hand.
+
 ## v1.2.1 — 2026-11-25
 
 ### Fixed
