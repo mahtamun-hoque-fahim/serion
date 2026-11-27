@@ -26,7 +26,7 @@ active-win-pos-rs = "0.11.0"
 user-idle = "0.6.0"
 chrono = { version = "0.4.45", default-features = false, features = ["clock"] }
 tauri-plugin-autostart = "2"
-aes-gcm = "0.10"
+aes-gcm = "0.11"
 tauri-plugin-dialog = "2"
 tauri-plugin-single-instance = "2"
 tauri-plugin-updater = "2"
