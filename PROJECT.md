@@ -498,7 +498,8 @@ through the UI, battery quit.
 | `de8fbf3` | Hero and closing laptops: the owner's blank laptop with an SVG hourglass that drains and turns over on a CSS loop over "Times up!" (`ScreenLaptop.tsx`); `laptop-video.png` and its Spider-Man stand-in removed |
 | `17f8a9b` | Scroll motion: blur-fade reveal on every block (`ScrollFx.tsx`); pinned "Screen is on" scene (centred full white screen shrinking into the gray band), blue band slides up then holds while the dark band slides over; the pill walks Full, Icon, Hidden on scroll with row focus; tray icon removed, pill moved right |
 | `ab0e30c` | Display band and install band on the blank laptop: the pill walks Full / Icon / Hidden on its screen, and the install steps play out (download, SmartScreen, tray menu); the pinned scenes live in one `.scenes` box so the sticky blue band no longer shows through FAQ and CTA; header 24px from the top, hero and closing laptops sized to the screen so their bases stay visible; `laptop-desk.png` removed |
-| (this commit) | README rewritten around the reader's problems (where the day went, losing hours, forgetting breaks, idle while reading, screen clutter, privacy), with the break-offer screenshot `docs/break-offer.webp` under Breaks |
+| `273e059` | README rewritten around the reader's problems (where the day went, losing hours, forgetting breaks, idle while reading, screen clutter, privacy), with the break-offer screenshot `docs/break-offer.webp` under Breaks |
+| (this commit) | Landing site: focused install card in brand blue, focused pill-mode row in white; laptop screens get rounded corners; Hidden mode shows a centred graphic (Serion mark placeholder until the owner's image) |
 
 Decisions worth knowing (and *why*): Tauri over Electron for a 24/7 widget
 (memory); a custom drag because the native one blocks page events; offered

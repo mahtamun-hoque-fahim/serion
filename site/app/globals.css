@@ -330,6 +330,15 @@ ul {
   width: 77.79%;
   height: 86.21%;
   overflow: hidden;
+  background: #000;
+}
+
+/* The PNG's screen has square corners; the live screen covers it with the
+   bezel's black and rounds its own corners. */
+.laptop-ui > * {
+  overflow: hidden;
+  border-radius: 1.1cqw;
+  background-color: #fff;
 }
 
 .hg-screen {
@@ -693,23 +702,51 @@ ul {
   transform: translateY(-2cqw) scale(0.8);
 }
 
-/* Where the pill was, while Hidden. */
-.scr-pill-ghost {
+/* Hidden: the screen is the user's again. A calm graphic sits in the middle. */
+.scr-hidden-art {
   position: absolute;
-  top: 3.2cqw;
+  top: 50%;
   left: 50%;
-  width: 5.8cqw;
-  height: 5.8cqw;
-  border: 1.5px dashed rgba(0, 71, 255, 0.35);
-  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  width: 22cqw;
+  aspect-ratio: 1;
+  translate: -50% -50%;
   opacity: 0;
-  translate: -50% 0;
-  transition: opacity 0.4s ease;
+  filter: blur(10px);
+  scale: 0.92;
+  transition:
+    opacity 0.6s var(--out),
+    filter 0.6s var(--out),
+    scale 0.8s var(--out);
 }
 
-.pill-screen[data-mode="0"] .scr-pill-ghost {
+.scr-hidden-art img,
+.scr-hidden-art svg {
+  width: 100%;
+  height: auto;
+}
+
+/* Placeholder until the owner's graphic lands: the mark in a soft halo. */
+.scr-hidden-mark {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 71, 255, 0.12), rgba(0, 71, 255, 0) 70%);
+  color: rgba(0, 71, 255, 0.55);
+}
+
+.scr-hidden-mark svg {
+  width: 38%;
+}
+
+.pill-screen[data-mode="0"] .scr-hidden-art {
   opacity: 1;
-  transition-delay: 0.25s;
+  filter: none;
+  scale: 1;
+  transition-delay: 0.2s;
 }
 
 .display-copy {
@@ -765,9 +802,13 @@ ul {
 }
 
 .mode-row.is-active {
-  background: #1b1b1e;
-  color: #fff;
+  background: #fff;
+  color: #2a2a2a;
   opacity: 1;
+}
+
+.mode-row.is-active .mode-num {
+  color: #777;
 }
 
 .mode-num {
@@ -790,7 +831,7 @@ ul {
 }
 
 .mode-row.is-active .mode-name {
-  color: #fff;
+  color: #111;
 }
 
 .mode-body {
@@ -858,9 +899,15 @@ ul {
 
 .step-card.is-active {
   border-color: transparent;
-  background: #f1f2f4;
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.08);
+  background: var(--brand);
+  color: #fff;
+  box-shadow: 0 14px 30px rgba(0, 71, 255, 0.28);
   opacity: 1;
+}
+
+.step-card.is-active .step-num,
+.step-card.is-active .step-body {
+  color: rgba(255, 255, 255, 0.82);
 }
 
 .step-num {

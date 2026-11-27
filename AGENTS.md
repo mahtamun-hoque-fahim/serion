@@ -203,3 +203,9 @@ Newest last. Date, decision, reason.
 - **2026-11-27 — laptops fit the screen.** Hero and closing laptops are sized
   from the viewport height so their bases stay visible (closing laptop sits on
   the footer line), and the header moved from 68px to 24px from the top.
+- **2026-11-27 — active rows and rounded screens.** Owner: the focused install
+  card is brand blue with white text; the focused pill-mode row is pure white
+  with dark text. The laptop PNG's screen has square corners, so the live
+  screen paints the bezel's black over it and rounds its own corners
+  (`.laptop-ui > *`, 1.1cqw). Hidden mode shows a graphic centred on the
+  screen; the Serion mark in a soft halo stands in until the owner's image.
