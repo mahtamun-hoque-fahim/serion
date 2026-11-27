@@ -158,3 +158,16 @@ Newest last. Date, decision, reason.
 - **2026-11-27 — display modes are a static band with three buttons.** The comp
   reads as a two-column dark band, so the previous 300vh scroll choreography is
   gone; the three rows switch the drawn laptop's pill on click.
+- **2026-11-27 — the owner's art replaces the drawn laptops.** The owner
+  supplied the laptop, desk, orb and glow PNGs and asked for the page to match
+  the comp exactly, so the CSS laptops and orbs are gone (`Laptop.tsx`
+  deleted) and every section is sized from the comp measured at 1440px. The
+  live pill stays as DOM on the desk art's white screen so the three mode
+  buttons still work.
+- **2026-11-27 — Google Sans only.** The owner said no font except Google Sans;
+  Inter is uninstalled and body text uses Google Sans with `0.02em` tracking to
+  match the comp's wider set.
+- **2026-11-27 — copy follows the comp where it changed.** Icon mode now reads
+  "Just the mark and today's time, when you want the nudge."; the closing line
+  reads "Install Serion and look at the times wasted."; the FAQ privacy line and
+  the install card's mode chips are gone because the comp has neither.

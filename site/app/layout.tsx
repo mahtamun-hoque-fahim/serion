@@ -1,9 +1,8 @@
 import type { Metadata, Viewport } from "next";
+import "@fontsource/google-sans/400.css";
 import "@fontsource/google-sans/500.css";
+import "@fontsource/google-sans/600.css";
 import "@fontsource/google-sans/700.css";
-import "@fontsource/inter/400.css";
-import "@fontsource/inter/500.css";
-import "@fontsource/inter/600.css";
 import "./globals.css";
 import { VERSION } from "@/lib/site";
 

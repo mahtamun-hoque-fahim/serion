@@ -4,10 +4,10 @@ One public route. No auth, no data, no API.
 
 ```
 /
-├── #top        hero, laptop slot, download
+├── #top        hero, laptop art, download
 ├── #counts     screen-on is not time used
 ├── #features   the dashboard on blue
-├── #display    Hidden / Icon / Full on a drawn laptop
+├── #display    Hidden / Icon / Full on the desk laptop art
 ├── #install    three steps, SmartScreen explained
 ├── #privacy    the privacy line inside the FAQ head
 ├── #faq        six questions
@@ -30,9 +30,6 @@ External destinations (all open in a new tab):
 Build output: `site/out/` (`index.html`, `404.html`, `opengraph-image`,
 `icon.svg`, `_next/`, `pill.png`, `dashboard.png`).
 
-Open art slots, both marked in the components:
-
-- Hero and closing laptops: `VideoScreen` in `components/Laptop.tsx`.
-- Display laptop: `DisplayScreen` in `components/Laptop.tsx`.
-- Hero and closing background atmosphere: the `.orb` spans in `Hero.tsx` and
-  `FinalCta.tsx`.
+Art in `public/`: `laptop-video.png` (hero and closing), `laptop-desk.png`
+(display band), `orb-small.png`, `orb-large.png`, `glow-top-left.png`,
+`glow-bottom-right.png`.

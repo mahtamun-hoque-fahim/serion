@@ -1,7 +1,5 @@
-import { ArrowRight, Download, FileArchive, ShieldAlert } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Download, FileArchive, ShieldAlert } from "lucide-react";
 import { INSTALLER, INSTALLER_SIZE, URLS } from "@/lib/site";
-
-const modes = ["Hidden", "Icon", "Full"];
 
 export function Install() {
   return (
@@ -18,7 +16,7 @@ export function Install() {
             <span className="step-num">01</span>
             <h3>Download the installer</h3>
             <p>
-              {INSTALLER} &middot; {INSTALLER_SIZE}, from GitHub.
+              {INSTALLER}, {INSTALLER_SIZE}, from GitHub.
             </p>
             <div className="step-visual">
               <a className="file-row" href={URLS.download} target="_blank" rel="noreferrer">
@@ -69,15 +67,6 @@ export function Install() {
               Serion starts in the tray by the clock. Click the tray icon, then pick Hidden,
               Icon or Full under Pill. Turn on Start at login if you want it every day.
             </p>
-            <div className="step-visual">
-              <div className="mini-modes" aria-hidden="true">
-                {modes.map((name, index) => (
-                  <span key={name} className={index === 2 ? "mini-mode is-on" : "mini-mode"}>
-                    {name}
-                  </span>
-                ))}
-              </div>
-            </div>
           </article>
         </div>
 
@@ -88,7 +77,7 @@ export function Install() {
           </a>
           <a className="link-arrow" href={URLS.latest} target="_blank" rel="noreferrer">
             Latest release on GitHub
-            <ArrowRight size={15} strokeWidth={2} aria-hidden="true" />
+            <ArrowUpRight size={15} strokeWidth={2} aria-hidden="true" />
           </a>
         </div>
       </div>

@@ -33,12 +33,13 @@ only, unsigned installer, no cloud). Success is a download, not applause.
 - [LOCKED] One primary action only: **Download for Windows**, pointing at the
   versioned GitHub release asset. No "Get started", no trial, no pricing.
 - [LOCKED] The dashboard is the real 2× capture
-  (`site/public/dashboard.png`). The laptops are drawn in CSS; their screens are
-  labelled placeholders until the owner supplies the final mockups, which drop
-  into `.laptop-screen`.
-- [LOCKED] The display-modes section is a laptop drawn in CSS (DOM + 3D
-  transforms), not a photograph and not a WebGL scene. The three rows are
-  buttons that switch the pill between Hidden / Icon / Full.
+  (`site/public/dashboard.png`). The laptops, orbs and glows are the owner's
+  art in `site/public/` (`laptop-video.png`, `laptop-desk.png`, `orb-*.png`,
+  `glow-*.png`), placed at their natural size at 1440px as in the comp.
+- [LOCKED] The display-modes section uses the owner's laptop-on-desk art; the
+  live pill and tray icon are DOM laid on its white screen (8 degree tilt). The
+  three rows are buttons that switch the pill between Hidden / Icon / Full.
+- [LOCKED] Google Sans is the only typeface (owner, 2026-11-27).
 - [LOCKED] No emojis. Icons come from `lucide-react` only.
 - [LOCKED] Section copy follows the 2026-11-27 comp, built on
   `docs/landing-page-prompt.md` § 2. It may be trimmed, never re-voiced, and no
@@ -52,8 +53,7 @@ only, unsigned installer, no cloud). Success is a download, not applause.
 - A platform page. No Mac or Linux download, no "coming soon", no app-store
   badges.
 - A template. No glassmorphism, purple, stock photography, fake dashboards or a
-  newsletter form. Background atmosphere is the owner's supplied art; the CSS
-  orbs are placeholders, not the final look.
+  newsletter form. Background atmosphere is the owner's supplied art only.
 - A second design system. The palette is the app's palette.
 
 ## Current state
@@ -61,21 +61,22 @@ only, unsigned installer, no cloud). Success is a download, not applause.
 Status: rebuilt to the 2026-11-27 comp, verified in headless Chrome at 390 / 768
 / 1024 / 1440 / 1920.
 Last updated: 2026-11-27.
-What works: the floating pill header; hero with a drawn laptop; the gray
+What works: the pill header; hero with the owner's laptop art; the gray
 "screen is on" band; the blue dashboard block; the dark display-modes band with
 Hidden / Icon / Full buttons; the three install cards with the SmartScreen mock;
-the dark FAQ; the closing laptop CTA and floating footer. Real dashboard
+the dark FAQ; the closing laptop CTA and footer. Real dashboard
 capture, branded 404, static export, OG card, metadata and JSON-LD.
-What is open: the laptop screen art and the background graphics (placeholders
-are in place); the domain and host; a look at the 1200×630 social card.
-What is next in spirit: drop in the owner's mockups, publish, then keep the
+What is open: the Spider-Man thumbnail in `laptop-video.png` is Marvel/Sony
+art and must be replaced with the owner's own before publishing; the domain
+and host; a look at the 1200×630 social card.
+What is next in spirit: publish, then keep the
 version line and screenshots in step with each release
 (`site/scripts/capture-app.mjs` re-shoots them).
 
 ## The stack (frozen)
 
 Next.js 16.4 (App Router, static export) · React 19 · TypeScript · hand-written
-CSS · `@fontsource/google-sans` + `@fontsource/inter` · `lucide-react` · Node 22+.
+CSS · `@fontsource/google-sans` · `lucide-react` · Node 22+.
 No database, no auth, no payments, no analytics, no server runtime.
 
 ## Constraints and non-negotiables
@@ -109,13 +110,15 @@ No database, no auth, no payments, no analytics, no server runtime.
 
 THEME: Quiet Product — light, editorial, one blue accent.
 
-- Ground `#FFFFFF`, soft `#F5F6F8`, dark band `#0B0C0E`.
-- Ink `#0B0C0E`, muted `#5A616F`, hairline `#E7E9ED`.
+- Ground `#FFFFFF`, gray band `#EFEFEF`, CTA `#F2F3F5`, display band `#0E0E0E`,
+  FAQ `#232323`.
+- Ink `#111111`, muted `#7A7A7A`, hairline `#ECECEC`.
 - Brand `#0047FF`, tint `#E8EEFF`, emerald `#047857` (counting only), red
   `#E11D48` (warnings only).
-- Headings Google Sans 700, tracking `-0.025em`; body Inter 400/500/600.
-- Container 1180px; section padding 92–100px; cards 20px; buttons 999px; one
-  shadow `0 12px 32px rgba(11,12,14,.08)`.
+- Google Sans only: headings 600, body 400 with `0.02em` tracking (matches
+  the comp's wider set).
+- Container 1190px; all section heights and offsets are the comp's at 1440px;
+  cards 18px; buttons 999px.
 - Motion: spring `cubic-bezier(.34,1.56,.64,1)` for the pill, out
   `cubic-bezier(.22,1,.36,1)` for reveals; nothing loops except the tray pulse
   while Hidden.

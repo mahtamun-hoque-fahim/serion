@@ -1,35 +1,34 @@
 import { Download, Eye } from "lucide-react";
-import { LaptopMockup, VideoScreen } from "./Laptop";
 import { SerionMark } from "./SerionMark";
 import { URLS } from "@/lib/site";
 
 export function FinalCta() {
   return (
     <section className="cta">
-      {/* CSS placeholders for the background artwork the owner is providing. */}
-      <div className="cta-orbs" aria-hidden="true">
-        <span className="orb orb--cta-a" />
-        <span className="orb orb--cta-b" />
+      <div className="cta-art" aria-hidden="true">
+        <img className="cta-glow-a" src="/glow-bottom-right.png" alt="" width={871} height={871} />
+        <img className="cta-orb" src="/orb-large.png" alt="" width={309} height={309} />
+        <img className="cta-glow-b" src="/glow-top-left.png" alt="" width={651} height={651} />
+      </div>
+
+      <div className="cta-device" aria-hidden="true">
+        <img src="/laptop-video.png" alt="" width={1049} height={609} loading="lazy" />
+        <span className="cta-break">
+          <Eye size={22} strokeWidth={1.8} />
+          Take a Break
+        </span>
       </div>
 
       <div className="container cta-grid">
-        <div className="cta-device">
-          {/* Screen slot: replace VideoScreen with the provided laptop mockup. */}
-          <LaptopMockup variant="cta" screen={<VideoScreen />} />
-          <span className="cta-break" aria-hidden="true">
-            <Eye size={16} strokeWidth={2} />
-            Take a Break
-          </span>
-        </div>
-
         <div className="cta-copy">
           <h2>Start today.</h2>
           <p>
-            Install Serion and see the time you actually used. 30 seconds to set up, and find
-            your true potential.
+            Install Serion and look at the times wasted.{" "}
+            <br />
+            30 seconds to set up, and find your true potential.
           </p>
-          <a className="btn" href={URLS.download} target="_blank" rel="noreferrer">
-            <Download size={18} strokeWidth={2} aria-hidden="true" />
+          <a className="btn btn-lg" href={URLS.download} target="_blank" rel="noreferrer">
+            <Download size={16} strokeWidth={2} aria-hidden="true" />
             Download for Windows
           </a>
         </div>
@@ -51,7 +50,7 @@ export function Footer() {
     <footer className="site-footer">
       <div className="container footer-bar">
         <a className="wordmark" href="#top" aria-label="Serion, back to top">
-          <SerionMark size={22} />
+          <SerionMark size={24} />
           <span>Serion</span>
         </a>
 
