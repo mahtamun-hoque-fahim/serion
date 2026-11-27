@@ -316,3 +316,10 @@ Newest last. Date, decision, reason.
   downloaded the owner-signed 1.3.0, exited, installed and relaunched it as
   1.3.0 with today's 6h 55m intact. The owner ran the signed build, so the
   key password never passed through the agent.
+- **2026-11-28 — 1.3.0 published; the site download moved with it.** Tag
+  `v1.3.0` sits on `acfdd2d`, the commit the installer was built from (later
+  commits touch only the site and docs). The owner pushed the tag, because
+  the agent's shell could not reach the GitHub login; the release and its
+  three assets went up through the REST API. The site still offered 1.2.1,
+  which has no updater, so every new visitor would have been stranded:
+  `site/lib/site.ts` now names 1.3.0 (2.4 MB, 2547811 bytes).

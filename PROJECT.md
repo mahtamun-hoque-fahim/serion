@@ -5,7 +5,7 @@ The single source of truth for anyone (person or agent) picking this project up.
 change that alters behavior, rules, files, workflow or status** (see
 "Keeping this file current" at the end).
 
-Last updated: 2026-11-27, version 1.3.0 (Serion updates itself from GitHub
+Last updated: 2026-11-28, version 1.3.0 (published) (Serion updates itself from GitHub
 Releases: a one-click banner in the dashboard), plus the landing site, now live at
 https://serion-here.vercel.app. The landing page
 was rebuilt to the owner's new comp, with the owner's laptop, orb and glow art
@@ -468,10 +468,13 @@ credit, Start menu = hold, a full live break cycle, export/import/folder move
 through the UI, battery quit.
 
 **Missing / open:**
-1. **Version 1.2.1** (2026-11-25): installer `Serion_1.2.1_x64-setup.exe`,
-   published as GitHub Release `v1.2.1` (tag on the fix commit). The owner's
-   installed app is this build. Start at login turns on at the first installed
-   run and has not been confirmed yet.
+1. **Version 1.3.0** (2026-11-28): installer `Serion_1.3.0_x64-setup.exe`,
+   its `.sig` and `latest.json`, published as GitHub Release `v1.3.0` (tag on
+   `acfdd2d`, marked latest). `releases/latest/download/latest.json` serves it
+   and the downloaded installer matches the local build byte for byte. The
+   owner's installed app is this build. The site's download button points at
+   it (`site/lib/site.ts`). Start at login turns on at the first installed run
+   and has not been confirmed yet.
 2. macOS / Linux: `screen.rs`, `names.rs`, `battery.rs` are stubs → nothing
    counts there yet. Decide: port or declare v1 Windows-only.
 3. Unsigned → SmartScreen warning for other users on the first install.
@@ -560,6 +563,7 @@ through the UI, battery quit.
 | `7288efa` | Landing site live at https://serion-here.vercel.app: repo About homepage points there and `metadataBase` falls back to it |
 | `58e6bde` | `CREDITS.md` credits every model that worked on Serion: Claude Opus 5.5, DeepSeek V4.1 Flash (OpenCode) with its five commits, the five models tried on 2026-11-27, and Google Stitch, plus how they were traced |
 | `acfdd2d` | 1.3.0: in-app updates from GitHub Releases (`tauri-plugin-updater`, signed, passive NSIS install, relaunch); dashboard update banner; today saved in the updater's `on_before_exit` because the updater exits the process itself |
+| v1.3.0 | GitHub Release `v1.3.0` with installer, `.sig` and `latest.json`; the site's download button moved from 1.2.1 to 1.3.0 |
 | `4404318` | Site: phones (720px and below) follow the owner's sketch (hero laptop over the copy, bar chart only, auto-cycling pill laptop, no laptop in install or closing); problem title left-aligned when stacked; hero hourglass kept on screen at 1101-1360px; tablet laptops go first and stick under the header |
 | (this commit) | Site: closing blur fires when the closing section is fully in view (wide screens), then the copy reveals, the button shimmers 0.5 s later and turns blue 0.5 s after; phones get the plain reveal only (no drift, no closing blur, no shimmer) |
 
