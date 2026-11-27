@@ -7,9 +7,9 @@ export function FinalCta() {
   return (
     <section className="cta">
       <div className="cta-art" aria-hidden="true">
-        <img data-reveal className="cta-glow-a" src="/glow-bottom-right.png" alt="" width={871} height={871} />
-        <img data-reveal="2" className="cta-orb" src="/orb-large.png" alt="" width={309} height={309} />
-        <img data-reveal="1" className="cta-glow-b" src="/glow-top-left.png" alt="" width={651} height={651} />
+        <img data-reveal data-drift className="cta-glow-a" src="/glow-bottom-right.png" alt="" width={871} height={871} />
+        <img data-reveal="2" data-drift className="cta-orb" src="/orb-large.png" alt="" width={309} height={309} />
+        <img data-reveal="1" data-drift className="cta-glow-b" src="/glow-top-left.png" alt="" width={651} height={651} />
       </div>
 
       <div className="cta-device" aria-hidden="true" data-reveal>

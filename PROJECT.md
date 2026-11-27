@@ -503,7 +503,8 @@ through the UI, battery quit.
 | `b09b007` | Hidden mode shows the owner's video card (`hidden-movie.png`, a stand-in poster to replace before publishing) on a plain white screen |
 | `5f30863` | The showcase dashboard is a live component (`DashboardMock.tsx`) instead of a screenshot; day bars and app bars grow in on reveal; `site/public/dashboard.png` removed |
 | `8ce33bf` | Closing laptop runs 85px down over the footer so its base covers it; section sized so the whole laptop fits the screen at the page end |
-| (this commit) | Orbs and glows drift slowly (transform-only CSS loop, staggered; the hero's cut orb only sways sideways) |
+| `772baf7` | Orbs and glows drift slowly (transform-only CSS loop, staggered; the hero's cut orb only sways sideways) |
+| (this commit) | Orb drift rebuilt as random per-orb CSS sines (compositor, smooth); finished reveals drop their blur filter; any visible sliver reveals; hero laptop leaves room for the top-right orb; closing copy spacing tightened |
 
 Decisions worth knowing (and *why*): Tauri over Electron for a 24/7 widget
 (memory); a custom drag because the native one blocks page events; offered

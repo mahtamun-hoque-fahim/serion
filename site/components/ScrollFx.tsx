@@ -22,7 +22,7 @@ export function ScrollFx() {
           io.unobserve(entry.target);
         }
       },
-      { rootMargin: "0px 0px -8% 0px", threshold: 0.12 },
+      { rootMargin: "0px 0px -8% 0px", threshold: 0 },
     );
     document.querySelectorAll("[data-reveal]").forEach((el) => io.observe(el));
 
@@ -42,6 +42,21 @@ export function ScrollFx() {
     const onScroll = () => {
       if (!frame) frame = requestAnimationFrame(update);
     };
+
+    // Drift: give each piece of [data-drift] art its own random reach, speed
+    // and starting point. The motion itself is CSS (globals.css, Drift), so it
+    // runs on the compositor and stays smooth.
+    const rand = (min: number, max: number) => min + Math.random() * (max - min);
+    document.querySelectorAll<HTMLElement>("[data-drift]").forEach((el) => {
+      const tx = rand(7, 12);
+      const ty = rand(9, 15);
+      el.style.setProperty("--dx", `${rand(8, 14).toFixed(1)}px`);
+      el.style.setProperty("--dy", `${rand(8, 14).toFixed(1)}px`);
+      el.style.setProperty("--tx", `${tx.toFixed(2)}s`);
+      el.style.setProperty("--ty", `${ty.toFixed(2)}s`);
+      el.style.setProperty("--ox", `${(-rand(0, tx)).toFixed(2)}s`);
+      el.style.setProperty("--oy", `${(-rand(0, ty)).toFixed(2)}s`);
+    });
 
     update();
     window.addEventListener("scroll", onScroll, { passive: true });

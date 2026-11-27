@@ -6,9 +6,9 @@ export function Hero() {
   return (
     <section className="hero" id="top">
       <div className="hero-art" aria-hidden="true">
-        <img data-reveal className="hero-glow" src="/glow-bottom-right.png" alt="" width={871} height={871} />
-        <img data-reveal="2" className="hero-orb-a" src="/orb-small.png" alt="" width={166} height={166} />
-        <img data-reveal="3" className="hero-orb-b" src="/orb-large.png" alt="" width={309} height={309} />
+        <img data-reveal data-drift className="hero-glow" src="/glow-bottom-right.png" alt="" width={871} height={871} />
+        <img data-reveal="2" data-drift className="hero-orb-a" src="/orb-small.png" alt="" width={166} height={166} />
+        <img data-reveal="3" data-drift="x" className="hero-orb-b" src="/orb-large.png" alt="" width={309} height={309} />
         <ScreenLaptop id="hero" className="hero-laptop" reveal="2" />
       </div>
 

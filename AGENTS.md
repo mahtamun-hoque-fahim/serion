@@ -228,3 +228,19 @@ Newest last. Date, decision, reason.
   uses `translate`, layout uses top/left, so nothing fights); the hero's
   bottom-left orb only sways sideways because its flat cut edge sits on the
   band line. Reduced motion stops it.
+- **2026-11-27 — drift rebuilt for smoothness.** Owner: the drift looked
+  choppy. Causes: three keyframes with ease-in-out stopped the motion at every
+  point, and revealed art kept `filter: blur(0)`, which makes the browser
+  repaint the moving image each frame. Per the owner ("make it randomized") each `[data-drift]` piece now
+  runs two CSS sines, x on `translate` and y on `transform`, with random
+  reach, periods and phase set once per load by `ScrollFx.tsx`: a path that
+  never visibly repeats. A per-frame rAF version was tried first and
+  stuttered on the main thread; CSS animations run on the compositor. A
+  finished reveal sets `filter: none`. Found
+  on the way: the hero's top-left glow never revealed, because only a sliver
+  is on screen and the observer wanted 12%; the threshold is now 0.
+- **2026-11-27 — orb peek and closing spacing.** The owner saw the top-right
+  hero orb as squashed: after the header and laptop moved up, only a sliver
+  showed between them. The hero laptop now leaves 182px above it (header plus
+  the comp's 85px peek). The closing copy was "too spacious": gaps tightened
+  (14px and 24px) and its button is 56px tall.
