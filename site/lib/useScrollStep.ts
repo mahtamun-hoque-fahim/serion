@@ -8,21 +8,28 @@ export const PINNED = "(min-width: 1101px) and (prefers-reduced-motion: no-prefe
 /**
  * Which of `count` steps a scroll scene is on. Pinned (wide screens): the
  * section's scroll span is split evenly. Unpinned: the steps advance as `list`
- * crosses the middle of the screen. `choose` scrolls to a step when pinned and
- * sets it directly otherwise.
+ * crosses the middle of the screen. While `autoQuery` matches, scroll is
+ * ignored and the steps cycle on a timer instead. `choose` scrolls to a step
+ * when pinned and sets it directly otherwise.
  */
 export function useScrollStep<S extends HTMLElement, L extends HTMLElement>(
   section: RefObject<S | null>,
   list: RefObject<L | null>,
   count: number,
+  autoQuery?: string,
 ) {
   const [step, setStep] = useState(0);
 
   useEffect(() => {
     const pinned = window.matchMedia(PINNED);
+    const auto = autoQuery ? window.matchMedia(autoQuery) : null;
+    const timer = window.setInterval(() => {
+      if (auto?.matches) setStep((s) => (s + 1) % count);
+    }, 2500);
     let frame = 0;
     const update = () => {
       frame = 0;
+      if (auto?.matches) return;
       const vh = window.innerHeight;
       let p: number;
       if (pinned.matches && section.current) {
@@ -40,11 +47,12 @@ export function useScrollStep<S extends HTMLElement, L extends HTMLElement>(
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll);
     return () => {
+      window.clearInterval(timer);
       cancelAnimationFrame(frame);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
     };
-  }, [section, list, count]);
+  }, [section, list, count, autoQuery]);
 
   const choose = (index: number) => {
     const el = section.current;

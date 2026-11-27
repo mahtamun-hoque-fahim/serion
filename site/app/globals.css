@@ -1986,8 +1986,9 @@ html:not(.fx) .dm-track b {
    -------------------------------------------------------------------------- */
 
 @media (max-width: 1360px) {
-  .hero-laptop {
-    left: calc(50% + 60px);
+  /* Keep the screen's centre (the hourglass) at least 140px inside the edge. */
+  .hero-laptop.hero-laptop {
+    left: min(calc(50% + 60px), calc(100% - var(--lh) * 0.861 - 140px));
   }
 
   .hero h1 {
@@ -2085,6 +2086,10 @@ html:not(.fx) .dm-track b {
     text-align: left;
   }
 
+  .t-line {
+    margin-left: 0;
+  }
+
   .problem p {
     padding-top: 0;
   }
@@ -2120,13 +2125,29 @@ html:not(.fx) .dm-track b {
     gap: 40px;
   }
 
+  /* Stacked: the laptop goes first and sticks under the header, so the
+     screen it plays stays in view while the rows below it step through. */
   .display-laptop,
   .install-laptop {
+    order: -1;
     justify-self: center;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    /* Borders, not padding: .laptop-ui is placed in % of the padding box. */
+    --mask: #fff;
+    border-block: solid var(--mask);
+    border-width: 92px 0 16px;
+    margin-top: -92px;
+    box-sizing: content-box;
+    background: var(--mask);
+    /* Paint the mask across the full width, not just the laptop's. */
+    box-shadow: 0 0 0 100vw var(--mask);
+    clip-path: inset(0 -100vw);
   }
 
-  .install-laptop {
-    order: -1;
+  .display-laptop {
+    --mask: var(--dark);
   }
 
   .faq-grid {
@@ -2233,6 +2254,117 @@ html:not(.fx) .dm-track b {
 
   .header-cta svg {
     display: none;
+  }
+
+  /* Phone layout (owner's sketch): image first, then the words; one mockup
+     per section at most. */
+  .hero-art {
+    order: 1;
+    padding: 100px 20px 0;
+  }
+
+  .hero-copy {
+    order: 2;
+    padding: 32px 0 64px;
+  }
+
+  .hero-art .hero-laptop {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  /* Showcase: only the week's bar chart, scaled up to be read at phone width. */
+  .dashboard-card {
+    margin-top: 0;
+  }
+
+  .dm-titlebar,
+  .dm-tiles,
+  .dm-columns {
+    display: none;
+  }
+
+  .dm-card.dm-chart {
+    padding: 5cqw 5cqw 9cqw;
+    border-radius: 4cqw;
+  }
+
+  .dm-h {
+    font-size: 4.4cqw;
+  }
+
+  .dm-plot {
+    height: 56cqw;
+    margin-top: 5cqw;
+    padding-left: 8cqw;
+  }
+
+  .dm-tick {
+    font-size: 3.2cqw;
+    translate: -8cqw -0.7em;
+    width: calc(100% + 8cqw);
+  }
+
+  .dm-bars {
+    left: 8cqw;
+  }
+
+  .dm-col span {
+    bottom: -6.5cqw;
+    font-size: 3.2cqw;
+  }
+
+  .dm-bar {
+    width: 6.5cqw;
+    border-radius: 1.4cqw 1.4cqw 0 0;
+  }
+
+  /* Display modes: the laptop at hero size above the copy, not sticky; it
+     cycles the modes itself (DisplayModes.tsx). */
+  .display-laptop {
+    position: relative;
+    width: 100%;
+    max-width: none;
+    margin-top: 0;
+    border: 0;
+    box-shadow: none;
+    clip-path: none;
+  }
+
+  /* Install and closing: no laptop on phones. */
+  .install-laptop,
+  .cta-device {
+    display: none;
+  }
+
+  .cta-art {
+    display: block;
+  }
+
+  .cta-grid {
+    position: relative;
+    padding-bottom: 150px;
+  }
+
+  .cta-art .cta-orb {
+    display: block;
+    left: calc(100% - 140px);
+    top: calc(100% - 120px);
+    width: 200px;
+  }
+
+  .cta-art .cta-glow-b {
+    display: block;
+    left: calc(100% - 260px);
+    top: calc(100% - 220px);
+  }
+
+  /* The end-of-page blur keeps the laptop's pill sharp; with no laptop, skip it. */
+  .end-focus .faq,
+  .end-focus .cta-art,
+  .end-focus .cta-grid,
+  .end-focus .site-footer {
+    filter: none;
   }
 }
 

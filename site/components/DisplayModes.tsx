@@ -27,7 +27,8 @@ const modes = [
 export function DisplayModes() {
   const section = useRef<HTMLElement>(null);
   const list = useRef<HTMLDivElement>(null);
-  const [mode, choose] = useScrollStep(section, list, modes.length);
+  // Phones: the laptop sits above the rows and cycles the modes on its own.
+  const [mode, choose] = useScrollStep(section, list, modes.length, "(max-width: 720px)");
 
   return (
     <section className="display" id="display" ref={section}>

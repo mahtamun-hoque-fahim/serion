@@ -279,3 +279,20 @@ Newest last. Date, decision, reason.
   password is the owner's secret, so the owner ran `tauri signer generate`
   in their own terminal; the agent only reads the public key. It lives in
   `%USERPROFILE%\.tauri\`, outside the repo.
+- **2026-11-27 — responsive pass: three fixes found by testing.** At every
+  stacked width the problem title's first line stayed right-aligned (`.t-line`
+  kept `margin-left: auto`); it is now left. Between 1101 and 1360px the hero
+  laptop pushed its hourglass off the right edge; its `left` is now capped so
+  the screen's centre stays 140px inside. On stacked tablets the display and
+  install laptops go first and stick under the header, so the screen being
+  played stays in view while the rows step.
+- **2026-11-27 — phones follow the owner's sketch, phones only.** The owner
+  drew the phone layout and chose 720px and below; tablets keep the full
+  mockups. Hero: laptop over the copy, full width, no crop. Showcase: only
+  the dashboard's bar chart, re-sized in cqw so it reads at phone width.
+  Display modes: the laptop at hero size above the copy, cycling Full, Icon,
+  Hidden every 2.5 s, with the cards highlighting in step (owner's choice);
+  `useScrollStep` takes an optional media query for this. Install: no laptop,
+  the scroll highlight stays (owner's choice). Closing: no laptop, orb and
+  glow shown, and the end-of-page blur is skipped since its sharp pill is
+  gone.

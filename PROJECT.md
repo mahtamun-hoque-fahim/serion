@@ -11,7 +11,10 @@ https://serion-here.vercel.app. The landing page
 was rebuilt to the owner's new comp, with the owner's laptop, orb and glow art
 in place and Google Sans as the only typeface: pill header, hero, the gray
 problem band, the blue dashboard block, the dark display-modes band, three
-install cards, dark FAQ, closing CTA and footer. The dashboard's Breaks row no longer cuts off its unit dropdown at the
+install cards, dark FAQ, closing CTA and footer. Phones (720px and below)
+follow the owner's sketch: hero laptop above the copy, bar chart only in the
+showcase, auto-cycling pill laptop above the modes, no laptop in install or
+the closing section. The dashboard's Breaks row no longer cuts off its unit dropdown at the
 window's 760px minimum. 1.2.0 (pill display modes Hidden / Icon / Full and the
 tray icon) is installed over 1.1.0 and verified live on the owner's machine,
 including the mode surviving a restart. The repo itself now has an About
@@ -155,8 +158,9 @@ The one-page landing site, a separate Next.js app in the same repo (own
 | `site/app/globals.css` | the whole design: tokens, sections, art placement |
 | `site/app/not-found.tsx` | branded 404 |
 | `site/app/opengraph-image.tsx` | 1200×630 social card, composed in code (`next/og`) |
-| `site/components/DisplayModes.tsx` | the dark mode band: scrolling walks the pill on the blank laptop through Full / Icon / Hidden |
-| `site/components/Install.tsx` | the install band: three step cards and the laptop playing each step (download, SmartScreen, tray menu) on scroll |
+| `site/components/DisplayModes.tsx` | the dark mode band: scrolling walks the pill on the blank laptop through Full / Icon / Hidden; on phones (720px and below) the laptop sits above the copy and cycles the modes on a 2.5 s timer |
+| `site/components/Install.tsx` | the install band: three step cards and the laptop playing each step (download, SmartScreen, tray menu) on scroll; phones show the cards only |
+| `site/lib/useScrollStep.ts` | which step a scroll scene is on: pinned span, list position when stacked, or a timer while its optional media query matches |
 | `site/components/Laptop.tsx` | the blank laptop with a live screen, shared by every laptop on the page |
 | `site/lib/site.ts` | version, installer name/size/bytes, every GitHub URL |
 | `site/public/pill.png` | 2× captures of the real app (`scripts/capture-app.mjs`) |
@@ -547,7 +551,8 @@ through the UI, battery quit.
 | `0aecc89` | End of page: for 1 s only the laptop's Take a Break pill is sharp, the rest blurs, then returns to focus |
 | `7288efa` | Landing site live at https://serion-here.vercel.app: repo About homepage points there and `metadataBase` falls back to it |
 | `58e6bde` | `CREDITS.md` credits every model that worked on Serion: Claude Opus 5.5, DeepSeek V4.1 Flash (OpenCode) with its five commits, the five models tried on 2026-11-27, and Google Stitch, plus how they were traced |
-| (this commit) | 1.3.0: in-app updates from GitHub Releases (`tauri-plugin-updater`, signed, passive NSIS install, relaunch); dashboard update banner; today saved in the updater's `on_before_exit` because the updater exits the process itself |
+| `acfdd2d` | 1.3.0: in-app updates from GitHub Releases (`tauri-plugin-updater`, signed, passive NSIS install, relaunch); dashboard update banner; today saved in the updater's `on_before_exit` because the updater exits the process itself |
+| (this commit) | Site: phones (720px and below) follow the owner's sketch (hero laptop over the copy, bar chart only, auto-cycling pill laptop, no laptop in install or closing); problem title left-aligned when stacked; hero hourglass kept on screen at 1101-1360px; tablet laptops go first and stick under the header |
 
 Decisions worth knowing (and *why*): Tauri over Electron for a 24/7 widget
 (memory); a custom drag because the native one blocks page events; offered
