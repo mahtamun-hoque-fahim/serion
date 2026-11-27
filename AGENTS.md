@@ -244,3 +244,9 @@ Newest last. Date, decision, reason.
   showed between them. The hero laptop now leaves 182px above it (header plus
   the comp's 85px peek). The closing copy was "too spacious": gaps tightened
   (14px and 24px) and its button is 56px tall.
+- **2026-11-27 — closing pill and button.** Owner: the Take a Break pill is
+  brand blue (was dark) and is kept ~30px inside the viewport, since the
+  laptop bleeds off the left edge and clipped it. The closing Download button
+  starts dark; 1.5 s after its copy is revealed a light sweeps across it and
+  it stays brand blue (CSS, `forwards`). Without the reveal effect it is blue
+  from the start.

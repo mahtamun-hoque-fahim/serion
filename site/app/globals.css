@@ -1823,20 +1823,22 @@ html:not(.fx) .dm-track b {
   width: 100%;
 }
 
+/* Kept about 30px inside the viewport, where the laptop bleeds off the left. */
 .cta-break {
   position: absolute;
   top: 4.3%;
-  left: 40.3%;
+  left: max(40.3%, calc(84px + var(--lh) * 1.7225 - 50vw));
   display: inline-flex;
   align-items: center;
   gap: 12px;
   height: 50px;
   padding: 0 24px 0 22px;
-  border: 2px solid #4a4a4a;
+  border: 0;
   border-radius: 999px;
-  background: #2a2a2a;
+  background: var(--brand);
   color: #fff;
   font-size: 19px;
+  box-shadow: 0 10px 24px rgba(0, 71, 255, 0.28);
 }
 
 .cta-grid {
@@ -1858,7 +1860,49 @@ html:not(.fx) .dm-track b {
 }
 
 .cta-copy .btn {
+  position: relative;
+  overflow: hidden;
   margin-top: 24px;
+}
+
+/* The closing button starts dark; 1.5 s after the copy is revealed a light
+   sweeps across it and it turns brand blue for good. */
+.fx .cta-copy .btn {
+  background: #111;
+}
+
+.fx .cta-copy .btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.55) 50%,
+    transparent 70%
+  );
+  translate: -120% 0;
+  pointer-events: none;
+}
+
+.fx .cta-copy.is-in .btn {
+  animation: cta-turn-blue 0.5s ease 1.75s forwards;
+}
+
+.fx .cta-copy.is-in .btn::after {
+  animation: cta-shimmer 0.9s var(--out) 1.5s forwards;
+}
+
+@keyframes cta-shimmer {
+  to {
+    translate: 120% 0;
+  }
+}
+
+@keyframes cta-turn-blue {
+  to {
+    background: var(--brand);
+  }
 }
 
 .site-footer {
