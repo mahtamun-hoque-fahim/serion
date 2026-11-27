@@ -115,8 +115,8 @@ No database, no auth, no payments, no analytics, no server runtime.
   with 12px padding, never in browser chrome.
 - `next build` writes `out/`. `trailingSlash: true` is deliberate for static
   hosts.
-- `metadataBase` falls back to `https://serion.pages.dev`; set
-  `NEXT_PUBLIC_SITE_URL` when the real domain exists.
+- `metadataBase` falls back to `https://serion-here.vercel.app` (live on Vercel); set
+  `NEXT_PUBLIC_SITE_URL` if a custom domain replaces it.
 
 ## Visual identity (locked)
 

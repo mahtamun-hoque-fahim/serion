@@ -10,7 +10,7 @@ import { VERSION } from "@/lib/site";
 export const metadata: Metadata = {
   // Set NEXT_PUBLIC_SITE_URL when the site gets a domain; the fallback keeps
   // social previews absolute until then.
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://serion.pages.dev"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://serion-here.vercel.app"),
   title: "Serion: track screen time, gain productivity",
   description:
     "Serion is a small pill at the top of your screen that counts the minutes you are really using your computer, and stops counting the moment you walk away. Free, open source, Windows 10 and 11.",

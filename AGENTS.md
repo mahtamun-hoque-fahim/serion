@@ -256,3 +256,10 @@ Newest last. Date, decision, reason.
   the page bottom is reached (re-arms after scrolling 200px away); the blur
   sits on the FAQ, closing art, copy, laptop image and footer, never on an
   ancestor of the pill. Reduced motion skips it.
+- **2026-11-27 — the site is live; About and metadata point at it.** The
+  owner deployed the landing site to https://serion-here.vercel.app. The
+  repo's About homepage was an old preview URL (`site-snowy-alpha-39`), so it
+  was set to the live one through the REST API; description and topics stay
+  as they were. `metadataBase` fell back to `serion.pages.dev`, a host that
+  was never used, so social cards would have pointed nowhere; the fallback is
+  now the live URL, and `NEXT_PUBLIC_SITE_URL` still overrides it.

@@ -5,7 +5,8 @@ The single source of truth for anyone (person or agent) picking this project up.
 change that alters behavior, rules, files, workflow or status** (see
 "Keeping this file current" at the end).
 
-Last updated: 2026-11-27, version 1.2.1, plus the landing site. The landing page
+Last updated: 2026-11-27, version 1.2.1, plus the landing site, now live at
+https://serion-here.vercel.app. The landing page
 was rebuilt to the owner's new comp, with the owner's laptop, orb and glow art
 in place and Google Sans as the only typeface: pill header, hero, the gray
 problem band, the blue dashboard block, the dark display-modes band, three
@@ -455,7 +456,9 @@ through the UI, battery quit.
    one page, static-exported and checked in headless Chrome at 390, 768, 1024,
    1440 and 1920 (all sections, no sideways scroll, laptop bases not clipped).
    The art is the owner's; the hero and closing laptops show an animated
-   hourglass (`components/ScreenLaptop.tsx`). Open: the domain and the host, and a look at the generated
+   hourglass (`components/ScreenLaptop.tsx`). Deployed 2026-11-27 on Vercel at
+   https://serion-here.vercel.app, which is the repo's About homepage and the
+   `metadataBase` fallback. Open: a custom domain (optional), and a look at the generated
    social card. `NEXT_PUBLIC_SITE_URL` is the only thing a real domain needs.
 
 ## 11. History (commits on `main`)
@@ -506,7 +509,8 @@ through the UI, battery quit.
 | `772baf7` | Orbs and glows drift slowly (transform-only CSS loop, staggered; the hero's cut orb only sways sideways) |
 | `40c6754` | Orb drift rebuilt as random per-orb CSS sines (compositor, smooth); finished reveals drop their blur filter; any visible sliver reveals; hero laptop leaves room for the top-right orb; closing copy spacing tightened |
 | `aa4c006` | Closing section: Take a Break pill in brand blue, kept inside the viewport; Download button starts dark, shimmers 1.5 s after reveal and stays blue |
-| (this commit) | End of page: for 1 s only the laptop's Take a Break pill is sharp, the rest blurs, then returns to focus |
+| `0aecc89` | End of page: for 1 s only the laptop's Take a Break pill is sharp, the rest blurs, then returns to focus |
+| (this commit) | Landing site live at https://serion-here.vercel.app: repo About homepage points there and `metadataBase` falls back to it |
 
 Decisions worth knowing (and *why*): Tauri over Electron for a 24/7 widget
 (memory); a custom drag because the native one blocks page events; offered
