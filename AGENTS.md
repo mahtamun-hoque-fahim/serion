@@ -250,3 +250,9 @@ Newest last. Date, decision, reason.
   starts dark; 1.5 s after its copy is revealed a light sweeps across it and
   it stays brand blue (CSS, `forwards`). Without the reveal effect it is blue
   from the start.
+- **2026-11-27 — end-of-page focus.** Owner: on reaching the bottom, only the
+  laptop's Take a Break pill stays sharp and the rest blurs, then returns to
+  focus after 1 s. `ScrollFx.tsx` adds `.end-focus` to <html> for 1 s when
+  the page bottom is reached (re-arms after scrolling 200px away); the blur
+  sits on the FAQ, closing art, copy, laptop image and footer, never on an
+  ancestor of the pill. Reduced motion skips it.

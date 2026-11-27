@@ -505,7 +505,8 @@ through the UI, battery quit.
 | `8ce33bf` | Closing laptop runs 85px down over the footer so its base covers it; section sized so the whole laptop fits the screen at the page end |
 | `772baf7` | Orbs and glows drift slowly (transform-only CSS loop, staggered; the hero's cut orb only sways sideways) |
 | `40c6754` | Orb drift rebuilt as random per-orb CSS sines (compositor, smooth); finished reveals drop their blur filter; any visible sliver reveals; hero laptop leaves room for the top-right orb; closing copy spacing tightened |
-| (this commit) | Closing section: Take a Break pill in brand blue, kept inside the viewport; Download button starts dark, shimmers 1.5 s after reveal and stays blue |
+| `aa4c006` | Closing section: Take a Break pill in brand blue, kept inside the viewport; Download button starts dark, shimmers 1.5 s after reveal and stays blue |
+| (this commit) | End of page: for 1 s only the laptop's Take a Break pill is sharp, the rest blurs, then returns to focus |
 
 Decisions worth knowing (and *why*): Tauri over Electron for a 24/7 widget
 (memory); a custom drag because the native one blocks page events; offered

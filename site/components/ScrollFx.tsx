@@ -38,7 +38,21 @@ export function ScrollFx() {
         el.style.setProperty("--p", p.toFixed(4));
         el.style.setProperty("--e", (p * p * (3 - 2 * p)).toFixed(4));
       }
+
+      // End of page: for 1 s only the laptop's Take a Break pill is sharp,
+      // then the rest comes back into focus. Re-arms once you scroll away.
+      const root = document.documentElement;
+      const fromEnd = root.scrollHeight - (window.scrollY + vh);
+      if (fromEnd <= 2 && endArmed && root.classList.contains("fx")) {
+        endArmed = false;
+        root.classList.add("end-focus");
+        endTimer = window.setTimeout(() => root.classList.remove("end-focus"), 1000);
+      } else if (fromEnd > 200) {
+        endArmed = true;
+      }
     };
+    let endArmed = true;
+    let endTimer = 0;
     const onScroll = () => {
       if (!frame) frame = requestAnimationFrame(update);
     };
@@ -64,6 +78,7 @@ export function ScrollFx() {
     return () => {
       io.disconnect();
       cancelAnimationFrame(frame);
+      clearTimeout(endTimer);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
     };

@@ -2309,6 +2309,33 @@ html:not(.fx) .dm-track b {
   translate: 0 0;
 }
 
+/* End of page (ScrollFx.tsx sets .end-focus for 1 s): everything blurs but
+   the laptop's Take a Break pill, then eases back into focus. */
+.fx .faq,
+.fx .cta-art,
+.fx .cta-grid,
+.fx .cta-device > .laptop-shot,
+.fx .site-footer {
+  transition: filter 0.6s var(--out);
+}
+
+.end-focus .faq,
+.end-focus .cta-art,
+.end-focus .cta-grid,
+.end-focus .cta-device > .laptop-shot,
+.end-focus .site-footer {
+  filter: blur(8px);
+  transition-duration: 0.35s;
+}
+
+.cta-break {
+  transition: scale 0.5s var(--spring);
+}
+
+.end-focus .cta-break {
+  scale: 1.06;
+}
+
 /* Pinned scenes, wide screens only (the same query is in DisplayModes.tsx). */
 @media (min-width: 1101px) and (prefers-reduced-motion: no-preference) {
   /* 1. A full white screen with the lines centred shrinks into the gray band. */
