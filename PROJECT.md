@@ -501,7 +501,8 @@ through the UI, battery quit.
 | `273e059` | README rewritten around the reader's problems (where the day went, losing hours, forgetting breaks, idle while reading, screen clutter, privacy), with the break-offer screenshot `docs/break-offer.webp` under Breaks |
 | `3ba12f1` | Landing site: focused install card in brand blue, focused pill-mode row in white; laptop screens get rounded corners; Hidden mode shows a centred graphic (Serion mark placeholder until the owner's image) |
 | `b09b007` | Hidden mode shows the owner's video card (`hidden-movie.png`, a stand-in poster to replace before publishing) on a plain white screen |
-| (this commit) | The showcase dashboard is a live component (`DashboardMock.tsx`) instead of a screenshot; day bars and app bars grow in on reveal; `site/public/dashboard.png` removed |
+| `5f30863` | The showcase dashboard is a live component (`DashboardMock.tsx`) instead of a screenshot; day bars and app bars grow in on reveal; `site/public/dashboard.png` removed |
+| (this commit) | Closing laptop runs 85px down over the footer so its base covers it; section sized so the whole laptop fits the screen at the page end |
 
 Decisions worth knowing (and *why*): Tauri over Electron for a 24/7 widget
 (memory); a custom drag because the native one blocks page events; offered

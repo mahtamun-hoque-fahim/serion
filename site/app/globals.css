@@ -1772,9 +1772,10 @@ html:not(.fx) .dm-track b {
    -------------------------------------------------------------------------- */
 
 .cta {
-  --lh: min(609px, calc(100svh - 160px));
+  /* The laptop runs down over the 85px footer, so its base fills the page bottom. */
+  --lh: min(609px, calc(100svh - 80px));
   position: relative;
-  height: max(560px, calc(var(--lh) + 70px));
+  height: max(560px, calc(var(--lh) - 15px));
   background: var(--cta-ground);
 }
 
@@ -1808,11 +1809,11 @@ html:not(.fx) .dm-track b {
   width: 651px;
 }
 
-/* Bleeds off the left edge as in the comp; its base sits on the footer line. */
+/* Bleeds off the left edge as in the comp; its base sits over the footer. */
 .cta-device {
   position: absolute;
   z-index: 2;
-  bottom: 0;
+  bottom: -85px;
   left: calc(50% - 50px - var(--lh) * 1.7225);
   width: calc(var(--lh) * 1.7225);
 }
@@ -1840,7 +1841,7 @@ html:not(.fx) .dm-track b {
 .cta-grid {
   position: relative;
   z-index: 1;
-  padding: calc(var(--lh) / 2 - 80px) 0 0 561px;
+  padding: calc(var(--lh) / 2 - 120px) 0 0 561px;
 }
 
 .cta h2 {

@@ -219,3 +219,7 @@ Newest last. Date, decision, reason.
   dark tokens (from `src/Dashboard.css`), sized in cqw so it scales like the
   image; bars grow when the card's reveal fires. `site/public/dashboard.png`
   is deleted (the README's `docs/dashboard.png` is separate and stays).
+- **2026-11-27 — closing laptop runs over the footer.** Owner wanted the
+  laptop's base to cover the footer, not sit on its line: `.cta-device` now
+  ends 85px below the section (the footer's height) and the section is sized
+  so the whole laptop fits the screen at the page end.
