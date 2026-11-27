@@ -209,3 +209,7 @@ Newest last. Date, decision, reason.
   screen paints the bezel's black over it and rounds its own corners
   (`.laptop-ui > *`, 1.1cqw). Hidden mode shows a graphic centred on the
   screen; the Serion mark in a soft halo stands in until the owner's image.
+- **2026-11-27 — Hidden shows a video card.** The owner supplied the Figma
+  frame and card (`site/public/hidden-movie.png`): a film poster with a play
+  button, centred at ~89% of the screen width on a plain white screen. The
+  poster is studio artwork and must be replaced before the site is published.

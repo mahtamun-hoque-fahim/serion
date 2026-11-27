@@ -635,9 +635,7 @@ ul {
 .pill-screen {
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(60% 70% at 80% 10%, rgba(0, 71, 255, 0.1), transparent 70%),
-    linear-gradient(160deg, #fbfcff, #eef2f9);
+  background: #fff;
 }
 
 .scr-pill {
@@ -702,15 +700,14 @@ ul {
   transform: translateY(-2cqw) scale(0.8);
 }
 
-/* Hidden: the screen is the user's again. A calm graphic sits in the middle. */
+/* Hidden: the screen is the user's again, shown as a video card in the middle. */
 .scr-hidden-art {
   position: absolute;
   top: 50%;
   left: 50%;
   display: grid;
   place-items: center;
-  width: 22cqw;
-  aspect-ratio: 1;
+  width: 69cqw;
   translate: -50% -50%;
   opacity: 0;
   filter: blur(10px);
@@ -725,21 +722,6 @@ ul {
 .scr-hidden-art svg {
   width: 100%;
   height: auto;
-}
-
-/* Placeholder until the owner's graphic lands: the mark in a soft halo. */
-.scr-hidden-mark {
-  display: grid;
-  place-items: center;
-  width: 100%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(0, 71, 255, 0.12), rgba(0, 71, 255, 0) 70%);
-  color: rgba(0, 71, 255, 0.55);
-}
-
-.scr-hidden-mark svg {
-  width: 38%;
 }
 
 .pill-screen[data-mode="0"] .scr-hidden-art {

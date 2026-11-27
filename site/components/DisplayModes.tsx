@@ -3,7 +3,6 @@
 import { useRef } from "react";
 import { Eye } from "lucide-react";
 import { Laptop } from "./Laptop";
-import { SerionMark } from "./SerionMark";
 import { useScrollStep } from "@/lib/useScrollStep";
 
 /* Scroll order: Full, then Icon, then Hidden. `pill` is the data-mode the CSS reads. */
@@ -80,11 +79,9 @@ export function DisplayModes() {
                 </span>
                 <span className="scr-pill-time">2.9h</span>
               </div>
-              {/* Hidden: a calm graphic in the middle. Placeholder until the owner's art. */}
+              {/* Hidden: nothing of Serion on screen, just what you are watching. */}
               <div className="scr-hidden-art">
-                <span className="scr-hidden-mark">
-                  <SerionMark size={64} />
-                </span>
+                <img src="/hidden-movie.png" alt="" width={729} height={383} loading="lazy" />
               </div>
             </div>
           </Laptop>
