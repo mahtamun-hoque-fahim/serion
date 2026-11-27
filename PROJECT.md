@@ -14,7 +14,11 @@ problem band, the blue dashboard block, the dark display-modes band, three
 install cards, dark FAQ, closing CTA and footer. Phones (720px and below)
 follow the owner's sketch: hero laptop above the copy, bar chart only in the
 showcase, auto-cycling pill laptop above the modes, no laptop in install or
-the closing section. The dashboard's Breaks row no longer cuts off its unit dropdown at the
+the closing section. Phones get only the blur-fade reveal: no drift, no
+closing blur, no button shimmer. On wider screens, reaching the closing
+section blurs everything but the Take a Break pill for 1 s, then reveals the
+copy; 0.5 s after the reveal the button shimmers, 0.5 s later it turns blue.
+The dashboard's Breaks row no longer cuts off its unit dropdown at the
 window's 760px minimum. 1.2.0 (pill display modes Hidden / Icon / Full and the
 tray icon) is installed over 1.1.0 and verified live on the owner's machine,
 including the mode surviving a restart. The repo itself now has an About
@@ -453,6 +457,10 @@ encrypted migration of real data, pill display modes Hidden / Icon / Full
 icon (tooltip, "Open Serion" opens the dashboard while the pill is hidden,
 "Quit Serion" exits and saves), a 1.2.0 build installed over 1.1.0, and the
 Breaks row wrapping cleanly at the 760px minimum in the installed 1.2.1.
+The updater, end to end (2026-11-27): a 1.2.9 test build pointed at a local
+`latest.json` showed the banner, downloaded the signed 1.3.0, exited, ran the
+installer and relaunched as 1.3.0 in about 6 s with today's total intact; with
+no `latest.json` on GitHub yet, 1.3.0 stays silent as intended.
 
 **Built, covered by unit tests, not yet seen live:** reading mode, display-awake
 (video/call) counting, midnight flip, fullscreen break peek, other-screens
@@ -552,7 +560,8 @@ through the UI, battery quit.
 | `7288efa` | Landing site live at https://serion-here.vercel.app: repo About homepage points there and `metadataBase` falls back to it |
 | `58e6bde` | `CREDITS.md` credits every model that worked on Serion: Claude Opus 5.5, DeepSeek V4.1 Flash (OpenCode) with its five commits, the five models tried on 2026-11-27, and Google Stitch, plus how they were traced |
 | `acfdd2d` | 1.3.0: in-app updates from GitHub Releases (`tauri-plugin-updater`, signed, passive NSIS install, relaunch); dashboard update banner; today saved in the updater's `on_before_exit` because the updater exits the process itself |
-| (this commit) | Site: phones (720px and below) follow the owner's sketch (hero laptop over the copy, bar chart only, auto-cycling pill laptop, no laptop in install or closing); problem title left-aligned when stacked; hero hourglass kept on screen at 1101-1360px; tablet laptops go first and stick under the header |
+| `4404318` | Site: phones (720px and below) follow the owner's sketch (hero laptop over the copy, bar chart only, auto-cycling pill laptop, no laptop in install or closing); problem title left-aligned when stacked; hero hourglass kept on screen at 1101-1360px; tablet laptops go first and stick under the header |
+| (this commit) | Site: closing blur fires when the closing section is fully in view (wide screens), then the copy reveals, the button shimmers 0.5 s later and turns blue 0.5 s after; phones get the plain reveal only (no drift, no closing blur, no shimmer) |
 
 Decisions worth knowing (and *why*): Tauri over Electron for a 24/7 widget
 (memory); a custom drag because the native one blocks page events; offered

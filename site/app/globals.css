@@ -1865,8 +1865,9 @@ html:not(.fx) .dm-track b {
   margin-top: 24px;
 }
 
-/* The closing button starts dark; 1.5 s after the copy is revealed a light
-   sweeps across it and it turns brand blue for good. */
+/* The closing button starts dark. Its copy's reveal takes about 1 s; 0.5 s
+   after that a light sweeps across it, and 0.5 s later it turns brand blue
+   for good. Wide screens only: phones get it blue from the start. */
 .fx .cta-copy .btn {
   background: #111;
 }
@@ -1886,7 +1887,7 @@ html:not(.fx) .dm-track b {
 }
 
 .fx .cta-copy.is-in .btn {
-  animation: cta-turn-blue 0.5s ease 1.75s forwards;
+  animation: cta-turn-blue 0.4s ease 2s forwards;
 }
 
 .fx .cta-copy.is-in .btn::after {
@@ -2359,12 +2360,21 @@ html:not(.fx) .dm-track b {
     top: calc(100% - 220px);
   }
 
-  /* The end-of-page blur keeps the laptop's pill sharp; with no laptop, skip it. */
-  .end-focus .faq,
-  .end-focus .cta-art,
-  .end-focus .cta-grid,
-  .end-focus .site-footer {
-    filter: none;
+  /* Phones: the plain reveal and nothing else. No drift, no shimmer (the
+     closing blur is wide-only in ScrollFx.tsx). */
+  /* html: outranks the Drift rules, which come later in the file. */
+  html [data-drift] {
+    animation: none;
+  }
+
+  .fx .cta-copy .btn,
+  .fx .cta-copy.is-in .btn {
+    background: var(--brand);
+    animation: none;
+  }
+
+  .fx .cta-copy .btn::after {
+    display: none;
   }
 }
 
@@ -2441,8 +2451,9 @@ html:not(.fx) .dm-track b {
   translate: 0 0;
 }
 
-/* End of page (ScrollFx.tsx sets .end-focus for 1 s): everything blurs but
-   the laptop's Take a Break pill, then eases back into focus. */
+/* Closing section reached (ScrollFx.tsx sets .end-focus for 1 s, wide
+   screens only): everything blurs but the laptop's Take a Break pill, then
+   eases back into focus as the closing copy reveals. */
 .fx .faq,
 .fx .cta-art,
 .fx .cta-grid,

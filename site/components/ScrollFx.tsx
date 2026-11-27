@@ -24,7 +24,14 @@ export function ScrollFx() {
       },
       { rootMargin: "0px 0px -8% 0px", threshold: 0 },
     );
-    document.querySelectorAll("[data-reveal]").forEach((el) => io.observe(el));
+    // Wide screens hold the closing copy back: it reveals after the closing
+    // blur (below). Phones get the plain reveal and nothing else.
+    const wide = window.matchMedia("(min-width: 721px)").matches;
+    const cta = document.querySelector<HTMLElement>(".cta");
+    const ctaCopy = document.querySelector<HTMLElement>(".cta-copy");
+    document.querySelectorAll("[data-reveal]").forEach((el) => {
+      if (!(wide && el === ctaCopy)) io.observe(el);
+    });
 
     const scenes = Array.from(document.querySelectorAll<HTMLElement>("[data-scroll]"));
     let frame = 0;
@@ -39,16 +46,24 @@ export function ScrollFx() {
         el.style.setProperty("--e", (p * p * (3 - 2 * p)).toFixed(4));
       }
 
-      // End of page: for 1 s only the laptop's Take a Break pill is sharp,
-      // then the rest comes back into focus. Re-arms once you scroll away.
+      // Closing section, wide screens: once it is fully in view, everything
+      // but the laptop's Take a Break pill blurs for 1 s, then the copy is
+      // revealed (its button's shimmer is timed from that in CSS). Re-arms
+      // once the section has left the screen.
       const root = document.documentElement;
-      const fromEnd = root.scrollHeight - (window.scrollY + vh);
-      if (fromEnd <= 2 && endArmed && root.classList.contains("fx")) {
-        endArmed = false;
-        root.classList.add("end-focus");
-        endTimer = window.setTimeout(() => root.classList.remove("end-focus"), 1000);
-      } else if (fromEnd > 200) {
-        endArmed = true;
+      if (wide && cta && root.classList.contains("fx")) {
+        const r = cta.getBoundingClientRect();
+        if (r.bottom <= vh + 2 && endArmed) {
+          endArmed = false;
+          root.classList.add("end-focus");
+          clearTimeout(endTimer);
+          endTimer = window.setTimeout(() => {
+            root.classList.remove("end-focus");
+            ctaCopy?.classList.add("is-in");
+          }, 1000);
+        } else if (r.top > vh) {
+          endArmed = true;
+        }
       }
     };
     let endArmed = true;

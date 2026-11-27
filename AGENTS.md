@@ -296,3 +296,23 @@ Newest last. Date, decision, reason.
   the scroll highlight stays (owner's choice). Closing: no laptop, orb and
   glow shown, and the end-of-page blur is skipped since its sharp pill is
   gone.
+- **2026-11-27 — the closing blur moves to the closing section and leads a
+  sequence.** Owner: the end-of-page blur should fire on reaching the last
+  section, since the footer follows right after. On wide screens (721px up)
+  it now fires once the closing section is fully on screen (re-arms when it
+  has left): everything but the Take a Break pill blurs for 1 s, then the
+  closing copy reveals (held back from the normal observer until then), the
+  button shimmers 0.5 s after the reveal and turns blue 0.5 s after that.
+- **2026-11-27 — phones get the plain reveal only.** Owner: on small screens
+  strip every extra. At 720px and below the orbs stop drifting, the closing
+  blur never fires and the closing button is blue from the start with no
+  shimmer. The display-modes auto-cycle stays: it is the content the owner
+  asked for, not decoration.
+- **2026-11-27 — the updater was tested with a fake older build.** A 1.2.9
+  copy was built with `--config` pointing the endpoint at
+  `http://127.0.0.1:8765/latest.json` (`dangerousInsecureTransportProtocol`,
+  test build only) and installed through a `.cmd` opened by Explorer, so the
+  install ran outside Claude's MSIX sandbox. Clicking the banner over CDP
+  downloaded the owner-signed 1.3.0, exited, installed and relaunched it as
+  1.3.0 with today's 6h 55m intact. The owner ran the signed build, so the
+  key password never passed through the agent.
