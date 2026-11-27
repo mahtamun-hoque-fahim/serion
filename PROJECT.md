@@ -452,8 +452,8 @@ through the UI, battery quit.
 7. **Landing site** (`site/`, 2026-11-25; rebuilt to the new comp 2026-11-27):
    one page, static-exported and checked in headless Chrome at 390, 768, 1024,
    1440 and 1920 (all sections, no sideways scroll, laptop bases not clipped).
-   The art is the owner's; its Spider-Man thumbnail must be swapped for the
-   owner's own before publishing. Open: the domain and the host, and a look at the generated
+   The art is the owner's; the hero and closing laptops show an animated
+   hourglass (`components/ScreenLaptop.tsx`). Open: the domain and the host, and a look at the generated
    social card. `NEXT_PUBLIC_SITE_URL` is the only thing a real domain needs.
 
 ## 11. History (commits on `main`)
@@ -492,7 +492,8 @@ through the UI, battery quit.
 | (this commit) | gh-meta: About description and nine topics, `CHANGELOG.md` back to 1.0.0 from the tags, README badges, Dependabot for npm, cargo and Actions |
 | `2c3044f` | Landing site in `site/`: one page, real screenshots at 2×, scroll-driven laptop for Hidden / Icon / Full, OG card, branded 404, static export; `CREDITS.md` for the co-authors found in the git history |
 | `f6518ff` | Landing page rebuilt to the new comp: floating pill header, hero laptop, gray problem band, blue dashboard block, dark display modes, three install cards, dark FAQ, closing CTA, floating footer; laptop screens and background art are placeholders; unused `HowItCounts`, `Features` and `Privacy` components removed |
-| (this commit) | Landing page matched to the comp at 1440px with the owner's art: video laptop in hero and CTA, laptop-on-desk in the display band with the live pill on its screen, orbs and glows; Google Sans only (Inter removed); copy synced to the comp; `Laptop.tsx` removed |
+| `05fa406` | Landing page matched to the comp at 1440px with the owner's art: video laptop in hero and CTA, laptop-on-desk in the display band with the live pill on its screen, orbs and glows; Google Sans only (Inter removed); copy synced to the comp; `Laptop.tsx` removed |
+| (this commit) | Hero and closing laptops: the owner's blank laptop with an SVG hourglass that drains and turns over on a CSS loop over "Times up!" (`ScreenLaptop.tsx`); `laptop-video.png` and its Spider-Man stand-in removed |
 
 Decisions worth knowing (and *why*): Tauri over Electron for a 24/7 widget
 (memory); a custom drag because the native one blocks page events; offered

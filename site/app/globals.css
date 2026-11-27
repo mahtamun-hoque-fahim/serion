@@ -271,7 +271,7 @@ ul {
   pointer-events: none;
 }
 
-.hero-art img {
+.hero-art > img {
   position: absolute;
   max-width: none;
 }
@@ -298,9 +298,130 @@ ul {
 }
 
 .hero-laptop {
+  position: absolute;
   left: calc(50% + 95px);
   top: 235px;
   width: 1049px;
+}
+
+/* --------------------------------------------------------------------------
+   Laptop with the hourglass screen (hero and closing section)
+   -------------------------------------------------------------------------- */
+
+.laptop-shot {
+  position: relative;
+  container-type: inline-size;
+}
+
+.laptop-shot > img {
+  width: 100%;
+  max-width: none;
+  height: auto;
+}
+
+/* The screen in laptop-blank.png: (113, 13) to (929, 538) of 1049 x 609. */
+.laptop-ui {
+  position: absolute;
+  left: 10.77%;
+  top: 2.13%;
+  width: 77.79%;
+  height: 86.21%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 23%;
+  color: #222;
+}
+
+.hourglass {
+  width: 13.7cqw;
+  overflow: visible;
+  fill: currentColor;
+}
+
+.hg-glass {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 11;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* One cycle: the sand runs down, then the glass turns over. Because the
+   glass is symmetric, the turned state equals the start, so the loop is seamless. */
+.hg-body {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: hg-flip 5s infinite;
+}
+
+.hg-sand-top {
+  animation: hg-drain 5s linear infinite;
+}
+
+.hg-sand-bottom {
+  animation: hg-fill 5s linear infinite;
+}
+
+.hg-stream {
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-dasharray: 4 4;
+  animation: hg-stream 5s linear infinite;
+}
+
+@keyframes hg-flip {
+  0%,
+  78% {
+    transform: rotate(0deg);
+    animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  100% {
+    transform: rotate(180deg);
+  }
+}
+
+@keyframes hg-drain {
+  0% {
+    transform: translateY(0);
+  }
+  74%,
+  100% {
+    transform: translateY(66px);
+  }
+}
+
+@keyframes hg-fill {
+  0% {
+    transform: translateY(0);
+  }
+  74%,
+  100% {
+    transform: translateY(-66px);
+  }
+}
+
+@keyframes hg-stream {
+  0% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+  72% {
+    opacity: 1;
+    stroke-dashoffset: -40;
+  }
+  76%,
+  100% {
+    opacity: 0;
+    stroke-dashoffset: -40;
+  }
+}
+
+.laptop-caption {
+  margin-top: 1.8cqw;
+  font-size: 2.6cqw;
+  letter-spacing: 0;
+  line-height: 1;
 }
 
 .hero-copy {
@@ -980,9 +1101,8 @@ ul {
   overflow: hidden;
 }
 
-.cta-device img {
+.cta-device .laptop-shot {
   width: 1049px;
-  max-width: none;
 }
 
 .cta-break {
@@ -1318,7 +1438,7 @@ ul {
     margin-left: -20vw;
   }
 
-  .cta-device img {
+  .cta-device .laptop-shot {
     width: 100%;
   }
 

@@ -34,8 +34,11 @@ only, unsigned installer, no cloud). Success is a download, not applause.
   versioned GitHub release asset. No "Get started", no trial, no pricing.
 - [LOCKED] The dashboard is the real 2× capture
   (`site/public/dashboard.png`). The laptops, orbs and glows are the owner's
-  art in `site/public/` (`laptop-video.png`, `laptop-desk.png`, `orb-*.png`,
+  art in `site/public/` (`laptop-blank.png`, `laptop-desk.png`, `orb-*.png`,
   `glow-*.png`), placed at their natural size at 1440px as in the comp.
+- [LOCKED] The hero and closing laptops (`components/ScreenLaptop.tsx`) show
+  an SVG hourglass over "Times up!" on the blank laptop's screen: the sand
+  runs down, then the glass turns over, on a 5 s CSS loop. No video, no script.
 - [LOCKED] The display-modes section uses the owner's laptop-on-desk art; the
   live pill and tray icon are DOM laid on its white screen (8 degree tilt). The
   three rows are buttons that switch the pill between Hidden / Icon / Full.
@@ -66,9 +69,7 @@ What works: the pill header; hero with the owner's laptop art; the gray
 Hidden / Icon / Full buttons; the three install cards with the SmartScreen mock;
 the dark FAQ; the closing laptop CTA and footer. Real dashboard
 capture, branded 404, static export, OG card, metadata and JSON-LD.
-What is open: the Spider-Man thumbnail in `laptop-video.png` is Marvel/Sony
-art and must be replaced with the owner's own before publishing; the domain
-and host; a look at the 1200×630 social card.
+What is open: the domain and host; a look at the 1200×630 social card.
 What is next in spirit: publish, then keep the
 version line and screenshots in step with each release
 (`site/scripts/capture-app.mjs` re-shoots them).

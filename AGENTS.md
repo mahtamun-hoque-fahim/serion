@@ -171,3 +171,11 @@ Newest last. Date, decision, reason.
   "Just the mark and today's time, when you want the nudge."; the closing line
   reads "Install Serion and look at the times wasted."; the FAQ privacy line and
   the install card's mode chips are gone because the comp has neither.
+- **2026-11-27 — an animated hourglass replaces the video laptop.** The owner
+  supplied a blank laptop and a "Times up!" sample and asked for an hourglass
+  that keeps filling and rotating. It is drawn in SVG and animated in CSS
+  (`components/ScreenLaptop.tsx`): the sand drains for 3.7 s, then the glass
+  turns 180 degrees; the glass is symmetric, so the turned state equals the
+  start and the 5 s loop has no jump. No third-party animation was used: a
+  hand-drawn SVG matches the sample's look and needs no license or script.
+  `laptop-video.png`, with its Spider-Man stand-in, is deleted.

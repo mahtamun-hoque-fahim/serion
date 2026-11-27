@@ -1,4 +1,5 @@
 import { Download, Eye } from "lucide-react";
+import { ScreenLaptop } from "./ScreenLaptop";
 import { SerionMark } from "./SerionMark";
 import { URLS } from "@/lib/site";
 
@@ -12,7 +13,7 @@ export function FinalCta() {
       </div>
 
       <div className="cta-device" aria-hidden="true">
-        <img src="/laptop-video.png" alt="" width={1049} height={609} loading="lazy" />
+        <ScreenLaptop id="cta" />
         <span className="cta-break">
           <Eye size={22} strokeWidth={1.8} />
           Take a Break
