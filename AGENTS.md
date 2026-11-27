@@ -223,3 +223,8 @@ Newest last. Date, decision, reason.
   laptop's base to cover the footer, not sit on its line: `.cta-device` now
   ends 85px below the section (the footer's height) and the section is sized
   so the whole laptop fits the screen at the page end.
+- **2026-11-27 — orbs drift.** Owner asked for a subtle float on the rounded
+  elements. The orbs and glows loop a 10-14px drift on `transform` (the reveal
+  uses `translate`, layout uses top/left, so nothing fights); the hero's
+  bottom-left orb only sways sideways because its flat cut edge sits on the
+  band line. Reduced motion stops it.

@@ -2192,6 +2192,62 @@ html:not(.fx) .dm-track b {
 }
 
 /* --------------------------------------------------------------------------
+   Drift: the orbs and glows float slowly. It runs on transform, so it never
+   fights the reveal (translate) or the layout (top/left).
+   -------------------------------------------------------------------------- */
+
+.hero-glow,
+.hero-orb-a,
+.cta-glow-a,
+.cta-orb,
+.cta-glow-b {
+  animation: drift 14s ease-in-out infinite;
+}
+
+.hero-orb-a {
+  animation-duration: 11s;
+  animation-delay: -3s;
+}
+
+.cta-orb {
+  animation-duration: 12s;
+  animation-delay: -6s;
+}
+
+.cta-glow-b {
+  animation-duration: 16s;
+  animation-delay: -2s;
+}
+
+/* Its flat cut edge sits on the band line, so it only sways sideways. */
+.hero-orb-b {
+  animation: sway 13s ease-in-out infinite;
+}
+
+@keyframes drift {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  33% {
+    transform: translate(10px, -14px);
+  }
+  66% {
+    transform: translate(-8px, 8px);
+  }
+}
+
+@keyframes sway {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(14px);
+  }
+}
+
+/* --------------------------------------------------------------------------
    Scroll effects. The fx class is set on <html> before paint when motion is
    allowed; ScrollFx.tsx adds is-in and the --p and --e scroll progress.
    -------------------------------------------------------------------------- */

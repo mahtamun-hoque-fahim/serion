@@ -502,7 +502,8 @@ through the UI, battery quit.
 | `3ba12f1` | Landing site: focused install card in brand blue, focused pill-mode row in white; laptop screens get rounded corners; Hidden mode shows a centred graphic (Serion mark placeholder until the owner's image) |
 | `b09b007` | Hidden mode shows the owner's video card (`hidden-movie.png`, a stand-in poster to replace before publishing) on a plain white screen |
 | `5f30863` | The showcase dashboard is a live component (`DashboardMock.tsx`) instead of a screenshot; day bars and app bars grow in on reveal; `site/public/dashboard.png` removed |
-| (this commit) | Closing laptop runs 85px down over the footer so its base covers it; section sized so the whole laptop fits the screen at the page end |
+| `8ce33bf` | Closing laptop runs 85px down over the footer so its base covers it; section sized so the whole laptop fits the screen at the page end |
+| (this commit) | Orbs and glows drift slowly (transform-only CSS loop, staggered; the hero's cut orb only sways sideways) |
 
 Decisions worth knowing (and *why*): Tauri over Electron for a 24/7 widget
 (memory); a custom drag because the native one blocks page events; offered

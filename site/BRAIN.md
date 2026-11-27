@@ -132,7 +132,7 @@ THEME: Quiet Product — light, editorial, one blue accent.
 - Container 1190px; all section heights and offsets are the comp's at 1440px;
   cards 18px; buttons 999px.
 - Motion: spring `cubic-bezier(.34,1.56,.64,1)` for the pill, out
-  `cubic-bezier(.22,1,.36,1)` for reveals; nothing loops except the hourglass.
+  `cubic-bezier(.22,1,.36,1)` for reveals; only the hourglass and a slow orb drift loop (transform only; reduced motion stops both).
 
 ## Features
 
