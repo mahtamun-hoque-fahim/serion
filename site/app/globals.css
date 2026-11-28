@@ -1906,15 +1906,6 @@ html:not(.fx) .dm-track b {
   max-width: 760px;
 }
 
-.policy-kicker {
-  margin: 0 0 14px;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--brand);
-}
-
 .policy-head h1 {
   font-size: clamp(34px, 5vw, 56px);
   line-height: 1.1;
@@ -1977,6 +1968,13 @@ html:not(.fx) .dm-track b {
   color: var(--ink);
 }
 
+/* The part being read (PolicyToc.tsx sets aria-current). */
+.policy-toc a[aria-current] {
+  border-color: var(--brand);
+  color: var(--brand);
+  font-weight: 600;
+}
+
 .policy-parts {
   display: grid;
   gap: 0;
@@ -1992,19 +1990,6 @@ html:not(.fx) .dm-track b {
 .policy-part:first-child {
   padding-top: 0;
   border-top: 0;
-}
-
-.policy-part-head {
-  display: flex;
-  align-items: baseline;
-  gap: 14px;
-}
-
-.policy-num {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--brand);
-  font-variant-numeric: tabular-nums;
 }
 
 .policy-part h2 {

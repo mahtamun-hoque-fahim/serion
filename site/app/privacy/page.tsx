@@ -4,6 +4,7 @@ import { ChevronDown } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/FinalCta";
 import { ScrollFx } from "@/components/ScrollFx";
+import { PolicyToc } from "@/components/PolicyToc";
 import { URLS } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -319,8 +320,11 @@ export default function Privacy() {
       <Header />
       <main id="main" className="policy">
         <div className="container policy-head" data-reveal>
-          <p className="policy-kicker">Privacy</p>
-          <h1>Your screen time stays on your computer.</h1>
+          <h1>
+            Your screen time,
+            <br />
+            your computer.
+          </h1>
           <p className="policy-lede">
             Serion counts which app is in front and for how long, keeps it in encrypted files on
             your PC, and sends none of it anywhere. Each part below has a one-line summary if you
@@ -330,26 +334,12 @@ export default function Privacy() {
         </div>
 
         <div className="container policy-grid">
-          <nav className="policy-toc" aria-label="On this page">
-            <p>On this page</p>
-            <ol>
-              {parts.map((part) => (
-                <li key={part.id}>
-                  <a href={`#${part.id}`}>{part.title}</a>
-                </li>
-              ))}
-            </ol>
-          </nav>
+          <PolicyToc items={parts.map(({ id, title }) => ({ id, title }))} />
 
           <div className="policy-parts">
-            {parts.map((part, i) => (
+            {parts.map((part) => (
               <section key={part.id} id={part.id} className="policy-part" aria-labelledby={`${part.id}-h`} data-reveal>
-                <div className="policy-part-head">
-                  <span className="policy-num" aria-hidden="true">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <h2 id={`${part.id}-h`}>{part.title}</h2>
-                </div>
+                <h2 id={`${part.id}-h`}>{part.title}</h2>
                 <details className="policy-sum">
                   <summary>
                     Summary

@@ -406,3 +406,9 @@ Newest last. Date, decision, reason.
   footer links are root-relative so they work from it. Found on the way: the
   header button showed "Download  for Windows" with a double gap, because
   the flex gap split the text from the span; the label is now one flex item.
+- **2026-11-28 — privacy page trimmed, its list follows the reader.** Owner:
+  the headline drops "stays on" and breaks after "Your screen time," (the
+  comma keeps it a sentence); the "Privacy" eyebrow and the 01-13 part
+  numbers are removed; the "On this page" list highlights the part being
+  scrolled through. `PolicyToc.tsx` does that with one rAF scroll handler and
+  `aria-current="location"`, so screen readers hear it too.
