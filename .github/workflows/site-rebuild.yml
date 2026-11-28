@@ -1,0 +1,23 @@
+# Rebuild the landing site when a release is published, so its download
+# button and version follow the new release (site/scripts/release.mjs reads it).
+name: Rebuild site on release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger the Vercel deploy hook
+        env:
+          HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "::error::Repo secret VERCEL_DEPLOY_HOOK is not set"; exit 1
+          fi
+          curl -fsS -X POST "$HOOK"

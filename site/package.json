@@ -5,6 +5,7 @@
   "description": "The Serion landing page. Static export, deployed from this folder.",
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node scripts/release.mjs",
     "build": "next build",
     "start": "npx serve out",
     "typecheck": "tsc --noEmit"

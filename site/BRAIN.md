@@ -94,8 +94,9 @@ No database, no auth, no payments, no analytics, no server runtime.
 
 - Windows 10 and 11, 64-bit only. Never imply other platforms.
 - The installer is unsigned: the SmartScreen warning is explained, not hidden.
-- Version, file size and installer name come from `site/lib/site.ts` in one
-  place. A release bump touches that file and nothing else.
+- Version, file size and installer name come from the latest GitHub Release:
+  `scripts/release.mjs` writes `lib/release.json` before every build, and a
+  published release triggers a rebuild. A release needs no site edit.
 - WCAG 2.2 AA: visible focus, landmarks, labelled sections, reduced motion.
 - The page must read and work with JavaScript off: the `fx` class that hides
   reveal targets is set by a head script and removed after 3 s if the app

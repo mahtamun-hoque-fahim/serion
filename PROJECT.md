@@ -5,7 +5,7 @@ The single source of truth for anyone (person or agent) picking this project up.
 change that alters behavior, rules, files, workflow or status** (see
 "Keeping this file current" at the end).
 
-Last updated: 2026-11-28, version 1.3.0 (published) (Serion updates itself from GitHub
+Last updated: 2026-11-28, version 1.3.0 (published; the site now follows the latest release on its own) (Serion updates itself from GitHub
 Releases: a one-click banner in the dashboard), plus the landing site, now live at
 https://serion-here.vercel.app. The landing page
 was rebuilt to the owner's new comp, with the owner's laptop, orb and glow art
@@ -166,7 +166,9 @@ The one-page landing site, a separate Next.js app in the same repo (own
 | `site/components/Install.tsx` | the install band: three step cards and the laptop playing each step (download, SmartScreen, tray menu) on scroll; phones show the cards only |
 | `site/lib/useScrollStep.ts` | which step a scroll scene is on: pinned span, list position when stacked, or a timer while its optional media query matches |
 | `site/components/Laptop.tsx` | the blank laptop with a live screen, shared by every laptop on the page |
-| `site/lib/site.ts` | version, installer name/size/bytes, every GitHub URL |
+| `site/lib/site.ts` | version, installer name/size/bytes (from `release.json`), every GitHub URL |
+| `site/lib/release.json` | latest release's version, installer name and bytes; rewritten before every build by `site/scripts/release.mjs` |
+| `.github/workflows/site-rebuild.yml` | on a published release, POSTs the `VERCEL_DEPLOY_HOOK` secret so the site rebuilds with the new version |
 | `site/public/pill.png` | 2× captures of the real app (`scripts/capture-app.mjs`) |
 | `site/scripts/` | `shot.mjs` (screenshots over CDP), `probe.mjs` (measure a live page), `capture-app.mjs` (re-shoot the app at 2× with the brand theme) |
 | `site/BRAIN.md`, `site/SITETREE.md` | the site's own identity, rules and route manifest |
@@ -473,7 +475,9 @@ through the UI, battery quit.
    `acfdd2d`, marked latest). `releases/latest/download/latest.json` serves it
    and the downloaded installer matches the local build byte for byte. The
    owner's installed app is this build. The site's download button points at
-   it (`site/lib/site.ts`). Start at login turns on at the first installed run
+   whatever release is latest: the site reads it at build time and rebuilds
+   when a release is published (needs the `VERCEL_DEPLOY_HOOK` repo secret).
+   Start at login turns on at the first installed run
    and has not been confirmed yet.
 2. macOS / Linux: `screen.rs`, `names.rs`, `battery.rs` are stubs → nothing
    counts there yet. Decide: port or declare v1 Windows-only.
@@ -502,6 +506,7 @@ through the UI, battery quit.
    upload it as a release asset named exactly `latest.json`. The release must
    be the repo's "latest" (not a draft or prerelease), because the endpoint is
    `releases/latest/download/latest.json`.
+   The site needs no edit: publishing the release triggers its rebuild.
 7. **Landing site** (`site/`, 2026-11-25; rebuilt to the new comp 2026-11-27):
    one page, static-exported and checked in headless Chrome at 390, 768, 1024,
    1440 and 1920 (all sections, no sideways scroll, laptop bases not clipped).
@@ -565,7 +570,9 @@ through the UI, battery quit.
 | `acfdd2d` | 1.3.0: in-app updates from GitHub Releases (`tauri-plugin-updater`, signed, passive NSIS install, relaunch); dashboard update banner; today saved in the updater's `on_before_exit` because the updater exits the process itself |
 | v1.3.0 | GitHub Release `v1.3.0` with installer, `.sig` and `latest.json`; the site's download button moved from 1.2.1 to 1.3.0 |
 | `4404318` | Site: phones (720px and below) follow the owner's sketch (hero laptop over the copy, bar chart only, auto-cycling pill laptop, no laptop in install or closing); problem title left-aligned when stacked; hero hourglass kept on screen at 1101-1360px; tablet laptops go first and stick under the header |
-| (this commit) | Site: closing blur fires when the closing section is fully in view (wide screens), then the copy reveals, the button shimmers 0.5 s later and turns blue 0.5 s after; phones get the plain reveal only (no drift, no closing blur, no shimmer) |
+| `7f7fe16` | Site: closing blur fires when the closing section is fully in view (wide screens), then the copy reveals, the button shimmers 0.5 s later and turns blue 0.5 s after; phones get the plain reveal only (no drift, no closing blur, no shimmer) |
+| `d74b7e7` | Site download moved to 1.3.0 |
+| (this commit) | Site reads the latest release at build time (`site/scripts/release.mjs` writes `site/lib/release.json` in `prebuild`, keeps the last file if GitHub is down); `.github/workflows/site-rebuild.yml` calls the Vercel deploy hook when a release is published; search description and social card no longer say a stale "1.6 MB" |
 
 Decisions worth knowing (and *why*): Tauri over Electron for a 24/7 widget
 (memory); a custom drag because the native one blocks page events; offered

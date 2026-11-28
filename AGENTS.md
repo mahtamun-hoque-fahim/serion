@@ -323,3 +323,16 @@ Newest last. Date, decision, reason.
   three assets went up through the REST API. The site still offered 1.2.1,
   which has no updater, so every new visitor would have been stranded:
   `site/lib/site.ts` now names 1.3.0 (2.4 MB, 2547811 bytes).
+- **2026-11-28 — the site follows the latest release by itself.** Owner: a
+  static version number goes stale, so either it updates on its own or it
+  goes. Chosen: read the latest GitHub Release at build time and rebuild on
+  every release. `site/scripts/release.mjs` runs as `prebuild` and writes
+  `site/lib/release.json` (version, installer, bytes), keeping the committed
+  file if GitHub is unreachable so a build never fails on it; size is shown
+  from the bytes. `.github/workflows/site-rebuild.yml` POSTs a Vercel deploy
+  hook on `release: published`. Rejected: fetching in the visitor's browser
+  (old text first, stale meta and structured data) and dropping the version
+  (the installer's file name carries it, so the button could only go to the
+  releases page). Found on the way: the search description and the social
+  card said 1.6 MB; both
+  now follow the installer.

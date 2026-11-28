@@ -5,7 +5,7 @@ import "@fontsource/google-sans/600.css";
 import "@fontsource/google-sans/700.css";
 import Script from "next/script";
 import "./globals.css";
-import { VERSION } from "@/lib/site";
+import { INSTALLER_SIZE, VERSION } from "@/lib/site";
 
 export const metadata: Metadata = {
   // Set NEXT_PUBLIC_SITE_URL when the site gets a domain; the fallback keeps
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Serion: track screen time, gain productivity",
     description:
-      `See how long you actually used your computer today. A small pill for Windows 10 and 11. v${VERSION}, 1.6 MB, free and open source.`,
+      `See how long you actually used your computer today. A small pill for Windows 10 and 11. v${VERSION}, ${INSTALLER_SIZE}, free and open source.`,
     type: "website",
     siteName: "Serion",
   },
