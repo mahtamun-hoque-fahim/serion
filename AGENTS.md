@@ -347,3 +347,18 @@ Newest last. Date, decision, reason.
   580px), past the copy, and shrinks so the pill stays 24px inside the
   screen. Checked at 1920, 1440, 1361, 1280, 1101, 1024, 768 and 375. The
   closing laptop keeps the hourglass.
+- **2026-11-28 — the hero dashboard is drawn and animated, not baked in.**
+  Owner: the dashboard should appear as an animation, not be part of the
+  image, and supplied the blank laptop (`public/hero-laptop.png`) plus two
+  comps: wide screens put the dashboard on the laptop's left edge, stacked
+  screens centre it in the screen, 408 of 1233 px wide in both. The hero
+  reuses `DashboardMock` (the showcase's drawn dashboard), which grows out of
+  the pill 0.9 s after the laptop reveals, then its bars fill. The phone-only
+  rules that cut `DashboardMock` down to the bar chart are now scoped to the
+  showcase card, so the hero keeps the whole dashboard.
+  `hero-dashboard.png` is deleted.
+- **2026-11-28 — phone fixes from the owner's checks.** The showcase bar
+  chart overlaps the gray band by 72px on phones, as the desktop card does
+  (it was flush). Around 330px the header button overflowed and the title
+  broke inside "Screen time": the title size is now (100vw - 48px) / 9,
+  capped 28-48px, and at 400px and below the header button reads "Download".

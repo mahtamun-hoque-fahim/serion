@@ -26,7 +26,7 @@ export function Header() {
         </nav>
         <a className="btn btn-sm header-cta" href={URLS.download} target="_blank" rel="noreferrer">
           <Download size={16} strokeWidth={2} aria-hidden="true" />
-          Download for Windows
+          Download<span className="header-cta-long"> for Windows</span>
         </a>
       </div>
     </header>

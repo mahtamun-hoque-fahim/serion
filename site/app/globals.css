@@ -308,15 +308,57 @@ ul {
   width: calc(var(--lh) * 1.7225);
 }
 
-/* The owner's hero image: the laptop spans x 63-1295 of 1296, the dashboard
-   hangs off its left. The box is sized to the laptop, so the image is 1296/1233
-   of it and shifted left by 63/1233. */
+/* The owner's blank laptop (hero-laptop.png, 1233 x 836: "Pure Screentime"
+   note on top, laptop from y 121, pill on screen) with the drawn dashboard
+   over it. Wide screens: the dashboard sits on the laptop's left edge; stacked:
+   centred in the screen. Both from the owner's comps, 408 px of 1233 wide. */
 .hero-shot > img {
   display: block;
-  width: 105.11%;
+  width: 100%;
   max-width: none;
   height: auto;
-  margin-left: -5.11%;
+}
+
+.hero-dash {
+  position: absolute;
+  left: 0;
+  top: 26.2%;
+  width: 33.09%;
+  container-type: inline-size;
+  /* The pill's centre, so the dashboard opens out of it. */
+  transform-origin: 150.7% -12%;
+}
+
+.hero-dash .dm {
+  border: 1px solid #2c2c30;
+  box-shadow: 0 2.5cqw 7cqw rgba(0, 0, 0, 0.28);
+}
+
+/* Appears after the laptop: grows out of the pill, then its bars fill. */
+@keyframes hero-dash-in {
+  from {
+    opacity: 0;
+    scale: 0.6;
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+    filter: none;
+  }
+}
+
+.fx .hero-dash {
+  opacity: 0;
+}
+
+.fx .hero-shot.is-in .hero-dash {
+  animation: hero-dash-in 0.7s var(--out) 0.9s both;
+}
+
+.hero-shot .dm-bar,
+.hero-shot .dm-track b {
+  transition-delay: 1.4s;
 }
 
 /* --------------------------------------------------------------------------
@@ -825,11 +867,13 @@ ul {
 
 /* Grow in when the card is revealed (or at once without the reveal effect). */
 .dashboard-card.is-in .dm-bar,
+.hero-shot.is-in .dm-bar,
 html:not(.fx) .dm-bar {
   scale: 1 1;
 }
 
 .dashboard-card.is-in .dm-track b,
+.hero-shot.is-in .dm-track b,
 html:not(.fx) .dm-track b {
   scale: 1 1;
 }
@@ -1998,13 +2042,13 @@ html:not(.fx) .dm-track b {
    -------------------------------------------------------------------------- */
 
 @media (max-width: 1360px) {
-  /* The dashboard hangs off the laptop's left edge, so the laptop starts past
+  /* The dashboard sits on the laptop's left edge, so the laptop starts past
      the copy (it ends ~540px in); the width shrinks so the pill (right edge
-     at 49.7% of the laptop) stays 24px inside the screen. */
+     at 54.2% of the laptop) stays 24px inside the screen. */
   .hero-laptop.hero-laptop {
     --hl: max(calc(50% + 60px), 580px);
     left: var(--hl);
-    width: min(calc(var(--lh) * 1.7225), calc((100% - var(--hl) - 24px) * 2.01));
+    width: min(calc(var(--lh) * 1.7225), calc((100% - var(--hl) - 24px) * 1.845));
   }
 
   .hero h1 {
@@ -2083,9 +2127,16 @@ html:not(.fx) .dm-track b {
     padding-top: 48px;
   }
 
+  /* Stacked: the whole laptop, centred, the dashboard inside its screen. */
   .hero-art .hero-laptop {
-    width: min(1049px, 120vw);
-    margin-left: 12vw;
+    width: min(1049px, calc(100vw - 48px));
+    margin: 0 auto;
+  }
+
+  .hero-dash {
+    left: 33.17%;
+    top: 26.8%;
+    transform-origin: 50% -12%;
   }
 
   .problem-band {
@@ -2221,13 +2272,21 @@ html:not(.fx) .dm-track b {
   }
 }
 
+/* Narrow phones: the header button keeps one word so it fits beside the logo. */
+@media (max-width: 400px) {
+  .header-cta-long {
+    display: none;
+  }
+}
+
 @media (max-width: 720px) {
   .container {
     width: calc(100% - 40px);
   }
 
+  /* "Track Screen time" is ~8.8em wide: keep each line whole down to 320px. */
   .hero h1 {
-    font-size: clamp(36px, 10vw, 48px);
+    font-size: clamp(28px, calc((100vw - 48px) / 9), 48px);
   }
 
   .hero-sub br,
@@ -2289,48 +2348,49 @@ html:not(.fx) .dm-track b {
     margin-left: 0;
   }
 
-  /* Showcase: only the week's bar chart, scaled up to be read at phone width. */
+  /* Showcase: only the week's bar chart, scaled up to be read at phone width.
+     It overlaps the gray band above, as the desktop card does. */
   .dashboard-card {
-    margin-top: 0;
+    margin-top: -72px;
   }
 
-  .dm-titlebar,
-  .dm-tiles,
-  .dm-columns {
+  .dashboard-card .dm-titlebar,
+  .dashboard-card .dm-tiles,
+  .dashboard-card .dm-columns {
     display: none;
   }
 
-  .dm-card.dm-chart {
+  .dashboard-card .dm-card.dm-chart {
     padding: 5cqw 5cqw 9cqw;
     border-radius: 4cqw;
   }
 
-  .dm-h {
+  .dashboard-card .dm-h {
     font-size: 4.4cqw;
   }
 
-  .dm-plot {
+  .dashboard-card .dm-plot {
     height: 56cqw;
     margin-top: 5cqw;
     padding-left: 8cqw;
   }
 
-  .dm-tick {
+  .dashboard-card .dm-tick {
     font-size: 3.2cqw;
     translate: -8cqw -0.7em;
     width: calc(100% + 8cqw);
   }
 
-  .dm-bars {
+  .dashboard-card .dm-bars {
     left: 8cqw;
   }
 
-  .dm-col span {
+  .dashboard-card .dm-col span {
     bottom: -6.5cqw;
     font-size: 3.2cqw;
   }
 
-  .dm-bar {
+  .dashboard-card .dm-bar {
     width: 6.5cqw;
     border-radius: 1.4cqw 1.4cqw 0 0;
   }

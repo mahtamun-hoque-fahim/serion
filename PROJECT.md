@@ -510,8 +510,8 @@ through the UI, battery quit.
 7. **Landing site** (`site/`, 2026-11-25; rebuilt to the new comp 2026-11-27):
    one page, static-exported and checked in headless Chrome at 390, 768, 1024,
    1440 and 1920 (all sections, no sideways scroll, laptop bases not clipped).
-   The art is the owner's; the hero shows the owner's laptop-and-dashboard
-   image (`public/hero-dashboard.png`), the closing laptop an animated
+   The art is the owner's; the hero shows the owner's blank laptop
+   (`public/hero-laptop.png`) with the drawn dashboard growing out of its pill, the closing laptop an animated
    hourglass (`components/ScreenLaptop.tsx`). Deployed 2026-11-27 on Vercel at
    https://serion-here.vercel.app, which is the repo's About homepage and the
    `metadataBase` fallback. Open: a custom domain (optional), and a look at the generated
@@ -574,7 +574,8 @@ through the UI, battery quit.
 | `7f7fe16` | Site: closing blur fires when the closing section is fully in view (wide screens), then the copy reveals, the button shimmers 0.5 s later and turns blue 0.5 s after; phones get the plain reveal only (no drift, no closing blur, no shimmer) |
 | `d74b7e7` | Site download moved to 1.3.0 |
 | `e1db9f4` | Site reads the latest release at build time (`site/scripts/release.mjs` writes `site/lib/release.json` in `prebuild`, keeps the last file if GitHub is down); `.github/workflows/site-rebuild.yml` calls the Vercel deploy hook when a release is published; search description and social card no longer say a stale "1.6 MB" |
-| (this commit) | Hero shows the owner's image (`site/public/hero-dashboard.png`: the laptop with the pill on screen and the dashboard hanging off its left) instead of the hourglass laptop; below 1360px the laptop starts past the copy and shrinks so the pill stays on screen |
+| `2487c20` | Hero shows the owner's image (`site/public/hero-dashboard.png`: the laptop with the pill on screen and the dashboard hanging off its left) instead of the hourglass laptop; below 1360px the laptop starts past the copy and shrinks so the pill stays on screen |
+| (this commit) | Hero rebuilt from the owner's blank laptop (`site/public/hero-laptop.png`, with the "Pure Screentime" note and the pill) plus the drawn dashboard (`DashboardMock`) that grows out of the pill after the laptop reveals: on the laptop's left edge on wide screens, centred in the screen when stacked; `hero-dashboard.png` removed. Phones: the showcase bar chart overlaps the gray band by 72px, the hero title keeps "Track Screen time" on one line down to 320px, and the header button reads "Download" at 400px and below |
 
 Decisions worth knowing (and *why*): Tauri over Electron for a 24/7 widget
 (memory); a custom drag because the native one blocks page events; offered
