@@ -1,17 +1,42 @@
-# Rebuild the landing site when a release is published, so its download
-# button and version follow the new release (site/scripts/release.mjs reads it).
-name: Rebuild site on release
+# On every published release:
+# 1. attach a copy of the installer under a fixed name, Serion_x64-setup.exe,
+#    so the site's buttons can link releases/latest/download/Serion_x64-setup.exe
+#    and always serve the newest version;
+# 2. rebuild the landing site, so its version and size labels follow
+#    (site/scripts/release.mjs reads the latest release at build time).
+name: Release follow-up
 
 on:
   release:
     types: [published]
   workflow_dispatch:
 
-permissions: {}
-
 jobs:
-  rebuild:
+  stable-installer:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ github.event.release.tag_name }}
+    steps:
+      - name: Copy the installer to Serion_x64-setup.exe
+        run: |
+          tag="${TAG:-$(gh release view --json tagName -q .tagName)}"
+          # Matches Serion_1.3.0_x64-setup.exe, not the copy itself or the .sig.
+          gh release download "$tag" -p 'Serion_*_x64-setup.exe' -D dl
+          count=$(ls dl | wc -l)
+          if [ "$count" -ne 1 ]; then
+            echo "::error::expected one versioned installer in $tag, found $count"; exit 1
+          fi
+          cp dl/* Serion_x64-setup.exe
+          gh release upload "$tag" Serion_x64-setup.exe --clobber
+
+  rebuild-site:
+    needs: stable-installer
+    runs-on: ubuntu-latest
+    permissions: {}
     steps:
       - name: Trigger the Vercel deploy hook
         env:

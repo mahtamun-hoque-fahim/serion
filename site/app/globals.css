@@ -362,7 +362,7 @@ ul {
 }
 
 /* --------------------------------------------------------------------------
-   Laptop with the hourglass screen (closing section)
+   Laptop with a live screen (display modes and install scenes)
    -------------------------------------------------------------------------- */
 
 .laptop-shot {
@@ -393,106 +393,6 @@ ul {
   overflow: hidden;
   border-radius: 1.1cqw;
   background-color: #fff;
-}
-
-.hg-screen {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  height: 100%;
-  padding-top: 23cqw;
-  color: #222;
-}
-
-.hourglass {
-  width: 13.7cqw;
-  overflow: visible;
-  fill: currentColor;
-}
-
-.hg-glass {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 11;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-/* One cycle: the sand runs down, then the glass turns over. Because the
-   glass is symmetric, the turned state equals the start, so the loop is seamless. */
-.hg-body {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: hg-flip 5s infinite;
-}
-
-.hg-sand-top {
-  animation: hg-drain 5s linear infinite;
-}
-
-.hg-sand-bottom {
-  animation: hg-fill 5s linear infinite;
-}
-
-.hg-stream {
-  stroke: currentColor;
-  stroke-width: 3;
-  stroke-dasharray: 4 4;
-  animation: hg-stream 5s linear infinite;
-}
-
-@keyframes hg-flip {
-  0%,
-  78% {
-    transform: rotate(0deg);
-    animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
-  }
-  100% {
-    transform: rotate(180deg);
-  }
-}
-
-@keyframes hg-drain {
-  0% {
-    transform: translateY(0);
-  }
-  74%,
-  100% {
-    transform: translateY(66px);
-  }
-}
-
-@keyframes hg-fill {
-  0% {
-    transform: translateY(0);
-  }
-  74%,
-  100% {
-    transform: translateY(-66px);
-  }
-}
-
-@keyframes hg-stream {
-  0% {
-    opacity: 1;
-    stroke-dashoffset: 0;
-  }
-  72% {
-    opacity: 1;
-    stroke-dashoffset: -40;
-  }
-  76%,
-  100% {
-    opacity: 0;
-    stroke-dashoffset: -40;
-  }
-}
-
-.laptop-caption {
-  margin-top: 1.8cqw;
-  font-size: 2.6cqw;
-  letter-spacing: 0;
-  line-height: 1;
 }
 
 .hero-copy {
@@ -1865,35 +1765,21 @@ html:not(.fx) .dm-track b {
   width: 651px;
 }
 
-/* Bleeds off the left edge as in the comp; its base sits over the footer. */
+/* Bleeds off the left edge as in the comp; its base sits over the footer.
+   The pill in cta-laptop.png starts at 45.7% of the width: kept 30px in. */
 .cta-device {
   position: absolute;
   z-index: 2;
   bottom: -85px;
-  left: calc(50% - 50px - var(--lh) * 1.7225);
+  left: max(calc(50% - 50px - var(--lh) * 1.7225), calc(30px - var(--lh) * 0.787));
   width: calc(var(--lh) * 1.7225);
 }
 
-.cta-device .laptop-shot {
+.cta-device img {
+  display: block;
   width: 100%;
-}
-
-/* Kept about 30px inside the viewport, where the laptop bleeds off the left. */
-.cta-break {
-  position: absolute;
-  top: 4.3%;
-  left: max(40.3%, calc(84px + var(--lh) * 1.7225 - 50vw));
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  height: 50px;
-  padding: 0 24px 0 22px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--brand);
-  color: #fff;
-  font-size: 19px;
-  box-shadow: 0 10px 24px rgba(0, 71, 255, 0.28);
+  max-width: none;
+  height: auto;
 }
 
 .cta-grid {
@@ -1920,9 +1806,9 @@ html:not(.fx) .dm-track b {
   margin-top: 24px;
 }
 
-/* The closing button starts dark. Its copy's reveal takes about 1 s; 0.5 s
-   after that a light sweeps across it, and 0.5 s later it turns brand blue
-   for good. Wide screens only: phones get it blue from the start. */
+/* The closing button starts dark and, once its copy is revealed, loops every
+   4 s: a light sweeps across it, it turns brand blue, holds, and goes dark
+   again. Wide screens only: phones get it blue from the start. */
 .fx .cta-copy .btn {
   background: #111;
 }
@@ -1942,22 +1828,36 @@ html:not(.fx) .dm-track b {
 }
 
 .fx .cta-copy.is-in .btn {
-  animation: cta-turn-blue 0.4s ease 2s forwards;
+  animation: cta-turn-blue 4s ease 1s infinite;
 }
 
 .fx .cta-copy.is-in .btn::after {
-  animation: cta-shimmer 0.9s var(--out) 1.5s forwards;
+  animation: cta-shimmer 4s ease-in-out 1s infinite;
 }
 
+/* One 4 s cycle: a slow sweep from 0.2 s to 2.2 s, blue from 1.2 s to 3.5 s, dark again by 4 s. */
 @keyframes cta-shimmer {
-  to {
+  0%,
+  5% {
+    translate: -120% 0;
+  }
+  55%,
+  100% {
     translate: 120% 0;
   }
 }
 
 @keyframes cta-turn-blue {
-  to {
+  0%,
+  30% {
+    background: #111;
+  }
+  45%,
+  87% {
     background: var(--brand);
+  }
+  100% {
+    background: #111;
   }
 }
 
@@ -2256,15 +2156,10 @@ html:not(.fx) .dm-track b {
     margin-left: -20vw;
   }
 
-  .cta-device .laptop-shot {
+  .cta-device img {
     width: 100%;
   }
 
-  .cta-break {
-    left: 40%;
-    font-size: 15px;
-    height: 42px;
-  }
 
   .footer-bar {
     margin: 0 auto;
@@ -2435,8 +2330,7 @@ html:not(.fx) .dm-track b {
     top: calc(100% - 220px);
   }
 
-  /* Phones: the plain reveal and nothing else. No drift, no shimmer (the
-     closing blur is wide-only in ScrollFx.tsx). */
+  /* Phones: the plain reveal and nothing else. No drift, no shimmer. */
   /* html: outranks the Drift rules, which come later in the file. */
   html [data-drift] {
     animation: none;
@@ -2524,34 +2418,6 @@ html:not(.fx) .dm-track b {
   /* none, not blur(0): a leftover filter makes the browser repaint moving art. */
   filter: none;
   translate: 0 0;
-}
-
-/* Closing section reached (ScrollFx.tsx sets .end-focus for 1 s, wide
-   screens only): everything blurs but the laptop's Take a Break pill, then
-   eases back into focus as the closing copy reveals. */
-.fx .faq,
-.fx .cta-art,
-.fx .cta-grid,
-.fx .cta-device > .laptop-shot,
-.fx .site-footer {
-  transition: filter 0.6s var(--out);
-}
-
-.end-focus .faq,
-.end-focus .cta-art,
-.end-focus .cta-grid,
-.end-focus .cta-device > .laptop-shot,
-.end-focus .site-footer {
-  filter: blur(8px);
-  transition-duration: 0.35s;
-}
-
-.cta-break {
-  transition: scale 0.5s var(--spring);
-}
-
-.end-focus .cta-break {
-  scale: 1.06;
 }
 
 /* Pinned scenes, wide screens only (the same query is in DisplayModes.tsx). */

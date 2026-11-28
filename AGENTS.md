@@ -362,3 +362,25 @@ Newest last. Date, decision, reason.
   (it was flush). Around 330px the header button overflowed and the title
   broke inside "Screen time": the title size is now (100vw - 48px) / 9,
   capped 28-48px, and at 400px and below the header button reads "Download".
+- **2026-11-28 — download buttons always serve the latest release.** Owner
+  asked whether the buttons give the latest version; they named one version,
+  filled in at build time, so a missed rebuild or a GitHub 403 during the
+  build (which falls back to the committed `release.json`) would keep handing
+  out an old installer. Now every button links
+  `releases/latest/download/Serion_x64-setup.exe`. The owner did not want a
+  manual step per release, so `site-rebuild.yml` copies each published
+  release's `Serion_X.Y.Z_x64-setup.exe` to that fixed name with the built-in
+  token, then rebuilds the site. 1.3.0 got its copy through the API and the
+  link was checked (302 to the 1.3.0 asset, 2547811 bytes). The labels
+  (version, size) still come from the build, so at worst a label lags, never
+  the file. `release.json` no longer stores the installer name.
+- **2026-11-28 — the closing laptop is the owner's image; the closing blur is
+  gone.** Owner supplied a laptop with a movie card and a "Looks cool!" note
+  pointing at the pill (`public/cta-laptop.png`, replaced once more the same
+  day with a dimmed card and a play button) and asked to remove the blur.
+  `ScreenLaptop.tsx`, its hourglass CSS and the overlaid Take a Break pill are
+  deleted; `ScrollFx.tsx` no longer adds `end-focus`, and the closing copy
+  reveals through the normal observer. Owner: the button's dark-to-blue
+  shimmer stays, repeats every 4 s (sweep, blue, hold, dark again), and the
+  sweep was slowed from about 1 s to about 2 s with an even ease. The image's pill is kept 30px inside the viewport where the
+  laptop bleeds off the left edge.

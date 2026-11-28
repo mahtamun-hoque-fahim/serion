@@ -30,7 +30,6 @@ External destinations (all open in a new tab):
 Build output: `site/out/` (`index.html`, `404.html`, `opengraph-image`,
 `icon.svg`, `_next/`, `pill.png`).
 
-Art in `public/`: `hero-laptop.png` (hero, with the dashboard drawn over it), `laptop-blank.png` (closing and
-the scenes, with the hourglass
-screen from `components/ScreenLaptop.tsx`), `orb-small.png`, `orb-large.png`, `glow-top-left.png`,
+Art in `public/`: `hero-laptop.png` (hero, with the dashboard drawn over it), `laptop-blank.png` (the display and install scenes),
+`cta-laptop.png` (closing), `orb-small.png`, `orb-large.png`, `glow-top-left.png`,
 `glow-bottom-right.png`.

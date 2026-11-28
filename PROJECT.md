@@ -15,9 +15,11 @@ install cards, dark FAQ, closing CTA and footer. Phones (720px and below)
 follow the owner's sketch: hero laptop above the copy, bar chart only in the
 showcase, auto-cycling pill laptop above the modes, no laptop in install or
 the closing section. Phones get only the blur-fade reveal: no drift, no
-closing blur, no button shimmer. On wider screens, reaching the closing
-section blurs everything but the Take a Break pill for 1 s, then reveals the
-copy; 0.5 s after the reveal the button shimmers, 0.5 s later it turns blue.
+button shimmer. On wider screens the closing copy reveals like the rest; 0.5 s
+after the reveal its button starts a 4 s loop: a light sweeps across it, it
+turns blue, holds, and goes dark again. Every download
+button links `releases/latest/download/Serion_x64-setup.exe`, so it always
+serves the newest release.
 The dashboard's Breaks row no longer cuts off its unit dropdown at the
 window's 760px minimum. 1.2.0 (pill display modes Hidden / Icon / Full and the
 tray icon) is installed over 1.1.0 and verified live on the owner's machine,
@@ -166,9 +168,9 @@ The one-page landing site, a separate Next.js app in the same repo (own
 | `site/components/Install.tsx` | the install band: three step cards and the laptop playing each step (download, SmartScreen, tray menu) on scroll; phones show the cards only |
 | `site/lib/useScrollStep.ts` | which step a scroll scene is on: pinned span, list position when stacked, or a timer while its optional media query matches |
 | `site/components/Laptop.tsx` | the blank laptop with a live screen, shared by every laptop on the page |
-| `site/lib/site.ts` | version, installer name/size/bytes (from `release.json`), every GitHub URL |
-| `site/lib/release.json` | latest release's version, installer name and bytes; rewritten before every build by `site/scripts/release.mjs` |
-| `.github/workflows/site-rebuild.yml` | on a published release, POSTs the `VERCEL_DEPLOY_HOOK` secret so the site rebuilds with the new version |
+| `site/lib/site.ts` | version and size (from `release.json`), the fixed installer name `Serion_x64-setup.exe`, every GitHub URL |
+| `site/lib/release.json` | latest release's version and installer bytes; rewritten before every build by `site/scripts/release.mjs` |
+| `.github/workflows/site-rebuild.yml` | on a published release: copies the installer to `Serion_x64-setup.exe` on that release (built-in token), then POSTs the `VERCEL_DEPLOY_HOOK` secret so the site rebuilds |
 | `site/public/pill.png` | 2× captures of the real app (`scripts/capture-app.mjs`) |
 | `site/scripts/` | `shot.mjs` (screenshots over CDP), `probe.mjs` (measure a live page), `capture-app.mjs` (re-shoot the app at 2× with the brand theme) |
 | `site/BRAIN.md`, `site/SITETREE.md` | the site's own identity, rules and route manifest |
@@ -506,13 +508,15 @@ through the UI, battery quit.
    upload it as a release asset named exactly `latest.json`. The release must
    be the repo's "latest" (not a draft or prerelease), because the endpoint is
    `releases/latest/download/latest.json`.
-   The site needs no edit: publishing the release triggers its rebuild.
+   The site needs no edit: publishing the release triggers the workflow, which
+   adds the `Serion_x64-setup.exe` copy the site's buttons link to and rebuilds
+   the site. Check that the copy appeared; without it the buttons 404.
 7. **Landing site** (`site/`, 2026-11-25; rebuilt to the new comp 2026-11-27):
    one page, static-exported and checked in headless Chrome at 390, 768, 1024,
    1440 and 1920 (all sections, no sideways scroll, laptop bases not clipped).
    The art is the owner's; the hero shows the owner's blank laptop
-   (`public/hero-laptop.png`) with the drawn dashboard growing out of its pill, the closing laptop an animated
-   hourglass (`components/ScreenLaptop.tsx`). Deployed 2026-11-27 on Vercel at
+   (`public/hero-laptop.png`) with the drawn dashboard growing out of its pill, the closing section the
+   owner's movie laptop (`public/cta-laptop.png`). Deployed 2026-11-27 on Vercel at
    https://serion-here.vercel.app, which is the repo's About homepage and the
    `metadataBase` fallback. Open: a custom domain (optional), and a look at the generated
    social card. `NEXT_PUBLIC_SITE_URL` is the only thing a real domain needs.
@@ -575,7 +579,8 @@ through the UI, battery quit.
 | `d74b7e7` | Site download moved to 1.3.0 |
 | `e1db9f4` | Site reads the latest release at build time (`site/scripts/release.mjs` writes `site/lib/release.json` in `prebuild`, keeps the last file if GitHub is down); `.github/workflows/site-rebuild.yml` calls the Vercel deploy hook when a release is published; search description and social card no longer say a stale "1.6 MB" |
 | `2487c20` | Hero shows the owner's image (`site/public/hero-dashboard.png`: the laptop with the pill on screen and the dashboard hanging off its left) instead of the hourglass laptop; below 1360px the laptop starts past the copy and shrinks so the pill stays on screen |
-| (this commit) | Hero rebuilt from the owner's blank laptop (`site/public/hero-laptop.png`, with the "Pure Screentime" note and the pill) plus the drawn dashboard (`DashboardMock`) that grows out of the pill after the laptop reveals: on the laptop's left edge on wide screens, centred in the screen when stacked; `hero-dashboard.png` removed. Phones: the showcase bar chart overlaps the gray band by 72px, the hero title keeps "Track Screen time" on one line down to 320px, and the header button reads "Download" at 400px and below |
+| `aad072a` | Hero rebuilt from the owner's blank laptop (`site/public/hero-laptop.png`, with the "Pure Screentime" note and the pill) plus the drawn dashboard (`DashboardMock`) that grows out of the pill after the laptop reveals: on the laptop's left edge on wide screens, centred in the screen when stacked; `hero-dashboard.png` removed. Phones: the showcase bar chart overlaps the gray band by 72px, the hero title keeps "Track Screen time" on one line down to 320px, and the header button reads "Download" at 400px and below |
+| (this commit) | Download buttons link `releases/latest/download/Serion_x64-setup.exe`; the release workflow (`site-rebuild.yml`) copies each release's installer to that fixed name, then rebuilds the site; 1.3.0 got the copy by hand. Closing section: the owner's movie laptop (`site/public/cta-laptop.png`) replaces the hourglass laptop and the Take a Break pill (`ScreenLaptop.tsx` deleted), the pill kept 30px in view; the end-of-section blur is removed; the button's sweep and dark-to-blue now repeat every 4 s |
 
 Decisions worth knowing (and *why*): Tauri over Electron for a 24/7 widget
 (memory); a custom drag because the native one blocks page events; offered

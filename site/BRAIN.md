@@ -40,10 +40,9 @@ only, unsigned installer, no cloud). Success is a download, not applause.
 - [LOCKED] The hero is the owner's blank laptop `public/hero-laptop.png`
   ("Pure Screentime" note, pill on screen) with the drawn dashboard
   (`DashboardMock`) appearing out of the pill: on the laptop's left edge on
-  wide screens, centred in the screen when stacked. The closing laptop
-  (`components/ScreenLaptop.tsx`) shows
-  an SVG hourglass over "Times up!" on the blank laptop's screen: the sand
-  runs down, then the glass turns over, on a 5 s CSS loop. No video, no script.
+  wide screens, centred in the screen when stacked. The closing
+  laptop is the owner's image `public/cta-laptop.png` (movie card, "Looks
+  cool!" pointing at the pill), its pill kept 30px inside the viewport.
 - [LOCKED] Every laptop is the blank mockup (`components/Laptop.tsx`) with a
   live DOM screen sized in cqw. The display band shows the pill on it, no tray
   icon. The install band plays the three steps on it: the release download,
@@ -98,7 +97,9 @@ No database, no auth, no payments, no analytics, no server runtime.
 
 - Windows 10 and 11, 64-bit only. Never imply other platforms.
 - The installer is unsigned: the SmartScreen warning is explained, not hidden.
-- Version, file size and installer name come from the latest GitHub Release:
+- Every download button links `releases/latest/download/Serion_x64-setup.exe`
+  (the release workflow adds that copy), so it is never an old version.
+- Version and file size come from the latest GitHub Release:
   `scripts/release.mjs` writes `lib/release.json` before every build, and a
   published release triggers a rebuild. A release needs no site edit.
 - WCAG 2.2 AA: visible focus, landmarks, labelled sections, reduced motion.
@@ -137,7 +138,7 @@ THEME: Quiet Product — light, editorial, one blue accent.
 - Container 1190px; all section heights and offsets are the comp's at 1440px;
   cards 18px; buttons 999px.
 - Motion: spring `cubic-bezier(.34,1.56,.64,1)` for the pill, out
-  `cubic-bezier(.22,1,.36,1)` for reveals; only the hourglass loops, and the orbs wander on random CSS sines (periods set by ScrollFx.tsx, compositor only); reduced motion stops both.
+  `cubic-bezier(.22,1,.36,1)` for reveals; only the orbs wander on random CSS sines (periods set by ScrollFx.tsx, compositor only); reduced motion stops both.
 
 ## Features
 
