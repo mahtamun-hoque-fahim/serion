@@ -16,8 +16,8 @@ follow the owner's sketch: hero laptop above the copy, bar chart only in the
 showcase, auto-cycling pill laptop above the modes, no laptop in install or
 the closing section. Phones get only the blur-fade reveal: no drift, no
 button shimmer. On wider screens the closing copy reveals like the rest; 0.5 s
-after the reveal its button starts a 4 s loop: a light sweeps across it, it
-turns blue, holds, and goes dark again. Every download
+after the reveal its button starts dark, turns blue for good during its first
+light sweep, and the sweep repeats every 5 s. Every download
 button links `releases/latest/download/Serion_x64-setup.exe`, so it always
 serves the newest release.
 The dashboard's Breaks row no longer cuts off its unit dropdown at the
@@ -580,7 +580,8 @@ through the UI, battery quit.
 | `e1db9f4` | Site reads the latest release at build time (`site/scripts/release.mjs` writes `site/lib/release.json` in `prebuild`, keeps the last file if GitHub is down); `.github/workflows/site-rebuild.yml` calls the Vercel deploy hook when a release is published; search description and social card no longer say a stale "1.6 MB" |
 | `2487c20` | Hero shows the owner's image (`site/public/hero-dashboard.png`: the laptop with the pill on screen and the dashboard hanging off its left) instead of the hourglass laptop; below 1360px the laptop starts past the copy and shrinks so the pill stays on screen |
 | `aad072a` | Hero rebuilt from the owner's blank laptop (`site/public/hero-laptop.png`, with the "Pure Screentime" note and the pill) plus the drawn dashboard (`DashboardMock`) that grows out of the pill after the laptop reveals: on the laptop's left edge on wide screens, centred in the screen when stacked; `hero-dashboard.png` removed. Phones: the showcase bar chart overlaps the gray band by 72px, the hero title keeps "Track Screen time" on one line down to 320px, and the header button reads "Download" at 400px and below |
-| (this commit) | Download buttons link `releases/latest/download/Serion_x64-setup.exe`; the release workflow (`site-rebuild.yml`) copies each release's installer to that fixed name, then rebuilds the site; 1.3.0 got the copy by hand. Closing section: the owner's movie laptop (`site/public/cta-laptop.png`) replaces the hourglass laptop and the Take a Break pill (`ScreenLaptop.tsx` deleted), the pill kept 30px in view; the end-of-section blur is removed; the button's sweep and dark-to-blue now repeat every 4 s |
+| `ca630d3` | Download buttons link `releases/latest/download/Serion_x64-setup.exe`; the release workflow (`site-rebuild.yml`) copies each release's installer to that fixed name, then rebuilds the site; 1.3.0 got the copy by hand. Closing section: the owner's movie laptop (`site/public/cta-laptop.png`) replaces the hourglass laptop and the Take a Break pill (`ScreenLaptop.tsx` deleted), the pill kept 30px in view; the end-of-section blur is removed; the button's sweep and dark-to-blue now repeat every 4 s |
+| (this commit) | Closing button: dark to blue once, during the first light sweep, then stays blue; the sweep repeats every 5 s |
 
 Decisions worth knowing (and *why*): Tauri over Electron for a 24/7 widget
 (memory); a custom drag because the native one blocks page events; offered

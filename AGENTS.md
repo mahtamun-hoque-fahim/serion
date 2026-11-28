@@ -384,3 +384,9 @@ Newest last. Date, decision, reason.
   shimmer stays, repeats every 4 s (sweep, blue, hold, dark again), and the
   sweep was slowed from about 1 s to about 2 s with an even ease. The image's pill is kept 30px inside the viewport where the
   laptop bleeds off the left edge.
+- **2026-11-28 — the closing button turns blue once; only the sweep repeats.**
+  Owner changed their mind on the 4 s loop: the button starts dark, turns
+  brand blue during its first light sweep and stays blue, and the sweep (2 s,
+  even ease) repeats every 5 s. This reverses the dark-blue-dark loop above.
+  Checked in headless Chrome at 1440px: blue from about 3.1 s after reaching
+  the section, sweeps at 2.5, 7.4 and 12.3 s.
