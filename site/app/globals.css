@@ -1887,6 +1887,293 @@ html:not(.fx) .dm-track b {
 }
 
 /* --------------------------------------------------------------------------
+   Privacy page (app/privacy/page.tsx): a head, then a sticky list of parts
+   beside the parts. Each part has a "Summary" toggle with its one-liner.
+   -------------------------------------------------------------------------- */
+
+.policy {
+  padding: 150px 0 120px;
+  background: var(--ground);
+}
+
+/* Lined up with the parts column (the list is 240px, the gap 72px). */
+.policy-head {
+  margin-bottom: 72px;
+  padding-left: 312px;
+}
+
+.policy-head > * {
+  max-width: 760px;
+}
+
+.policy-kicker {
+  margin: 0 0 14px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--brand);
+}
+
+.policy-head h1 {
+  font-size: clamp(34px, 5vw, 56px);
+  line-height: 1.1;
+}
+
+.policy-lede {
+  margin: 22px 0 0;
+  font-size: 18px;
+  line-height: 1.6;
+  color: #333;
+}
+
+.policy-date {
+  margin: 18px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.policy-grid {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 72px;
+  align-items: start;
+}
+
+.policy-toc {
+  position: sticky;
+  top: 120px;
+  font-size: 14px;
+}
+
+.policy-toc p {
+  margin: 0 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.policy-toc ol {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.policy-toc a {
+  display: block;
+  padding: 6px 12px;
+  border-left: 2px solid var(--line);
+  color: #444;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.policy-toc a:hover,
+.policy-toc a:focus-visible {
+  border-color: var(--brand);
+  color: var(--ink);
+}
+
+.policy-parts {
+  display: grid;
+  gap: 0;
+  max-width: 760px;
+}
+
+.policy-part {
+  padding: 40px 0;
+  border-top: 1px solid var(--line);
+  scroll-margin-top: 110px;
+}
+
+.policy-part:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.policy-part-head {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
+
+.policy-num {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--brand);
+  font-variant-numeric: tabular-nums;
+}
+
+.policy-part h2 {
+  font-size: clamp(24px, 2.6vw, 30px);
+  line-height: 1.2;
+}
+
+/* The Summary toggle: a small pill; opening it shows the one-liner in a
+   tinted card under it. */
+.policy-sum {
+  margin-top: 16px;
+}
+
+.policy-sum summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px 0 14px;
+  border: 1px solid #dcdcdc;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.policy-sum summary::-webkit-details-marker {
+  display: none;
+}
+
+.policy-sum summary:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+.policy-sum summary:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.policy-sum summary svg {
+  transition: rotate 0.25s var(--out);
+}
+
+.policy-sum[open] summary {
+  border-color: var(--brand);
+  background: var(--brand);
+  color: #fff;
+}
+
+.policy-sum[open] summary svg {
+  rotate: 180deg;
+}
+
+.policy-sum p {
+  margin: 12px 0 0;
+  padding: 14px 18px;
+  border-left: 3px solid var(--brand);
+  border-radius: 0 12px 12px 0;
+  background: var(--brand-tint);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: #0b1a4a;
+}
+
+.policy-sum[open] p {
+  animation: policy-sum-in 0.35s var(--out);
+}
+
+@keyframes policy-sum-in {
+  from {
+    opacity: 0;
+    translate: 0 -6px;
+  }
+}
+
+.policy-body {
+  margin-top: 20px;
+  font-size: 16px;
+  line-height: 1.75;
+  color: #2b2b2b;
+}
+
+.policy-body p {
+  margin: 0 0 16px;
+}
+
+.policy-body ul {
+  margin: 0 0 16px;
+  padding-left: 22px;
+}
+
+.policy-body li {
+  margin: 6px 0;
+}
+
+.policy-body li::marker {
+  color: var(--brand);
+}
+
+.policy-body a {
+  color: var(--brand);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.policy-body code {
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: #f1f2f4;
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 0.88em;
+  overflow-wrap: anywhere;
+}
+
+/* The footer bar sits beside the closing laptop on the home page; here it is
+   a plain centred bar. */
+.policy + .site-footer {
+  border-top: 1px solid var(--line);
+}
+
+.policy + .site-footer .footer-bar {
+  width: min(var(--container), calc(100% - 64px));
+  margin: 0 auto;
+}
+
+@media (max-width: 900px) {
+  .policy {
+    padding: 130px 0 80px;
+  }
+
+  .policy-head {
+    margin-bottom: 40px;
+    padding-left: 0;
+  }
+
+  .policy-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+
+  .policy-toc {
+    position: static;
+    padding: 18px 20px;
+    border-radius: 16px;
+    background: #f6f7f9;
+  }
+
+  .policy-toc ol {
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  }
+
+  .policy-part {
+    padding: 32px 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .policy-sum[open] p {
+    animation: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
    Not found
    -------------------------------------------------------------------------- */
 

@@ -45,12 +45,13 @@ export function Footer() {
   return (
     <footer className="site-footer">
       <div className="container footer-bar" data-reveal>
-        <a className="wordmark" href="#top" aria-label="Serion, back to top">
+        <a className="wordmark" href="/#top" aria-label="Serion, back to top">
           <SerionMark size={24} />
           <span>Serion</span>
         </a>
 
         <nav className="footer-links" aria-label="Project links">
+          <a href="/privacy/">Privacy</a>
           {links.map((link) => (
             <a key={link.href} href={link.href} target="_blank" rel="noreferrer">
               {link.label}

@@ -163,6 +163,7 @@ The one-page landing site, a separate Next.js app in the same repo (own
 | `site/app/layout.tsx` | metadata, `metadataBase` (override with `NEXT_PUBLIC_SITE_URL`), fonts |
 | `site/app/globals.css` | the whole design: tokens, sections, art placement |
 | `site/app/not-found.tsx` | branded 404 |
+| `site/app/privacy/page.tsx` | `/privacy/`: what the app records and never records, storage, retention, the update check, exports, capture hiding, the website, third parties, choices; each part has a Summary toggle (`<details>`) with a one-line gist. Every claim is checked against the code, so a change to data handling changes this page |
 | `site/app/opengraph-image.tsx` | 1200×630 social card, composed in code (`next/og`) |
 | `site/components/DisplayModes.tsx` | the dark mode band: scrolling walks the pill on the blank laptop through Full / Icon / Hidden; on phones (720px and below) the laptop sits above the copy and cycles the modes on a 2.5 s timer |
 | `site/components/Install.tsx` | the install band: three step cards and the laptop playing each step (download, SmartScreen, tray menu) on scroll; phones show the cards only |
@@ -581,7 +582,8 @@ through the UI, battery quit.
 | `2487c20` | Hero shows the owner's image (`site/public/hero-dashboard.png`: the laptop with the pill on screen and the dashboard hanging off its left) instead of the hourglass laptop; below 1360px the laptop starts past the copy and shrinks so the pill stays on screen |
 | `aad072a` | Hero rebuilt from the owner's blank laptop (`site/public/hero-laptop.png`, with the "Pure Screentime" note and the pill) plus the drawn dashboard (`DashboardMock`) that grows out of the pill after the laptop reveals: on the laptop's left edge on wide screens, centred in the screen when stacked; `hero-dashboard.png` removed. Phones: the showcase bar chart overlaps the gray band by 72px, the hero title keeps "Track Screen time" on one line down to 320px, and the header button reads "Download" at 400px and below |
 | `ca630d3` | Download buttons link `releases/latest/download/Serion_x64-setup.exe`; the release workflow (`site-rebuild.yml`) copies each release's installer to that fixed name, then rebuilds the site; 1.3.0 got the copy by hand. Closing section: the owner's movie laptop (`site/public/cta-laptop.png`) replaces the hourglass laptop and the Take a Break pill (`ScreenLaptop.tsx` deleted), the pill kept 30px in view; the end-of-section blur is removed; the button's sweep and dark-to-blue now repeat every 4 s |
-| (this commit) | Closing button: dark to blue once, during the first light sweep, then stays blue; the sweep repeats every 5 s |
+| `e39107a` | Closing button: dark to blue once, during the first light sweep, then stays blue; the sweep repeats every 5 s |
+| (this commit) | `/privacy/` page with a Summary toggle per part, linked from the header (was the FAQ anchor) and the footer; header and footer links made root-relative so they work from it; header button no longer shows a double gap in "Download for Windows" |
 
 Decisions worth knowing (and *why*): Tauri over Electron for a 24/7 widget
 (memory); a custom drag because the native one blocks page events; offered

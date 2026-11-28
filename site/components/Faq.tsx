@@ -31,7 +31,7 @@ export function Faq() {
   return (
     <section className="faq" id="faq">
       <div className="container faq-grid">
-        <div className="faq-head" id="privacy" data-reveal>
+        <div className="faq-head" data-reveal>
           <h2>Before you install</h2>
           <p>Short answers to the things people ask first.</p>
         </div>

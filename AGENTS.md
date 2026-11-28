@@ -390,3 +390,19 @@ Newest last. Date, decision, reason.
   even ease) repeats every 5 s. This reverses the dark-blue-dark loop above.
   Checked in headless Chrome at 1440px: blue from about 3.1 s after reaching
   the section, sweeps at 2.5, 7.4 and 12.3 s.
+- **2026-11-28 — a full privacy page, no terms page.** Owner asked whether
+  privacy and terms pages are needed. Neither is legally required while the
+  app and site collect nothing (no analytics, no cookies, no accounts; the
+  app's only request is the update check to GitHub), and the MIT license is
+  the terms. The owner chose a full, detailed `/privacy/` page with a
+  "Summary" toggle on every part showing a one-line gist. The toggles are
+  native `<details>`, so they need no script and work with the keyboard. All
+  claims were checked in the source first, which corrected two of the
+  drafts: Store apps hosted by `ApplicationFrameHost` are named by their
+  window title (so a title such as a photo's file name can be stored as an
+  app name), and "Hide Serion from recordings" covers the pill and its alert
+  flash, not the dashboard. The page says plainly that the encryption key is
+  inside the app. The header's Privacy link now opens the page; header and
+  footer links are root-relative so they work from it. Found on the way: the
+  header button showed "Download  for Windows" with a double gap, because
+  the flex gap split the text from the span; the label is now one flex item.

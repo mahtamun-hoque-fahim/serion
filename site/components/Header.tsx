@@ -3,17 +3,18 @@ import { SerionMark } from "./SerionMark";
 import { URLS } from "@/lib/site";
 
 const links = [
-  { href: "#counts", label: "How it counts" },
-  { href: "#features", label: "What you get" },
-  { href: "#privacy", label: "Privacy" },
-  { href: "#install", label: "Install" },
+  /* Root-relative, so they also work from /privacy/. */
+  { href: "/#counts", label: "How it counts" },
+  { href: "/#features", label: "What you get" },
+  { href: "/privacy/", label: "Privacy" },
+  { href: "/#install", label: "Install" },
 ];
 
 export function Header() {
   return (
     <header className="site-header">
       <div className="container header-bar" data-reveal>
-        <a className="wordmark" href="#top" aria-label="Serion, back to top">
+        <a className="wordmark" href="/#top" aria-label="Serion, back to top">
           <SerionMark size={22} />
           <span>Serion</span>
         </a>
@@ -26,7 +27,10 @@ export function Header() {
         </nav>
         <a className="btn btn-sm header-cta" href={URLS.download} target="_blank" rel="noreferrer">
           <Download size={16} strokeWidth={2} aria-hidden="true" />
-          Download<span className="header-cta-long"> for Windows</span>
+          {/* One flex item, so the gap does not split "Download for Windows". */}
+          <span>
+            Download<span className="header-cta-long"> for Windows</span>
+          </span>
         </a>
       </div>
     </header>
