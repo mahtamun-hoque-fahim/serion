@@ -11,8 +11,9 @@ call, the meeting down the hall, all of it. Serion counts only the time you are
 really there, and shows it in a small pill at the top of your screen.
 
 <p align="center">
-  <img src="docs/pill.png" alt="The Serion pill with today's top apps" width="290">
-  <img src="docs/dashboard.png" alt="The Serion dashboard" width="520">
+<img width="1366" height="768" alt="Serion app dashboard" src="https://github.com/user-attachments/assets/28bd02d9-8c59-49e1-902f-67932f53ea35" />
+
+
 </p>
 
 Free and open source, for Windows 10 and 11 (64-bit).
