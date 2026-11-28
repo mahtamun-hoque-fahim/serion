@@ -37,7 +37,9 @@ only, unsigned installer, no cloud). Success is a download, not applause.
   app bars grow in when the card is revealed. The laptops, orbs and glows are the owner's
   art in `site/public/` (`laptop-blank.png`, `orb-*.png`,
   `glow-*.png`), placed at their natural size at 1440px as in the comp.
-- [LOCKED] The hero and closing laptops (`components/ScreenLaptop.tsx`) show
+- [LOCKED] The hero is the owner's image `public/hero-dashboard.png` (laptop
+  with the pill, dashboard hanging off its left). The closing laptop
+  (`components/ScreenLaptop.tsx`) shows
   an SVG hourglass over "Times up!" on the blank laptop's screen: the sand
   runs down, then the glass turns over, on a 5 s CSS loop. No video, no script.
 - [LOCKED] Every laptop is the blank mockup (`components/Laptop.tsx`) with a

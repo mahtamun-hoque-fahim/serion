@@ -308,8 +308,19 @@ ul {
   width: calc(var(--lh) * 1.7225);
 }
 
+/* The owner's hero image: the laptop spans x 63-1295 of 1296, the dashboard
+   hangs off its left. The box is sized to the laptop, so the image is 1296/1233
+   of it and shifted left by 63/1233. */
+.hero-shot > img {
+  display: block;
+  width: 105.11%;
+  max-width: none;
+  height: auto;
+  margin-left: -5.11%;
+}
+
 /* --------------------------------------------------------------------------
-   Laptop with the hourglass screen (hero and closing section)
+   Laptop with the hourglass screen (closing section)
    -------------------------------------------------------------------------- */
 
 .laptop-shot {
@@ -1987,9 +1998,13 @@ html:not(.fx) .dm-track b {
    -------------------------------------------------------------------------- */
 
 @media (max-width: 1360px) {
-  /* Keep the screen's centre (the hourglass) at least 140px inside the edge. */
+  /* The dashboard hangs off the laptop's left edge, so the laptop starts past
+     the copy (it ends ~540px in); the width shrinks so the pill (right edge
+     at 49.7% of the laptop) stays 24px inside the screen. */
   .hero-laptop.hero-laptop {
-    left: min(calc(50% + 60px), calc(100% - var(--lh) * 0.861 - 140px));
+    --hl: max(calc(50% + 60px), 580px);
+    left: var(--hl);
+    width: min(calc(var(--lh) * 1.7225), calc((100% - var(--hl) - 24px) * 2.01));
   }
 
   .hero h1 {

@@ -1,7 +1,7 @@
 import { Laptop } from "./Laptop";
 
 /**
- * The owner's blank laptop with a live screen: an hourglass whose sand runs
+ * The closing section's laptop: the owner's blank laptop with a live screen: an hourglass whose sand runs
  * down, then flips and starts again, over "Times up!". Pure SVG + CSS, so it
  * costs no script and stops under reduced motion.
  */

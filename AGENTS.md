@@ -336,3 +336,14 @@ Newest last. Date, decision, reason.
   releases page). Found on the way: the search description and the social
   card said 1.6 MB; both
   now follow the installer.
+- **2026-11-28 — the hero is the owner's image.** The owner supplied a laptop
+  with the pill on screen and the dashboard overlapping its left side, and
+  asked for it to replace the hero's hourglass laptop. The empty top 118px
+  were cropped (`public/hero-dashboard.png`, 1296x718); the laptop inside it
+  matches the old one's proportions, so the hero box keeps the laptop's size
+  and the image overhangs it by 63/1233 on the left. The old 1101-1360px rule
+  pulled the laptop left to keep the hourglass in view, which now put the
+  dashboard over the headline; the laptop now starts at max(50% + 60px,
+  580px), past the copy, and shrinks so the pill stays 24px inside the
+  screen. Checked at 1920, 1440, 1361, 1280, 1101, 1024, 768 and 375. The
+  closing laptop keeps the hourglass.

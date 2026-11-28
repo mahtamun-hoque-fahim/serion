@@ -1,5 +1,4 @@
 import { Download } from "lucide-react";
-import { ScreenLaptop } from "./ScreenLaptop";
 import { URLS } from "@/lib/site";
 
 export function Hero() {
@@ -9,7 +8,9 @@ export function Hero() {
         <img data-reveal data-drift className="hero-glow" src="/glow-bottom-right.png" alt="" width={871} height={871} />
         <img data-reveal="2" data-drift className="hero-orb-a" src="/orb-small.png" alt="" width={166} height={166} />
         <img data-reveal="3" data-drift="x" className="hero-orb-b" src="/orb-large.png" alt="" width={309} height={309} />
-        <ScreenLaptop id="hero" className="hero-laptop" reveal="2" />
+        <div className="hero-laptop hero-shot" data-reveal="2">
+          <img src="/hero-dashboard.png" alt="" width={1296} height={718} />
+        </div>
       </div>
 
       <div className="container hero-copy">
